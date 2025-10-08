@@ -22,6 +22,8 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger(AccountColumns::PARENT_ID)->nullable();
+            $table->unsignedBigInteger(AccountColumns::USER_ID);
+            $table->foreign(AccountColumns::USER_ID)->references('id')->on('users')->onDelete('cascade');
             $table->string(AccountColumns::NAME, 100);
             $table->enum(AccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
             $table->bigInteger(AccountColumns::BALANCE)->default(0);

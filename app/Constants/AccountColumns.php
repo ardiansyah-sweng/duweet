@@ -6,6 +6,7 @@ class AccountColumns
 {
     public const ID             = 'id'; // Primary Key
     public const PARENT_ID      = 'parent_id'; // Foreign Key to accounts.id
+    public const USER_ID      = 'user_id'; // Foreign Key to user.id
     public const NAME           = 'name';   // Account name (e.g., "Bank", "BCA Savings", "Wallet")
     public const TYPE           = 'type'; // Account type (e.g., "AS" for Asset, "LI" for Liability)
     public const IS_GROUP       = 'is_group'; // Boolean to indicate if the account is a group
