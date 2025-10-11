@@ -7,9 +7,8 @@ use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    public function index()
-    {
-        $data = Transaction::getLatestActivitiesRaw();
-        return response()->json(['data' => $data]);
+    public function index(){
+        $data = Transaction::querySumExpensesByPeriod();
+        return response()->json(["Totalnya Adalah = ", $data]);
     }
 }

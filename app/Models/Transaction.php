@@ -26,26 +26,26 @@ class Transaction extends Model
     }
 
 
-    public static function getLatestActivitiesRaw(){
-        $query = "
-            SELECT
-                t.amount,
-                t.description,
-                t.created_at,
-                u.name as user_name,
-                a.name as account_name,
-                a.type
-            FROM
-                transactions as t
-            JOIN
-                users as u ON t.user_id = u.id
-            JOIN
-                accounts as a ON t.account_id = a.id
-            ORDER BY
-                t.created_at DESC
-            LIMIT 20
+    
+
+
+
+
+    public static function querySumExpensesByPeriod(){
+         $query = "
+            SELECT 
+                SUM(t.amount) AS total_expense
+            FROM transactions t
+            INNER JOIN accounts a ON t.account_id = a.id
+            WHERE a.type = 'EX'
         ";
 
-        return DB::select($query);
+        $result = DB::select($query);
+
+        // Kembalikan nilainya (kalau null, jadi 0)
+        return $result[0]->total_expense ?? 0;
     }
+
+
+
 }
