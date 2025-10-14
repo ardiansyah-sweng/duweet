@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 <svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" style="background: transparent; background-color: transparent;" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="272px" height="216px" viewBox="-0.5 -0.5 272 216" content="&lt;mxfile&gt;&lt;diagram id=&quot;raokdmHqMOQaVMPQIVqK&quot; name=&quot;Page-1&quot;&gt;rVbJbuMwDP2a3B0727VNlzlkgAFymGOgSIotVLYMmc7Srx/KprzEaeNgekmkR1IkRT7Kk2idnt8ty5PfRkg9CQNxnkQvkzAMgwh/HXCpgeVsWQOxVaKGpi2wVZ+SwIDQUglZ9BTBGA0q74PcZJnk0MOYtebUVzsY3feas1gOgC1neoj+VQKSGl3Ngxb/JVWceM/TgCQp88oEFAkT5tSBotdJtLbGQL1Kz2up3d35e6nt3r6QNoFZmcEYg3ltcGS6pNwoLrj4ZKXA3GmbmQz/nhNINe6muBw6pBgKU1pOR9ChwGwsSWtWQ+7wjhkF+S5NKsFeUMFKzUAd+xfPqH5xo9emiAvK8nbG4SDjJ85NidFfJ16cVKpZlTBPlBYbdjGlC78Axj/87jkxVn2aDJi/EhRboKbFluhqbJ0lwg616FRIQUYHlJPNdOb3FEtQHWrNR9NtobOXBer/8TcfNNCGFeBD8e3lpIIVSeXPbZhWcYZrjtbSOsBy8u/cnxIFcpuzqoInJPHIqh+lBXn+tqIkXREDaAREniKnllANbZIOmZoh8D9NEN1o+4V21SxxEbsFqhKEhzWox/bWI/Ul7Fr1VpSxVHpUqKOH4ZLLztkdyQ3lPcMW5OP1VaZAMb172K7YxdiR+WgDHMDcqhyUyR5xwnjF5rEWWh7d0zFSe1iCr0yvqO7ZoOUBGrKtjTa2HXoHpfUVVCBBVBZvKquXhrZEY0dSxweFD8cTOQCTe56yfUNua4BBZ4895Rn8LenC0aQjls1Hkmy6+AGSze6/LTYx6b4s7g+c++Pxaub2p+twen4zGXuD8AcmXbi8GnWL+aAKqxtFWD1eA9y23w6VrPMBFr3+Aw==&lt;/diagram&gt;&lt;/mxfile&gt;">
+=======
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" style="background: transparent; background-color: transparent;" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="422px" height="216px" viewBox="-0.5 -0.5 422 216" content="&lt;mxfile&gt;&lt;diagram id=&quot;raokdmHqMOQaVMPQIVqK&quot; name=&quot;Page-1&quot;&gt;7VdLj+IwDP413AsFlusM89gDK43EYY/IpKGNJm2qNAU6v36d1umDMtDRolmtxKnJZzuOY3+2OvKX8fFVQxr9UgGXo4kXHEf+02gyGXtTDz8WKSpkOp5WQKhFQEoNsBYf3FkSmouAZx1Fo5Q0Iu2CTCUJZ6aDgdbq0FXbKdn1mkLIe8Cageyjv0VgogpdzLwG/8lFGDnPY48kMThlArIIAnVoQf7zyF9qpUy1io9LLu3juXep7F4+kdYX0zwxQwxmlcEeZE6x0b1M4YLlAcZO20Ql+HmMTCxxN8Zl3yHdIVO5ZnQEHWpAh5y0KOH28JYZXfKVq5gbXaCC5hKM2HcfHih/Ya3XhIgLivJ8xJNexA+MqRxvfxp4dhCxhDJgFgkZrKBQub1+ZoC9u91jpLT4UIkB9yQo1oaKFkuirbG2lghbVKPTgAdktEM52SAZaE938cpDtXqvq21i7XmG+m/u5b0aWkFm3FVceVlpAFlU+rMbkCJMcM3QmmsLaEb+rftDJAxfp1Bm8IAsHpj1PdeGHy9mlKRzYoBrAbQ9NHyqWRO1uFT3gL+pAf9M1c+lTWaOi9AuUJUgPKxGHbbVDqneYNOoN6IEYu7QQOwdbIqUt85uSc4obwErkA3XF4kwAuTmy3bZJsSCTAcbYP9lWqRGqOQrToCVZB5qIfnejo6B2v0UfGZ6wnRHBsl3pubaUkmlm563E1KeQBnyQyThqrR6qllLLLYctXQQODceyIFRqaMpbGtua2XAtPZYU47AFzk3Gcw5ItlsIMnG8xuQbHp9tOhIxds8u95vrnfHk5bbba795nmhMXb64A0aXf3qhXvxWS8LizNJWNwgB/NeDt6giPl92H3zsPMX/3Da/bhPu/u0+/+n3Xww6b5h2uG2+UkrZa1fXf/5Dw==&lt;/diagram&gt;&lt;/mxfile&gt;">
+>>>>>>> Stashed changes
     <defs/>
     <g>
         <g>
@@ -82,6 +86,83 @@
         <g>
             <path d="M 211 86 L 229.59 67.41 Q 231 66 232.41 67.41 L 269.59 104.59 Q 271 106 269.59 107.41 L 232.41 144.59 Q 231 146 229.59 144.59 L 192.41 107.41 Q 191 106 192.41 104.59 Z" fill="#ffffff" stroke="#000000" stroke-width="2" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(#ffffff, var(--ge-dark-color, #121212)); stroke: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));"/>
         </g>
+<<<<<<< Updated upstream
+=======
+        <g>
+            <path d="M 421 51 L 421 7 Q 421 1 415 1 L 327 1 Q 321 1 321 7 L 321 51" fill="#ffffff" stroke="#000000" stroke-width="2" stroke-miterlimit="10" pointer-events="all" style="fill: light-dark(#ffffff, var(--ge-dark-color, #121212)); stroke: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));"/>
+            <path d="M 321 51 L 321 205 Q 321 211 327 211 L 415 211 Q 421 211 421 205 L 421 51" fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" pointer-events="none" style="stroke: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));"/>
+            <path d="M 321 51 L 421 51" fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" pointer-events="none" style="stroke: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));"/>
+        </g>
+        <g>
+            <g transform="translate(-0.5 -0.5)">
+                <switch>
+                    <foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+                        <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 98px; height: 1px; padding-top: 26px; margin-left: 322px;">
+                            <div style="box-sizing: border-box; font-size: 0; text-align: center; color: #000000; ">
+                                <div style="display: inline-block; font-size: 14px; font-family: &quot;Helvetica&quot;; color: light-dark(#000000, #ffffff); line-height: 1.2; pointer-events: all; white-space: normal; word-wrap: normal; ">
+                                    Payment
+                                </div>
+                            </div>
+                        </div>
+                    </foreignObject>
+                    <text x="371" y="30" fill="light-dark(#000000, #ffffff)" font-family="&quot;Helvetica&quot;" font-size="14px" text-anchor="middle">
+                        Payment
+                    </text>
+                </switch>
+            </g>
+        </g>
+        <g>
+            <rect x="321" y="51" width="100" height="160" fill="none" stroke="none" pointer-events="all"/>
+        </g>
+        <g>
+            <g transform="translate(-0.5 -0.5)">
+                <switch>
+                    <foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
+                        <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 1px; height: 1px; padding-top: 58px; margin-left: 327px;">
+                            <div style="box-sizing: border-box; font-size: 0; text-align: left; color: #000000; ">
+                                <div style="display: inline-block; font-size: 12px; font-family: &quot;Helvetica&quot;; color: light-dark(#000000, #ffffff); line-height: 1.2; pointer-events: all; white-space: nowrap; ">
+                                    <u>
+                                        id
+                                    </u>
+                                    <br/>
+                                    parent_id
+                                    <br/>
+                                    name
+                                    <div>
+                                        type
+                                    </div>
+                                    <div>
+                                        balance
+                                    </div>
+                                    <div>
+                                        initial_balance
+                                    </div>
+                                    <div>
+                                        is_group
+                                    </div>
+                                    <div>
+                                        description
+                                    </div>
+                                    <div>
+                                        is_active
+                                    </div>
+                                    <div>
+                                        level
+                                    </div>
+                                    <div>
+                                        <br/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </foreignObject>
+                    <text x="327" y="70" fill="light-dark(#000000, #ffffff)" font-family="&quot;Helvetica&quot;" font-size="12px">
+                        id...
+                    </text>
+                </switch>
+            </g>
+        </g>
+>>>>>>> Stashed changes
     </g>
     <switch>
         <g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/>
