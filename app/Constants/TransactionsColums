@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Constants;
+
+class TransactionColumns
+{
+    public const ID              = 'id'; // Primary Key
+    public const ACCOUNT_ID      = 'account_id'; // Foreign Key to accounts.id
+    public const DATE            = 'date'; // Transaction date
+    public const DESCRIPTION     = 'description'; // Description of the transaction
+    public const AMOUNT          = 'amount'; // Transaction amount
+    public const TYPE            = 'type'; // "DEBIT" or "CREDIT"
+    public const REFERENCE       = 'reference'; // Optional reference number
+    public const BALANCE_AFTER   = 'balance_after'; // Balance after this transaction
+    public const CREATED_AT      = 'created_at';
+    public const UPDATED_AT      = 'updated_at';
+ q
+    /**
+     * Get fillable columns (exclude id, created_at, updated_at)
+     */
+    public static function getFillable(): array
+    {
+        return [
+            self::ACCOUNT_ID,
+            self::DATE,
+            self::DESCRIPTION,
+            self::AMOUNT,
+            self::TYPE,
+            self::REFERENCE,
+            self::BALANCE_AFTER,
+        ];
+    }
+}
