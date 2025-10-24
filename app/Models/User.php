@@ -3,49 +3,61 @@ namespace App\Models;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'name',
+        'nama_awal',
+        'nama_tengah',
+        'nama_akhir',
+        'username',
         'email',
         'password',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'nomor_telepon',
+        'tanggal_lahir'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'tanggal_lahir' => 'date',
+    ];
+
+    // Method untuk usia
+    public function usia()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        if (!$this->tanggal_lahir) {
+            return null;
+        }
+        return \Carbon\Carbon::parse($this->tanggal_lahir)->age;
+    }
+
+    // Accessor untuk nama lengkap
+    public function getNamaLengkapAttribute()
+    {
+        return trim($this->nama_awal . ' ' . 
+            ($this->nama_tengah ? $this->nama_tengah . ' ' : '') . 
+            $this->nama_akhir);
     }
 
     public static function createUserRaw(array $data)
@@ -58,19 +70,30 @@ class User extends Authenticatable
         try {
             $insertQuery = "
                 INSERT INTO users 
-                    (name, username, email, password, created_at, updated_at) 
+                    (nama_awal, nama_tengah, nama_akhir, username, email, password, 
+                    provinsi, kabupaten, kecamatan, jalan, kode_pos, nomor_telepon, 
+                    tanggal_lahir, created_at, updated_at) 
                 VALUES 
-                    (?, ?, ?, ?, ?, ?)
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
 
             $hashedPassword = Hash::make($data['password']);
             $now = now();
 
             DB::insert($insertQuery, [
-                $data['name'],
+                $data['nama_awal'],
+                $data['nama_tengah'] ?? null,
+                $data['nama_akhir'],
                 $data['username'],
                 $data['email'],
                 $hashedPassword,
+                $data['provinsi'] ?? null,
+                $data['kabupaten'] ?? null,
+                $data['kecamatan'] ?? null,
+                $data['jalan'] ?? null,
+                $data['kode_pos'] ?? null,
+                $data['nomor_telepon'] ?? null,
+                $data['tanggal_lahir'] ?? null,
                 $now,
                 $now
             ]);
@@ -78,7 +101,7 @@ class User extends Authenticatable
             return true; 
 
         } catch (\Exception $e) {
-            return 'Gagal menyimpan user ke database.';
+            return 'Gagal menyimpan user ke database: ' . $e->getMessage();
         }
     }
 }
