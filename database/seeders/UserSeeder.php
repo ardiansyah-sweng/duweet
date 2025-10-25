@@ -26,19 +26,6 @@ class UserSeeder extends Seeder
             'usia' => 25,
             'password' => Hash::make('password123'),
         ]);
-        //ke 2
-        $user = User::create([
-            'name' => 'Anto dayat sin',
-            'first_name' => 'Anto',
-            'middle_name' => null,
-            'last_name' => 'Dayat',
-            'email' => 'muchsin@example.com',
-            'tanggal_lahir' => 15,
-            'bulan_lahir' => 5,
-            'tahun_lahir' => 2000,
-            'usia' => 25,
-            'password' => Hash::make('password123'),
-        ]);
 
         // 🔹 Buat akun login untuk user tersebut
         $account = UserAccount::create([
