@@ -8,116 +8,53 @@ use Illuminate\Http\JsonResponse;
 class TransactionReportController extends Controller
 {
     /**
-     * Get total transactions per user.
+     * Get total transactions per user with various filter options.
      * 
      * GET /api/reports/transactions/per-user
+     * Query parameters:
+     *   - user_id (optional) - filter by specific user ID
+     *   - group_by (optional) - 'account-type' to group by account type, default is detailed breakdown
+     * 
+     * Default behavior: returns detailed breakdown (debit/credit)
+     * If group_by=account-type: groups results by account type
      * 
      * @return JsonResponse
      */
     public function getTotalTransactionPerUser(): JsonResponse
     {
         try {
-            $data = User::getTotalTransactionStats();
+            $userId = request('user_id');
+            $groupBy = request('group_by');
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Total transaksi per user berhasil diambil',
-                'data' => $data,
-                'total_records' => $data->count(),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get total transactions per user with detailed breakdown.
-     * 
-     * GET /api/reports/transactions/per-user/detailed
-     * 
-     * @return JsonResponse
-     */
-    public function getTotalTransactionPerUserDetailed(): JsonResponse
-    {
-        try {
-            $data = User::getTotalTransactionStatsDetailed();
+            $userIds = $userId ? [$userId] : null;
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Detail total transaksi per user berhasil diambil',
-                'data' => $data,
-                'total_records' => $data->count(),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get total transactions per user grouped by account type.
-     * 
-     * GET /api/reports/transactions/per-user/by-account-type
-     * 
-     * @return JsonResponse
-     */
-    public function getTotalTransactionPerUserByAccountType(): JsonResponse
-    {
-        try {
-            $data = User::getTotalTransactionByAccountType();
+            // Get data with optional grouping
+            $data = User::getTotalTransactionStats($userIds, $groupBy);
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Total transaksi per user berdasarkan tipe akun berhasil diambil',
-                'data' => $data,
-                'total_records' => $data->count(),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get total transactions per user by date range.
-     * 
-     * GET /api/reports/transactions/per-user/by-date-range
-     * Query parameters: start_date, end_date (Y-m-d format)
-     * 
-     * @return JsonResponse
-     */
-    public function getTotalTransactionPerUserByDateRange(): JsonResponse
-    {
-        try {
-            $startDate = request('start_date');
-            $endDate = request('end_date');
-            
-            if (!$startDate || !$endDate) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Parameter start_date dan end_date diperlukan',
-                ], 400);
+            // Determine message based on parameters
+            if ($groupBy === 'account-type') {
+                $message = 'Total transaksi per user berdasarkan tipe akun berhasil diambil';
+            } else {
+                $message = 'Detail total transaksi per user (debit/credit breakdown) berhasil diambil';
             }
-
-            $data = User::getTotalTransactionByDateRange($startDate, $endDate);
             
-            return response()->json([
+            $response = [
                 'success' => true,
-                'message' => 'Total transaksi per user dalam periode berhasil diambil',
+                'message' => $message,
                 'data' => $data,
                 'total_records' => $data->count(),
-                'date_range' => [
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                ],
-            ], 200);
+            ];
+            
+            // Add filter info if applied
+            $filters = [];
+            if ($userId) $filters['user_id'] = $userId;
+            if ($groupBy) $filters['group_by'] = $groupBy;
+            
+            if (!empty($filters)) {
+                $response['filters'] = $filters;
+            }
+            
+            return response()->json($response, 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -126,3 +63,5 @@ class TransactionReportController extends Controller
         }
     }
 }
+
+
