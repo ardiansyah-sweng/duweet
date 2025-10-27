@@ -27,26 +27,26 @@ class Transaction extends Model
 
 
  public static function getLatestActivitiesRaw(){
-    $query = "
-        SELECT
-            t.amount,
-            t.description,
-            t.created_at,
-            u.name as user_name,
-            a.name as account_name,
-            a.type
-        FROM
-            transactions as t
-        JOIN
-            users as u ON t.user_id = u.id
-        JOIN
-            accounts as a ON t.account_id = a.id
-        WHERE
-            t.created_at >= NOW() - INTERVAL 7 DAY
-        ORDER BY
-            t.created_at DESC
-        LIMIT 20
-    ";
+     $query = "
+            SELECT
+                t.amount,
+                t.description,
+                t.created_at,
+                CONCAT_WS(' ', u.nama_awal, u.nama_tengah, u.nama_akhir) as user_name,
+                a.name as account_name,
+                a.type
+            FROM
+                transactions as t
+            JOIN
+                users as u ON t.user_id = u.id
+            JOIN
+                accounts as a ON t.account_id = a.id
+            WHERE
+                t.created_at >= NOW() - INTERVAL 7 DAY
+            ORDER BY
+                t.created_at DESC
+            LIMIT 20 
+        ";
 
     return DB::select($query);
 }

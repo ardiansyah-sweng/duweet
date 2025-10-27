@@ -14,7 +14,7 @@ class AccountColumns
     public const BALANCE        = 'balance'; // Current balance of the account
     public const INITIAL_BALANCE = 'initial_balance'; // Initial balance when the account was created
     public const DESCRIPTION    = 'description'; // Optional description for the account
-    //public const PATH           = 'path'; // Hierarchical path (e.g., "1/2/5")
+  
     public const SORT_ORDER     = 'sort_order'; // Sort order for the account
     public const LEVEL          = 'level'; // Level in the hierarchy (0 = root, 1 = child, 2 = grandchild)
     public const CREATED_AT     = 'created_at';

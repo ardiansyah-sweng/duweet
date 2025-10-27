@@ -22,25 +22,29 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger(AccountColumns::PARENT_ID)->nullable();
-            $table->unsignedBigInteger(AccountColumns::USER_ID);
-            $table->foreign(AccountColumns::USER_ID)->references('id')->on('users')->onDelete('cascade');
+            $table->unsignedBigInteger('id_userAccount');
+            $table->foreign('id_userAccount')
+                  ->references('id_userAccount') // <-- Mereferensi ke PK 'user_accounts'
+                  ->on('user_accounts')      // <-- Mereferensi ke tabel 'user_accounts'
+                  ->onDelete('cascade');
             $table->string(AccountColumns::NAME, 100);
+            
             $table->enum(AccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
             $table->bigInteger(AccountColumns::BALANCE)->default(0);
             $table->bigInteger(AccountColumns::INITIAL_BALANCE)->default(0);
             $table->boolean(AccountColumns::IS_GROUP)->default(false);
             $table->text(AccountColumns::DESCRIPTION)->nullable();
             $table->boolean(AccountColumns::IS_ACTIVE)->default(true);
-            // $table->string('color', 7)->nullable(); // hex color code
-            // $table->string('icon', 50)->nullable();
             $table->tinyInteger(AccountColumns::SORT_ORDER)->default(0);
-            $table->tinyInteger(AccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
+            $table->tinyInteger(AccountColumns::LEVEL)->default(0); 
             $table->timestamps();
+        
+            $table->foreign(AccountColumns::PARENT_ID)
+                  ->references(AccountColumns::ID)
+                  ->on($this->table)
+                  ->onDelete('set null'); // set null lebih aman dari cascade
             
-            // Foreign key constraint
-            $table->foreign(AccountColumns::PARENT_ID)->references(AccountColumns::ID)->on($this->table)->onDelete('cascade');
-
-            // Indexes for performance
+            $table->index('id_userAccount'); // Index untuk FK baru
             $table->index([AccountColumns::PARENT_ID, AccountColumns::SORT_ORDER]);
             $table->index([AccountColumns::TYPE, AccountColumns::IS_ACTIVE]);
             $table->index(AccountColumns::LEVEL);
@@ -52,6 +56,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists($this->table);
+        Schema::dropIfExists('acconunts');
     }
 };
