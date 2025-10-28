@@ -12,13 +12,20 @@ class UserAccount extends Model
 
     protected $fillable = [
         'user_id',
-        'account_id',
-        'permission',
+        'username',
+        'email',
+        'password',
+        'email_verified_at',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'email_verified_at' => 'datetime',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 
     /**
@@ -27,14 +34,6 @@ class UserAccount extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Relasi ke Account
-     */
-    public function account(): BelongsTo
-    {
-        return $this->belongsTo(Akun::class);
     }
 
     /**
