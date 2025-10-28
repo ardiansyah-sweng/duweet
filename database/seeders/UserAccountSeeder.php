@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Constants\UserAccountColumns;
 use App\Models\User;
 use App\Models\UserAccount;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -35,39 +36,39 @@ class UserAccountSeeder extends Seeder
 
         // Create user accounts
         UserAccount::create([
-            'user_id' => $user1->id,
-            'username' => 'johndoe',
-            'email' => 'johndoe@duweet.com',
-            'password' => bcrypt('password123'),
-            'email_verified_at' => now(),
-            'is_active' => true,
+            UserAccountColumns::ID_USER => $user1->id,
+            UserAccountColumns::USERNAME => 'johndoe',
+            UserAccountColumns::EMAIL => 'johndoe@duweet.com',
+            UserAccountColumns::PASSWORD => bcrypt('password123'),
+            UserAccountColumns::VERIFIED_AT => now(),
+            UserAccountColumns::IS_ACTIVE => true,
         ]);
 
         UserAccount::create([
-            'user_id' => $user2->id,
-            'username' => 'janesmith',
-            'email' => 'janesmith@duweet.com',
-            'password' => bcrypt('password123'),
-            'email_verified_at' => now(),
-            'is_active' => true,
+            UserAccountColumns::ID_USER => $user2->id,
+            UserAccountColumns::USERNAME => 'janesmith',
+            UserAccountColumns::EMAIL => 'janesmith@duweet.com',
+            UserAccountColumns::PASSWORD => bcrypt('password123'),
+            UserAccountColumns::VERIFIED_AT => now(),
+            UserAccountColumns::IS_ACTIVE => true,
         ]);
 
         UserAccount::create([
-            'user_id' => $user3->id,
-            'username' => 'bobjohnson',
-            'email' => 'bobjohnson@duweet.com',
-            'password' => bcrypt('password123'),
-            'email_verified_at' => null, // Not verified yet
-            'is_active' => false, // Inactive account
+            UserAccountColumns::ID_USER => $user3->id,
+            UserAccountColumns::USERNAME => 'bobjohnson',
+            UserAccountColumns::EMAIL => 'bobjohnson@duweet.com',
+            UserAccountColumns::PASSWORD => bcrypt('password123'),
+            UserAccountColumns::VERIFIED_AT => null, // Not verified yet
+            UserAccountColumns::IS_ACTIVE => false, // Inactive account
         ]);
 
         UserAccount::create([
-            'user_id' => $user1->id,
-            'username' => 'johndoe_alt',
-            'email' => 'johndoe_alt@duweet.com',
-            'password' => bcrypt('password123'),
-            'email_verified_at' => now(),
-            'is_active' => true,
+            UserAccountColumns::ID_USER => $user1->id,
+            UserAccountColumns::USERNAME => 'johndoe_alt',
+            UserAccountColumns::EMAIL => 'johndoe_alt@duweet.com',
+            UserAccountColumns::PASSWORD => bcrypt('password123'),
+            UserAccountColumns::VERIFIED_AT => now(),
+            UserAccountColumns::IS_ACTIVE => true,
         ]);
 
         $this->command->info('UserAccount seeder completed! Created 3 users and 4 user accounts.');

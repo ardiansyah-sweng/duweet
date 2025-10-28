@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\UserAccountColumns;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -15,8 +16,8 @@ class UserAccountController extends Controller
     {
         $userAccounts = UserAccount::with('user')->get();
         $totalAccounts = $userAccounts->count();
-        $activeAccounts = $userAccounts->where('is_active', true)->count();
-        $verifiedAccounts = $userAccounts->whereNotNull('email_verified_at')->count();
+        $activeAccounts = $userAccounts->where(UserAccountColumns::IS_ACTIVE, true)->count();
+        $verifiedAccounts = $userAccounts->whereNotNull(UserAccountColumns::VERIFIED_AT)->count();
 
         return view('user-accounts.index', compact('userAccounts', 'totalAccounts', 'activeAccounts', 'verifiedAccounts'));
     }
@@ -59,14 +60,14 @@ class UserAccountController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'username' => 'required|string|unique:user_accounts,username|max:255',
-            'email' => 'required|email|unique:user_accounts,email|max:255',
-            'password' => 'required|string|min:8',
-            'is_active' => 'boolean',
+            UserAccountColumns::ID_USER => 'required|exists:users,id',
+            UserAccountColumns::USERNAME => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME . '|max:255',
+            UserAccountColumns::EMAIL => 'required|email|unique:user_accounts,' . UserAccountColumns::EMAIL . '|max:255',
+            UserAccountColumns::PASSWORD => 'required|string|min:8',
+            UserAccountColumns::IS_ACTIVE => 'boolean',
         ]);
 
-        $validated['password'] = bcrypt($validated['password']);
+        $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
 
         $userAccount = UserAccount::create($validated);
 
@@ -92,14 +93,14 @@ class UserAccountController extends Controller
         }
 
         $validated = $request->validate([
-            'username' => 'sometimes|string|unique:user_accounts,username,' . $id . '|max:255',
-            'email' => 'sometimes|email|unique:user_accounts,email,' . $id . '|max:255',
-            'password' => 'sometimes|string|min:8',
-            'is_active' => 'boolean',
+            UserAccountColumns::USERNAME => 'sometimes|string|unique:user_accounts,' . UserAccountColumns::USERNAME . ',' . $id . '|max:255',
+            UserAccountColumns::EMAIL => 'sometimes|email|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id . '|max:255',
+            UserAccountColumns::PASSWORD => 'sometimes|string|min:8',
+            UserAccountColumns::IS_ACTIVE => 'boolean',
         ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = bcrypt($validated['password']);
+        if (isset($validated[UserAccountColumns::PASSWORD])) {
+            $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
         }
 
         $userAccount->update($validated);

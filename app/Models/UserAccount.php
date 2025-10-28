@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Constants\UserAccountColumns;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -11,21 +12,21 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     protected $fillable = [
-        'user_id',
-        'username',
-        'email',
-        'password',
-        'email_verified_at',
-        'is_active',
+        UserAccountColumns::ID_USER,
+        UserAccountColumns::USERNAME,
+        UserAccountColumns::EMAIL,
+        UserAccountColumns::PASSWORD,
+        UserAccountColumns::VERIFIED_AT,
+        UserAccountColumns::IS_ACTIVE,
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'email_verified_at' => 'datetime',
+        UserAccountColumns::IS_ACTIVE => 'boolean',
+        UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
     protected $hidden = [
-        'password',
+        UserAccountColumns::PASSWORD,
     ];
 
     /**
@@ -33,7 +34,7 @@ class UserAccount extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
     /**
@@ -45,7 +46,7 @@ class UserAccount extends Model
     public static function deleteUserAccountRaw($id)
     {
         try {
-            $deleteQuery = "DELETE FROM user_accounts WHERE id = ?";
+            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
             return [
                 'success' => true,
