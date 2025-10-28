@@ -4,46 +4,67 @@ namespace App\Constants;
 
 class UserColumns
 {
-    // Identitas dasar
-    public const ID_USER       = 'id_user';        // Primary Key
-    public const NAMA_AWAL     = 'nama_awal';      // Nama depan
-    public const NAMA_TENGAH   = 'nama_tengah';    // Nama tengah
-    public const NAMA_AKHIR    = 'nama_akhir';     // Nama belakang
-    public const EMAIL         = 'email';          // Email utama user
-    public const NOMOR_TELEPON = 'nomor_telepon';  // Nomor HP pengguna
-    public const TANGGAL_LAHIR = 'tanggal_lahir';
-    public const JENIS_KELAMIN = 'jenis_kelamin';  // Laki-laki / Perempuan
+    // Kolom USERS
+    public const ID             = 'id';               // Primary Key (users)
+    public const NAME           = 'name';             // Nama lengkap user
+    public const FIRST_NAME     = 'first_name';       // Nama depan (nullable)
+    public const MIDDLE_NAME    = 'middle_name';      // Nama tengah (nullable)
+    public const LAST_NAME      = 'last_name';        // Nama belakang (nullable)
+    public const EMAIL          = 'email';            // Email utama (unique)
 
-    // Informasi alamat
-    public const PROVINSI      = 'provinsi';
-    public const KABUPATEN     = 'kabupaten';
-    public const KECAMATAN     = 'kecamatan';
-    public const JALAN         = 'jalan';
-    public const KODE_POS      = 'kode_pos';
+    // Data Alamat (Users)
+    public const PROVINSI       = 'provinsi';         // Nama provinsi tempat tinggal
+    public const KABUPATEN      = 'kabupaten';        // Kabupaten / kota
+    public const KECAMATAN      = 'kecamatan';        // Kecamatan
+    public const JALAN          = 'jalan';            // Nama jalan
+    public const KODE_POS       = 'kode_pos';         // Kode pos wilayah
 
-    // Sistem & status
-    public const ROLE          = 'role';           // Peran user (admin, staf, user)
-    public const IS_ACTIVE     = 'is_active';      // Status aktif (1=aktif, 0=nonaktif)
-    public const CREATED_AT    = 'created_at';     // Tanggal dibuat
-    public const UPDATED_AT    = 'updated_at';     // Tanggal terakhir diperbarui
+    // Data Lahir (Users)
+    public const TANGGAL_LAHIR  = 'tanggal_lahir';    // Hari lahir (integer)
+    public const BULAN_LAHIR    = 'bulan_lahir';      // Bulan lahir (integer)
+    public const TAHUN_LAHIR    = 'tahun_lahir';      // Tahun lahir (integer)
+    public const USIA           = 'usia';             // Umur user (integer)
 
-    public static function getFillable(): array
+    // USER_TELEPHONES
+    public const TELEPHONE_ID   = 'telephone_id';     // Primary Key (user_telephones)
+    public const USER_ID        = 'user_id';          // Foreign key ke users.id
+    public const NUMBER         = 'number';           // Nomor telepon (nullable)
+
+
+    public static function getUserFillable(): array
     {
         return [
-            self::NAMA_AWAL,
-            self::NAMA_TENGAH,
-            self::NAMA_AKHIR,
+            self::NAME,
+            self::FIRST_NAME,
+            self::MIDDLE_NAME,
+            self::LAST_NAME,
             self::EMAIL,
-            self::NOMOR_TELEPON,
-            self::TANGGAL_LAHIR,
-            self::JENIS_KELAMIN,
             self::PROVINSI,
             self::KABUPATEN,
             self::KECAMATAN,
             self::JALAN,
             self::KODE_POS,
-            self::ROLE,
-            self::IS_ACTIVE,
+            self::TANGGAL_LAHIR,
+            self::BULAN_LAHIR,
+            self::TAHUN_LAHIR,
+            self::USIA,
         ];
+    }
+
+    public static function getTelephoneFillable(): array
+    {
+        return [
+            self::USER_ID,
+            self::NUMBER,
+        ];
+    }
+
+    // Gabungan seluruh kolom users dan user_telephones
+    public static function getAllColumns(): array
+    {
+        return array_merge(
+            self::getUserFillable(),
+            self::getTelephoneFillable()
+        );
     }
 }
