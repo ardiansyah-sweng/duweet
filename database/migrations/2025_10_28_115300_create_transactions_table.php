@@ -21,6 +21,8 @@ return new class extends Migration
             $table->enum('balance_effect', ['increase', 'decrease']);
             $table->integer('description');
             $table->boolean('is_balance');
+
+            $table->timestamps();
         });
     }
 
