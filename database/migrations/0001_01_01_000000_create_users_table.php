@@ -14,11 +14,11 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string(UserColumns::NAMA);
             $table->string(UserColumns::NAMA_AWAL);
             $table->string(UserColumns::NAMA_TENGAH)->nullable();
             $table->string(UserColumns::NAMA_AKHIR);
             $table->string(UserColumns::EMAIL)->unique();
-            $table->bigInteger(UserColumns::NOMOR_TELEPON)->nullable();
             $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
             $table->enum(UserColumns::JENIS_KELAMIN, ['L', 'P'])->nullable();
             $table->string(UserColumns::PROVINSI)->nullable();
@@ -26,11 +26,6 @@ return new class extends Migration
             $table->string(UserColumns::KECAMATAN)->nullable();
             $table->string(UserColumns::JALAN)->nullable();
             $table->string(UserColumns::KODE_POS)->nullable();
-            $table->enum(UserColumns::ROLE, ['admin', 'staf', 'user'])
-            ->default('user');
-            $table->boolean(UserColumns::IS_ACTIVE)->default(true);
-
-            $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
 

@@ -4,8 +4,9 @@ namespace App\Constants;
 
 class UserColumns
 {
-    // Identitas dasar
+    
     public const ID_USER       = 'id_user';        // Primary Key
+    public const NAMA     = 'nama';      // Nama depan
     public const NAMA_AWAL     = 'nama_awal';      // Nama depan
     public const NAMA_TENGAH   = 'nama_tengah';    // Nama tengah
     public const NAMA_AKHIR    = 'nama_akhir';     // Nama belakang
@@ -14,7 +15,7 @@ class UserColumns
     public const TANGGAL_LAHIR = 'tanggal_lahir';
     public const JENIS_KELAMIN = 'jenis_kelamin';  // Laki-laki / Perempuan
 
-    // Informasi alamat
+    
     public const PROVINSI      = 'provinsi';
     public const KABUPATEN     = 'kabupaten';
     public const KECAMATAN     = 'kecamatan';
@@ -30,6 +31,7 @@ class UserColumns
     public static function getFillable(): array
     {
         return [
+            self::NAMA,
             self::NAMA_AWAL,
             self::NAMA_TENGAH,
             self::NAMA_AKHIR,
