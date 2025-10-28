@@ -11,8 +11,34 @@ Aplikasi personal finance berbasis gamifikasi
   - Bisa registrasi
   - Bisa mencatat transaksi keuangan
 
-## Entitas
-- **User**. User adalah pengguna aplikasi Duweet.
+## Entitas/Set Relasi
+- **Users**. User adalah pengguna aplikasi Duweet.
+  - Atribut
+    - id (Primary Key) - Unique identifier
+    - name (string) - Nama lengkap user
+    - first_name (string, nullable) - Nama depan
+    - middle_name (string, nullable) - Nama tengah
+    - last_name (string, nullable) - Nama belakang
+    - email (string, unique) - Email pribadi/kontak utama
+    - tanggal_lahir (integer)
+    - bulan_lahir (integer)
+    - tahun_lahir (integer)
+    - usia (integer)
+- **user_telephones**
+  - Atribut
+    - id (Primary Key) - Unique identifier
+    - user_id (foreign  key) - References ke users.id
+    - number (string, nullable)
+- **User_Accounts**. Adalah entitas yang dimiliki user untuk menggunakan aplikasi Duweet, terutama keperluan otorisasi/login.
+  - Atribut
+    - id (Primary Key) - Unique identifier
+    - user_id (Foreign Key) - Reference ke users.id
+    - username (string, unique) - Username untuk login
+    - email (string, unique) - Email untuk login (bisa sama dengan user.email)
+    - password (string, hashed) - Password ter-hash
+    - email_verified_at (timestamp, nullable) - Waktu verifikasi email
+    - is_active (boolean) - Status aktif/nonaktif account
+    - 
 - **Account Type**. Jenis account untuk transaksi.
   - Data
     - Income    (IN)
@@ -21,7 +47,7 @@ Aplikasi personal finance berbasis gamifikasi
     - Liability (LI)
     - Asset     (AS)
   - Note: Di buat sebagai enum bukan tabel. Check app/Enums/AccountType.php
-- **Account**. Nama account untuk transaksi keuangan (mendukung nested/hierarchical structure)
+- **Financial_Accounts**. Nama entitas untuk transaksi keuangan (mendukung nested/hierarchical structure)
   - Atribut
     - id (Primary Key)
     - parent_id (nullable, foreign key to accounts.id) - Parent account untuk nested structure
@@ -60,5 +86,22 @@ Aplikasi personal finance berbasis gamifikasi
     - Liability account bisa memiliki saldo negatif
     - Leaf account tidak bisa dihapus jika masih ada transaksi
     - Name harus unique per level dalam parent yang sama
-- **UserAccount**. Adalah entitas/tabel relasi entitas **User** dengan **Account**.
-- **Transaction**: adalah entitas yang mendata tiap transaksi keuangan yang terjadi
+- **User_Financial_Accounts**. Set relasi dari entitas **User** dan **Financial_Account**
+  - Atribut
+    - id (Primary Key) - Unique identifier
+    - user_id (Foreign Key) - Reference ke users.id
+    - financial_account_id (Foreign Key) - Reference ke financial_accounts.id
+    - balance (Integer) - saldo rekening saat ini
+    - initial_balance (integer, default 0) - saldo awal rekening
+    - is_active (boolean)
+- **Transactions**: adalah entitas yang mendata tiap transaksi keuangan yang terjadi
+  - Atribut
+    - id (Primary Key) - Unique identifier
+    - transaction_group_id (string) - UUID untuk mengelompokkan debit-credit pair
+    - user_id (Foreign Key) - Reference ke users.id
+    - account_id (Foreign Key) - Account yang terpengaruh (single account per record). References ke financial_accounts.id
+    - entry_type (enum) - Jenis entry: 'debit', 'credit'
+    - amount (big integer) - Nominal (selalu positif)
+    - balance_effect (enum) - Efek ke saldo: 'increase', 'decrease'
+    - description (string) - Deskripsi transaksi
+    - is_balance (boolean) - status grup transaksi yang menyatakan jumlahnya seimbang atau tidak antara debit dan kredit
