@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct()
+    {
+        $this->table = config('db_tables.financial_account');
+    }
+    
     /**
      * Run the migrations.
      */
