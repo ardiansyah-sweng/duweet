@@ -50,7 +50,7 @@ Aplikasi personal finance berbasis gamifikasi
 - **Financial_Accounts**. Nama entitas untuk transaksi keuangan (mendukung nested/hierarchical structure)
   - Atribut
     - id (Primary Key)
-    - parent_id (nullable, foreign key to accounts.id) - Parent account untuk nested structure
+    - parent_id (nullable, foreign key to financial_accounts.id) - Parent account untuk nested structure
     - name (string) - Nama account (contoh: "Bank", "BCA Tabungan", "Dompet")
     - type (enum AccountType) - Jenis account (IN/EX/SP/LI/AS)
     - balance (big integer) - Saldo saat ini (hanya untuk leaf accounts)
