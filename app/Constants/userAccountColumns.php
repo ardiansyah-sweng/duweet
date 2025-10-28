@@ -5,7 +5,7 @@ namespace App\Constants;
 class UserAccountColumns
 {
     // Identitas dasar
-    public const ID_USER_ACCOUNT = 'id_userAccount'; // Primary Key
+    public const ID              = 'id'; // Primary Key
     public const ID_USER         = 'id_user';        // Foreign Key ke tabel users
 
     // Informasi akun
@@ -14,24 +14,25 @@ class UserAccountColumns
     public const PASSWORD        = 'password';       // Password terenkripsi (hashed)
 
     // Verifikasi dan status
-    public const EMAIL_VERIFIED_AT = 'email_verified_at'; // Timestamp verifikasi email (nullable)
-    public const STATUS            = 'status';            // Status akun (aktif/nonaktif)
+    public const VERIFIED_AT     = 'verified_at'; // Timestamp verifikasi email (nullable)
+    public const IS_ACTIVE       = 'is_active';            // Status akun (aktif/nonaktif)
 
     public static function getFillable(): array
     {
         return [
+            self::ID,
             self::ID_USER,
             self::USERNAME,
             self::EMAIL,
             self::PASSWORD,
-            self::EMAIL_VERIFIED_AT,
-            self::STATUS,
+            self::VERIFIED_AT,
+            self::IS_ACTIVE,
         ];
     }
 
     public static function getPrimaryKey(): string
     {
-        return self::ID_USER_ACCOUNT;
+        return self::ID;
     }
 
     public static function getForeignKey(): string
