@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class AccountColumns
+class FinancialAccountColumns
 {
     public const ID             = 'id'; // Primary Key
     public const PARENT_ID      = 'parent_id'; // Foreign Key to accounts.id
