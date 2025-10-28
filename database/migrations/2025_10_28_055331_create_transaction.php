@@ -7,12 +7,18 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct(){
+
+    $this->table = config('db_tables.transactions');
+    }
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
             $table->id();
             
             // UUID untuk grup transaksi (pasangan debit-kredit)

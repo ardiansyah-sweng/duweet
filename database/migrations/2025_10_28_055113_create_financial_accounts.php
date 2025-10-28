@@ -7,12 +7,22 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
+
+    protected string $table;
+
+// Ini adalah Constructor (Konstruktor)
+    public function __construct()
+{
+    // Baris ini dijalankan secara otomatis saat migrasi dibuat
+    $this->table = config('db_tables.financial_accounts');
+}
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('financial_accounts', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
            $table->id(FinancialAccountColumns::ID);
 
             $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();

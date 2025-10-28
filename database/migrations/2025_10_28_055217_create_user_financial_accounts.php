@@ -7,12 +7,18 @@ use App\Constants\UserFinancialAccountColumns;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct(){
+
+    $this->table = config('db_tables.user_financial_accounts');
+    }
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('user_financial_accounts', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserFinancialAccountColumns::ID);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('financial_account_id')->constrained('financial_accounts')->onDelete('cascade');
