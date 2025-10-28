@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('account_id')->references('id')->on('accounts')->onDelete('cascade');
-            // If you have users table, keep this FK; else remove
+            // If you have users table, keep th  is FK; else remove
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
 
             $table->index(['account_id', 'date']);
