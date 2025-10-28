@@ -6,29 +6,36 @@ class UserAccountColumns
 {
     // Identitas dasar
     public const ID_USER_ACCOUNT = 'id_userAccount'; // Primary Key
-    public const ID_USER         = 'id_user';        // Foreign Key ke tabel user
+    public const ID_USER         = 'id_user';        // Foreign Key ke tabel users
 
-    // Informasi login
-    public const USERNAME        = 'username';       // Nama pengguna untuk login
-    public const PASSWORD        = 'password';       // Kata sandi terenkripsi
+    // Informasi akun
+    public const USERNAME        = 'username';       // Username unik untuk login
+    public const EMAIL           = 'email';          // Email unik untuk login
+    public const PASSWORD        = 'password';       // Password terenkripsi (hashed)
 
-    // Status & sistem
-    public const STATUS          = 'status';         // Status akun (aktif/nonaktif/dihapus)
-    public const TANGGAL_DAFTAR  = 'tanggal_daftar'; // Tanggal pembuatan akun
-    public const TANGGAL_UPDATE  = 'tanggal_update'; // Tanggal terakhir pembaruan
-    public const TANGGAL_HAPUS   = 'tanggal_hapus';  // Tanggal akun dihapus (soft delete)
+    // Verifikasi dan status
+    public const EMAIL_VERIFIED_AT = 'email_verified_at'; // Timestamp verifikasi email (nullable)
+    public const STATUS            = 'status';            // Status akun (aktif/nonaktif)
 
-    
     public static function getFillable(): array
     {
         return [
             self::ID_USER,
             self::USERNAME,
+            self::EMAIL,
             self::PASSWORD,
+            self::EMAIL_VERIFIED_AT,
             self::STATUS,
-            self::TANGGAL_DAFTAR,
-            self::TANGGAL_UPDATE,
-            self::TANGGAL_HAPUS,
         ];
+    }
+
+    public static function getPrimaryKey(): string
+    {
+        return self::ID_USER_ACCOUNT;
+    }
+
+    public static function getForeignKey(): string
+    {
+        return self::ID_USER;
     }
 }
