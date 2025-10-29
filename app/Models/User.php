@@ -50,7 +50,7 @@ class User extends Authenticatable
     $query = "
         SELECT
             id,
-            CONCAT_WS(' ', nama_awal, nama_tengah, nama_akhir) as full_name,
+            CONCAT_WS(' ', first_name, middle_name, last_name) as full_name,
             email,
             nomor_telepon,
             role,
@@ -59,7 +59,7 @@ class User extends Authenticatable
         FROM
             users
         ORDER BY
-            nama_awal ASC
+            first_name ASC
     ";
 
     return DB::select($query);
