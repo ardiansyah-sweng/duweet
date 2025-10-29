@@ -45,4 +45,23 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public static function getAllUsersRaw()
+{
+    $query = "
+        SELECT
+            id,
+            CONCAT_WS(' ', nama_awal, nama_tengah, nama_akhir) as full_name,
+            email,
+            nomor_telepon,
+            role,
+            is_active,
+            created_at
+        FROM
+            users
+        ORDER BY
+            nama_awal ASC
+    ";
+
+    return DB::select($query);
+}
 }
