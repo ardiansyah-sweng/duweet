@@ -13,7 +13,6 @@ class UserColumns
     public const EMAIL            = 'email';          // Email utama (unique)
 
     // Kolom Tambahan dari LOKAL (HEAD)
-    public const NOMOR_TELEPON    = 'nomor_telepon';  // Nomor HP pengguna
     public const JENIS_KELAMIN    = 'jenis_kelamin';  // Laki-laki / Perempuan
 
     // Data Alamat (Struktur dari MAIN)
@@ -56,7 +55,6 @@ class UserColumns
             self::USIA,
 
             // Kolom dari LOKAL (HEAD)
-            self::NOMOR_TELEPON,
             self::JENIS_KELAMIN,
             self::ROLE,
             self::IS_ACTIVE,
