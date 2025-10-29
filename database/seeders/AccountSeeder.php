@@ -12,7 +12,6 @@ class AccountSeeder extends Seeder
      */
     public function run(): void
     {
-        // For SQLite - disable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = OFF;');
         } else {

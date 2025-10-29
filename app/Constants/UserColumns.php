@@ -4,46 +4,40 @@ namespace App\Constants;
 
 class UserColumns
 {
-    // Identitas dasar
-    public const ID_USER       = 'id_user';        // Primary Key
-    public const NAMA_AWAL     = 'nama_awal';      // Nama depan
-    public const NAMA_TENGAH   = 'nama_tengah';    // Nama tengah
-    public const NAMA_AKHIR    = 'nama_akhir';     // Nama belakang
-    public const EMAIL         = 'email';          // Email utama user
-    public const NOMOR_TELEPON = 'nomor_telepon';  // Nomor HP pengguna
-    public const TANGGAL_LAHIR = 'tanggal_lahir';
-    public const JENIS_KELAMIN = 'jenis_kelamin';  // Laki-laki / Perempuan
+     public const TABLE = 'users';
 
-    // Informasi alamat
-    public const PROVINSI      = 'provinsi';
-    public const KABUPATEN     = 'kabupaten';
-    public const KECAMATAN     = 'kecamatan';
-    public const JALAN         = 'jalan';
-    public const KODE_POS      = 'kode_pos';
-
-    // Sistem & status
-    public const ROLE          = 'role';           // Peran user (admin, staf, user)
-    public const IS_ACTIVE     = 'is_active';      // Status aktif (1=aktif, 0=nonaktif)
-    public const CREATED_AT    = 'created_at';     // Tanggal dibuat
-    public const UPDATED_AT    = 'updated_at';     // Tanggal terakhir diperbarui
+    public const ID              = 'id';
+    public const NAME            = 'name';
+    public const FIRST_NAME      = 'first_name';
+    public const MIDDLE_NAME     = 'middle_name';
+    public const LAST_NAME       = 'last_name';
+    public const EMAIL           = 'email';
+    public const TANGGAL_LAHIR   = 'tanggal_lahir';
+    public const BULAN_LAHIR     = 'bulan_lahir';
+    public const TAHUN_LAHIR     = 'tahun_lahir';
+    public const USIA            = 'usia';
+    public const EMAIL_VERIFIED  = 'email_verified_at';
+    public const PASSWORD        = 'password';
+    public const REMEMBER_TOKEN  = 'remember_token';
+    public const CREATED_AT      = 'created_at';
+    public const UPDATED_AT      = 'updated_at';
 
     public static function getFillable(): array
     {
         return [
-            self::NAMA_AWAL,
-            self::NAMA_TENGAH,
-            self::NAMA_AKHIR,
+            self::FIRST_NAME,
+            self::MIDDLE_NAME,
+            self::LAST_NAME,
             self::EMAIL,
-            self::NOMOR_TELEPON,
             self::TANGGAL_LAHIR,
-            self::JENIS_KELAMIN,
-            self::PROVINSI,
-            self::KABUPATEN,
-            self::KECAMATAN,
-            self::JALAN,
-            self::KODE_POS,
-            self::ROLE,
-            self::IS_ACTIVE,
+            self::BULAN_LAHIR,
+            self::TAHUN_LAHIR,
+            self::USIA,
+            self::EMAIL_VERIFIED,
+            self::PASSWORD,
+            self::REMEMBER_TOKEN,
+            self::CREATED_AT,
+            self::UPDATED_AT
         ];
     }
 }
