@@ -4,48 +4,68 @@ namespace App\Constants;
 
 class UserColumns
 {
-    
-    public const ID_USER       = 'id_user';        // Primary Key
-    public const NAMA     = 'nama';      // Nama depan
-    public const NAMA_AWAL     = 'nama_awal';      // Nama depan
-    public const NAMA_TENGAH   = 'nama_tengah';    // Nama tengah
-    public const NAMA_AKHIR    = 'nama_akhir';     // Nama belakang
-    public const EMAIL         = 'email';          // Email utama user
-    public const NOMOR_TELEPON = 'nomor_telepon';  // Nomor HP pengguna
-    public const TANGGAL_LAHIR = 'tanggal_lahir';
-    public const JENIS_KELAMIN = 'jenis_kelamin';  // Laki-laki / Perempuan
+    // Kolom USERS (Struktur dari MAIN)
+    public const ID               = 'id';             // Primary Key (users)
+    public const NAME             = 'name';           // Nama lengkap user
+    public const FIRST_NAME       = 'first_name';     // Nama depan (nullable)
+    public const MIDDLE_NAME      = 'middle_name';    // Nama tengah (nullable)
+    public const LAST_NAME        = 'last_name';      // Nama belakang (nullable)
+    public const EMAIL            = 'email';          // Email utama (unique)
 
-    
-    public const PROVINSI      = 'provinsi';
-    public const KABUPATEN     = 'kabupaten';
-    public const KECAMATAN     = 'kecamatan';
-    public const JALAN         = 'jalan';
-    public const KODE_POS      = 'kode_pos';
+    // Kolom Tambahan dari LOKAL (HEAD)
+    public const NOMOR_TELEPON    = 'nomor_telepon';  // Nomor HP pengguna
+    public const JENIS_KELAMIN    = 'jenis_kelamin';  // Laki-laki / Perempuan
 
-    // Sistem & status
-    public const ROLE          = 'role';           // Peran user (admin, staf, user)
-    public const IS_ACTIVE     = 'is_active';      // Status aktif (1=aktif, 0=nonaktif)
-    public const CREATED_AT    = 'created_at';     // Tanggal dibuat
-    public const UPDATED_AT    = 'updated_at';     // Tanggal terakhir diperbarui
+    // Data Alamat (Struktur dari MAIN)
+    public const PROVINSI         = 'provinsi';       // Nama provinsi tempat tinggal
+    public const KABUPATEN        = 'kabupaten';      // Kabupaten / kota
+    public const KECAMATAN        = 'kecamatan';      // Kecamatan
+    public const JALAN            = 'jalan';          // Nama jalan
+    public const KODE_POS         = 'kode_pos';       // Kode pos wilayah
+
+    // Data Lahir (Struktur dari MAIN)
+    public const TANGGAL_LAHIR    = 'tanggal_lahir';  // Hari lahir (integer)
+    public const BULAN_LAHIR      = 'bulan_lahir';    // Bulan lahir (integer)
+    public const TAHUN_LAHIR      = 'tahun_lahir';    // Tahun lahir (integer)
+    public const USIA             = 'usia';           // Umur user (integer)
+
+    // Kolom Sistem Tambahan dari LOKAL (HEAD)
+    public const ROLE             = 'role';           // Peran user (admin, staf, user)
+    public const IS_ACTIVE        = 'is_active';      // Status aktif (1=aktif, 0=nonaktif)
+    public const CREATED_AT       = 'created_at';     // Tanggal dibuat
+    public const UPDATED_AT       = 'updated_at';     // Tanggal terakhir diperbarui
+
 
     public static function getFillable(): array
     {
         return [
-            self::NAMA,
-            self::NAMA_AWAL,
-            self::NAMA_TENGAH,
-            self::NAMA_AKHIR,
+            // Kolom dari MAIN
+            self::NAME,
+            self::FIRST_NAME,
+            self::MIDDLE_NAME,
+            self::LAST_NAME,
             self::EMAIL,
-            self::NOMOR_TELEPON,
-            self::TANGGAL_LAHIR,
-            self::JENIS_KELAMIN,
             self::PROVINSI,
             self::KABUPATEN,
             self::KECAMATAN,
             self::JALAN,
             self::KODE_POS,
+            self::TANGGAL_LAHIR,
+            self::BULAN_LAHIR,
+            self::TAHUN_LAHIR,
+            self::USIA,
+
+            // Kolom dari LOKAL (HEAD)
+            self::NOMOR_TELEPON,
+            self::JENIS_KELAMIN,
             self::ROLE,
             self::IS_ACTIVE,
         ];
+    }
+
+    // Method ini dari MAIN
+    public static function getAllColumns(): array
+    {
+        return array_merge([self::ID], self::getFillable());
     }
 }

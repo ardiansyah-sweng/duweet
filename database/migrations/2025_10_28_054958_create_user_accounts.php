@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string(UserAccountColumns::EMAIL)->unique();
             $table->string(UserAccountColumns::PASSWORD);
 
-            $table->timestamp(UserAccountColumns::EMAIL_VERIFIED_AT)->nullable();
+            $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
 
             $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
 

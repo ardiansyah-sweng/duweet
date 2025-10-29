@@ -53,27 +53,29 @@ class Transaction extends Model
                 t.amount,
                 t.description,
                 t.created_at,
-                t.entry_type, -- Ini akan 'debit' (jika EX) or 'credit' (jika IN)
+                t.entry_type, 
                 
-                -- Menggabungkan nama dari tabel 'users'
-                CONCAT_WS(' ', u.nama_awal, u.nama_tengah, u.nama_akhir) as user_name,
+                -- PERUBAHAN 1:
+                -- Mengambil 'username' dari tabel 'user_accounts'
+                ua.username as user_name,
                 
-                -- Mengambil nama dari rekening KATEGORI (bukan dompet/bank)
+                -- Mengambil nama dari rekening KATEGORI
                 a.name as category_name,
                 a.type as category_type
             FROM
                 transactions as t
             JOIN
-                users as u ON t.user_id = u.id
+                -- PERUBAHAN 2:
+                -- Mengganti JOIN 'users' menjadi 'user_accounts'
+                -- Kita beri alias 'ua' (untuk User Account)
+                user_accounts as ua ON t.user_id = ua.user_id
             JOIN
-                -- GANTI 'accounts' menjadi 'financial_accounts'
+                -- Ini tetap sama
                 financial_accounts as a ON t.account_id = a.id
             WHERE
                 t.created_at >= NOW() - INTERVAL 7 DAY
                 
-                -- FILTER KUNCI:
-                -- Hanya tampilkan entri yang merupakan KATEGORI 
-                -- (Pemasukan/Pengeluaran), BUKAN rekening Aset/Utang.
+                -- Filter ini tetap sama
                 AND a.type IN ('IN', 'EX', 'SP') 
                 
             ORDER BY
