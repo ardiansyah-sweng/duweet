@@ -9,13 +9,6 @@ class UserAccount extends Model
 {
     protected $table = 'user_accounts';
 
-    protected $fillable = [
-        'user_id',
-        'username',
-        'email',
-        'password',
-        'is_active',
-    ];
 
 
     protected $hidden = [

@@ -15,16 +15,6 @@ class Transaction extends Model
  
     protected $table = 'transactions';
 
-    protected $fillable = [
-        'transaction_group_id',
-        'user_id',
-        'account_id',
-        'entry_type',
-        'amount',
-        'balance_effect',
-        'description',
-        'is_balance',
-    ];
 
     protected $casts = [
         'entry_type'     => TransactionEntryType::class,

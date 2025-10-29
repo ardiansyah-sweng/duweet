@@ -25,13 +25,6 @@ class UserFinancialAccount extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'user_id',
-        'financial_account_id',
-        'balance',
-        'initial_balance',
-        'is_active',
-    ];
 
     /**
      * The attributes that should be cast.

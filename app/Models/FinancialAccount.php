@@ -14,20 +14,6 @@ class FinancialAccount extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'parent_id',
-        'name',
-        'type',
-        'balance',
-        'initial_balance',
-        'is_group',
-        'description',
-        'is_active',
-        'color',
-        'icon',
-        'sort_order',
-        'level',
-    ];
 
     /**
      * The attributes that should be cast.
