@@ -2,5 +2,5 @@
 
     return [
         'financial_account'   => 'financial_accounts',
-        'transactions'   => 'transactions'
+        'transaction'   => 'transactions'
     ];
