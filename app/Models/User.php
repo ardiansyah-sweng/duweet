@@ -9,8 +9,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
-use App\Constants\TransactionColumns;
 use App\Constants\FinancialAccountColumns;
+
+// Load TransactionColumns from the actual file
+require_once app_path('Constants/TransactionsColums.php');
+use App\Constants\TransactionColumns;
 
 class User extends Authenticatable
 {
@@ -77,8 +80,8 @@ class User extends Authenticatable
         if ($groupBy === 'account-type') {
             // Group by account type
             $query = DB::table($usersTable)
-                ->leftJoin($transactionsTable, "$usersTable." . TransactionColumns::ID, '=', "$transactionsTable." . TransactionColumns::USER_ID)
-                ->leftJoin($accountsTable, "$transactionsTable." . TransactionColumns::ACCOUNT_ID, '=', "$accountsTable." . FinancialAccountColumns::ID)
+                ->leftJoin($transactionsTable, "$usersTable.id", '=', "$transactionsTable." . TransactionColumns::USER_ACCOUNT_ID)
+                ->leftJoin($accountsTable, "$transactionsTable." . TransactionColumns::FINANCIAL_ACCOUNT_ID, '=', "$accountsTable." . FinancialAccountColumns::ID)
                 ->select(
                     "$usersTable." . 'id',
                     "$usersTable." . 'name',
@@ -93,7 +96,7 @@ class User extends Authenticatable
         } else {
             // Default: detailed breakdown (debit/credit)
             $query = DB::table($usersTable)
-                ->leftJoin($transactionsTable, "$usersTable." . TransactionColumns::ID, '=', "$transactionsTable." . TransactionColumns::USER_ID)
+                ->leftJoin($transactionsTable, "$usersTable.id", '=', "$transactionsTable." . TransactionColumns::USER_ACCOUNT_ID)
                 ->select(
                     "$usersTable." . 'id',
                     "$usersTable." . 'name',

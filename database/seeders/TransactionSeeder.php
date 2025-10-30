@@ -61,8 +61,8 @@ class TransactionSeeder extends Seeder
 
                 DB::table($transactionsTable)->insert([
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id' => $user->id,
-                    'account_id' => $accountId,
+                    'user_account_id' => $user->id,
+                    'financial_account_id' => $accountId,
                     'entry_type' => $entryType,
                     'amount' => $amount,
                     'balance_effect' => $balanceEffect,

@@ -3,6 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+
+// Load TransactionColumns from the actual file (TransactionsColums.php)
+require_once app_path('Constants/TransactionsColums.php');
 use App\Constants\TransactionColumns;
 
 return new class extends Migration
@@ -27,8 +30,8 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
             $table->string(TransactionColumns::TRANSACTION_GROUP_ID, 36);
-            $table->foreignId(TransactionColumns::USER_ID)->constrained($this->userTable)->onDelete('cascade');
-            $table->foreignId(TransactionColumns::ACCOUNT_ID)->constrained($this->accountTable)->onDelete('restrict');
+            $table->foreignId(TransactionColumns::USER_ACCOUNT_ID)->constrained($this->userTable)->onDelete('cascade');
+            $table->foreignId(TransactionColumns::FINANCIAL_ACCOUNT_ID)->constrained($this->accountTable)->onDelete('restrict');
             $table->enum(TransactionColumns::ENTRY_TYPE, ['debit', 'credit']);
             $table->bigInteger(TransactionColumns::AMOUNT);
             $table->enum(TransactionColumns::BALANCE_EFFECT, ['increase', 'decrease']);
@@ -37,10 +40,10 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes for performance
-            $table->index(TransactionColumns::USER_ID);
-            $table->index(TransactionColumns::ACCOUNT_ID);
+            $table->index(TransactionColumns::USER_ACCOUNT_ID);
+            $table->index(TransactionColumns::FINANCIAL_ACCOUNT_ID);
             $table->index(TransactionColumns::TRANSACTION_GROUP_ID);
-            $table->index([TransactionColumns::USER_ID, TransactionColumns::CREATED_AT]);
+            $table->index([TransactionColumns::USER_ACCOUNT_ID, TransactionColumns::CREATED_AT]);
         });
     }
 
