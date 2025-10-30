@@ -14,7 +14,8 @@ return new class extends Migration
     public function __construct()
     {
         $this->table = config('db_tables.transaction');
-        $this->accountTable = config('db_tables.account');
+        // Use the canonical financial account table name from config
+        $this->accountTable = config('db_tables.financial_account', 'financial_accounts');
         $this->userTable = 'users';
     }
 

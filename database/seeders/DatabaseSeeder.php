@@ -13,16 +13,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Create a predictable test user plus additional random users for test coverage
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        // Seed accounts with real world data
+        // create additional users to reach ~10 users total for broader testing
+        User::factory(9)->create();
+
+        // Seed accounts first so transactions have accounts to reference
         $this->call([
             AccountSeeder::class,
+        ]);
+
+        // Seed transactions after accounts and users exist
+        $this->call([
+            TransactionSeeder::class,
         ]);
     }
 }
