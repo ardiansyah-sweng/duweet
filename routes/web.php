@@ -1,7 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
+// Halaman utama (welcome page)
 Route::get('/', function () {
     return view('welcome');
 });
