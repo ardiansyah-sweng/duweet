@@ -1,8 +1,10 @@
+
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Constants\UserColumns;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -13,19 +15,21 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->string(UserColumns::NAME);
+            $table->string(UserColumns::FIRST_NAME);
+            $table->string(UserColumns::MIDDLE_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME);
+            $table->string(UserColumns::EMAIL)->unique();
+            $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
+            $table->string(UserColumns::PROVINSI)->nullable();
+            $table->string(UserColumns::KABUPATEN)->nullable();
+            $table->string(UserColumns::KECAMATAN)->nullable();
+            $table->string(UserColumns::JALAN)->nullable();
+            $table->string(UserColumns::KODE_POS)->nullable();
             $table->timestamps();
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
+        
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
