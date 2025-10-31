@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class AccountColumns
+class FinancialAccountColumns
 {
     public const ID             = 'id'; // Primary Key
     public const PARENT_ID      = 'parent_id'; // Foreign Key to accounts.id
@@ -19,6 +19,8 @@ class AccountColumns
     public const CREATED_AT     = 'created_at';
     public const UPDATED_AT     = 'updated_at';
 
+    public const COLOR           = 'color';
+    public const ICON            = 'icon';
     /**
      * Get fillable columns (exclude id, created_at, updated_at)
      */
@@ -35,7 +37,8 @@ class AccountColumns
             self::IS_ACTIVE,
             self::SORT_ORDER,
             self::LEVEL,
-            self::DESCRIPTION,
+            self::COLOR,
+            self::ICON,
         ];
     }
 }
