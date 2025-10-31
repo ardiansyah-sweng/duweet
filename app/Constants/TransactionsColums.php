@@ -2,15 +2,15 @@
 
 namespace App\Constants;
 
-class TransactionColumns
+class TransactionsColums
 {
     // Kunci utama
     public const ID = 'id'; // Primary Key - identitas unik
 
     // Relasi antar tabel
     public const TRANSACTION_GROUP_ID = 'transaction_group_id'; // ID grup transaksi (UUID unik)
-    public const USER_ACCOUNT_ID = 'user_account_id'; // Foreign Key ke tabel user_accounts.id
-    public const FINANCIAL_ACCOUNT_ID = 'financial_account_id'; // Foreign Key ke tabel financial_accounts.id
+    public const USER_ID = 'user_id'; // Foreign Key ke tabel user_accounts.id
+    public const ACCOUNT_ID = 'account_id'; // Foreign Key ke tabel financial_accounts.id
 
     // Informasi transaksi
     public const ENTRY_TYPE = 'entry_type'; // Jenis transaksi: 'debit' atau 'kredit'
@@ -30,8 +30,8 @@ class TransactionColumns
     {
         return [
             self::TRANSACTION_GROUP_ID,
-            self::USER_ACCOUNT_ID,
-            self::FINANCIAL_ACCOUNT_ID,
+            self::USER_ID,
+            self::ACCOUNT_ID,
             self::ENTRY_TYPE,
             self::AMOUNT,
             self::BALANCE_EFFECT,
