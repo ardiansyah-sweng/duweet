@@ -13,16 +13,36 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create multiple users for testing
+        User::factory()->create([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ]);
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Jane Smith',
+            'email' => 'jane@example.com',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Bob Wilson',
+            'email' => 'bob@example.com',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Alice Johnson',
+            'email' => 'alice@example.com',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Charlie Brown',
+            'email' => 'charlie@example.com',
         ]);
 
         // Seed accounts with real world data
         $this->call([
             AccountSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
