@@ -12,43 +12,37 @@ use App\Models\User;
 class ReportsController extends Controller
 {
     /**
-     * Return total transactions per user as JSON.
+     * Return total transactions per user as JSON - simplified version.
      *
      * GET /api/reports/transactions-per-user
+     * Query parameters:
+     * - user_id: Filter by specific user (optional)
      */
     public function transactionsPerUser(Request $request)
     {
-        // validate optional parameters
+        // Validate optional parameter
         $validator = Validator::make($request->all(), [
-            'from' => 'nullable|date',
-            'to' => 'nullable|date',
             'user_id' => 'nullable|integer|exists:users,id',
-            'group_by_account_type' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => 'error', 
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $from = $request->query('from');
-        $to = $request->query('to');
         $userId = $request->query('user_id');
-        $groupByAccountType = $request->boolean('group_by_account_type');
 
-        if (($from && !$to) || (!$from && $to)) {
-            return response()->json(['status' => 'error', 'message' => 'Both from and to are required when filtering by date'], 422);
-        }
-
-        // Delegate to the model-level query
-        $data = User::transactionTotals($from, $to, $userId, $groupByAccountType);
+        // Get transaction totals from model
+        $data = User::transactionTotals($userId);
 
         return response()->json([
             'status' => 'success',
-            'filters' => [
-                'date_range' => $from && $to ? ['from' => $from, 'to' => $to] : null,
+            'filter' => [
                 'user_id' => $userId,
-                'grouped_by_account_type' => $groupByAccountType,
             ],
+            'count' => $data->count(),
             'data' => $data,
         ]);
     }

@@ -39,6 +39,9 @@ return new class extends Migration
             // Foreign key constraint
             $table->foreign(FinancialAccountColumns::PARENT_ID)->references(FinancialAccountColumns::ID)->on($this->table)->onDelete('cascade');
 
+            // Unique constraint: name must be unique per level within same parent
+            $table->unique([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::NAME]);
+
             // Indexes for performance
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
             $table->index([FinancialAccountColumns::TYPE, FinancialAccountColumns::IS_ACTIVE]);
