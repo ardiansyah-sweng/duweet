@@ -53,6 +53,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
+
+    // Relasi ke UserFinancialAccount
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class);
+    }
+
     
     /**
      * Opsional: method bantu untuk mendapatkan nama lengkap secara dinamis

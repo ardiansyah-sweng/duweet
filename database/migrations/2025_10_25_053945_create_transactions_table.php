@@ -6,14 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected string $table = 'transactions';
+
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
             $table->id();
+
             $table->uuid('transaction_group_id');
 
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('account_id')->constrained('user_accounts')->onDelete('cascade');
+            // Foreign keys
+            $table->foreignId('user_account_id')
+                ->constrained('user_accounts')
+                ->onDelete('cascade');
+
+            $table->foreignId('financial_account_id')
+                ->constrained('financial_accounts')
+                ->onDelete('cascade');
 
             $table->enum('entry_type', ['debit', 'credit']);
             $table->unsignedBigInteger('amount');
@@ -29,7 +38,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('transactions');
+        Schema::dropIfExists($this->table);
         Schema::enableForeignKeyConstraints();
     }
 };

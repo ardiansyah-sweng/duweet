@@ -10,18 +10,12 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    /**
-     * Nama tabel (opsional jika sesuai konvensi Laravel)
-     */
     protected $table = 'transactions';
 
-    /**
-     * Kolom yang bisa diisi secara mass-assignment
-     */
     protected $fillable = [
         'transaction_group_id',
-        'user_id',
-        'account_id',
+        'user_account_id',
+        'financial_account_id',
         'entry_type',
         'amount',
         'balance_effect',
@@ -29,17 +23,11 @@ class Transaction extends Model
         'is_balance',
     ];
 
-    /**
-     * Casting otomatis tipe data
-     */
     protected $casts = [
-        'is_balance' => 'boolean',
         'amount' => 'integer',
+        'is_balance' => 'boolean',
     ];
 
-    /**
-     * Event boot untuk generate UUID otomatis pada transaction_group_id
-     */
     protected static function booted()
     {
         static::creating(function ($transaction) {
@@ -49,20 +37,15 @@ class Transaction extends Model
         });
     }
 
-    /**
-     * Relasi ke model User
-     */
-    public function user()
+    // Relasi ke UserAccount
+    public function userAccount()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(UserAccount::class, 'user_account_id');
     }
 
-    /**
-     * Relasi ke model FinancialAccount
-     */
-    public function account()
+    // Relasi ke FinancialAccount
+    public function financialAccount()
     {
-        return $this->belongsTo(FinancialAccount::class, 'account_id');
+        return $this->belongsTo(FinancialAccount::class, 'financial_account_id');
     }
-
 }

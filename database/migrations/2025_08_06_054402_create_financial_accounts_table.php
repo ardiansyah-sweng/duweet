@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns as AccountColumns;
 
 return new class extends Migration
 {
@@ -42,8 +42,12 @@ return new class extends Migration
             $table->index([AccountColumns::PARENT_ID, AccountColumns::SORT_ORDER]);
             $table->index([AccountColumns::TYPE, AccountColumns::IS_ACTIVE]);
             $table->index(AccountColumns::LEVEL);
+
+            
         });
     }
+
+    
 
     /**
      * Reverse the migrations.

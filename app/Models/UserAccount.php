@@ -40,13 +40,13 @@ class UserAccount extends Authenticatable
      * Relasi ke model User
      * UserAccount dimiliki oleh satu User
      */
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class);
+    // }
 
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class, 'account_id');
-    }
+    // public function transactions()
+    // {
+    //     return $this->hasMany(Transaction::class, 'account_id');
+    // }
 }

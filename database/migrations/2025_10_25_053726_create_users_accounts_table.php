@@ -6,9 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public function __construct(){
+        $this->table = config('db_tables.user_account');
+    }
+
     public function up(): void
     {
-        Schema::create('user_accounts', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('username')->unique();
@@ -18,6 +22,11 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
+
+            // Relasi ke financial_accounts
+            $table->unsignedBigInteger('account_id')->nullable();
+            $table->foreign('account_id')->references('id')->on('financial_accounts')->onDelete('cascade');
+
         });
     }
 

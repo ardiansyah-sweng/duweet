@@ -4,61 +4,89 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use App\Models\UserAccount;
-use App\Models\Transaction;
+use Illuminate\Support\Facades\DB;    
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 🔹 Buat 1 user utama
-        $user = User::create([
-            'name' => 'Muchsin',
-            'first_name' => 'Muchsin',
-            'middle_name' => null,
-            'last_name' => 'Ahmad',
-            'email' => 'muchsin@example.com',
-            'tanggal_lahir' => 15,
-            'bulan_lahir' => 5,
-            'tahun_lahir' => 2000,
-            'usia' => 25,
-            'password' => Hash::make('password123'),
-        ]);
+        // Nonaktifkan FK sementara
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        User::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 🔹 Buat akun login untuk user tersebut
-        $account = UserAccount::create([
-            'user_id' => $user->id,
-            'username' => 'muchsin_acc',
-            'email' => 'muchsin@example.com', // bisa sama dengan user.email
-            'password' => Hash::make('secret'),
-            'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
-
-        // 🔹 Tambahkan transaksi awal (contoh: setoran pertama)
-        Transaction::create([
-            'transaction_group_id' => (string) Str::uuid(),
-            'user_id' => $user->id,
-            'account_id' => $account->id,
-            'entry_type' => 'debit',
-            'amount' => 500000,
-            'balance_effect' => 'increase',
-            'description' => 'Initial deposit',
-            'is_balance' => true,
-        ]);
-
-        // 🔹 Tambahkan transaksi kedua (contoh: pengeluaran)
-        Transaction::create([
-            'transaction_group_id' => (string) Str::uuid(),
-            'user_id' => $user->id,
-            'account_id' => $account->id,
-            'entry_type' => 'credit',
-            'amount' => 150000,
-            'balance_effect' => 'decrease',
-            'description' => 'Purchase - App Subscription',
-            'is_balance' => true,
+         DB::table('users')->insert([
+            [
+                'name' => 'Muchsin Hidayat',
+                'first_name' => 'Muchsin',
+                'middle_name' => '',
+                'last_name' => 'Hidayat',
+                'email' => 'muchsin@example.com',
+                'tanggal_lahir' => 12,
+                'bulan_lahir' => 5,
+                'tahun_lahir' => 2000,
+                'usia' => 25,
+                'password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Rina Putri',
+                'first_name' => 'Rina',
+                'middle_name' => '',
+                'last_name' => 'Putri',
+                'email' => 'rina@example.com',
+                'tanggal_lahir' => 3,
+                'bulan_lahir' => 7,
+                'tahun_lahir' => 1998,
+                'usia' => 27,
+                'password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Andi Saputra',
+                'first_name' => 'Andi',
+                'middle_name' => '',
+                'last_name' => 'Saputra',
+                'email' => 'andi@example.com',
+                'tanggal_lahir' => 22,
+                'bulan_lahir' => 11,
+                'tahun_lahir' => 1995,
+                'usia' => 30,
+                'password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Dewi Lestari',
+                'first_name' => 'Dewi',
+                'middle_name' => '',
+                'last_name' => 'Lestari',
+                'email' => 'dewi@example.com',
+                'tanggal_lahir' => 5,
+                'bulan_lahir' => 2,
+                'tahun_lahir' => 2001,
+                'usia' => 24,
+                'password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Budi Santoso',
+                'first_name' => 'Budi',
+                'middle_name' => '',
+                'last_name' => 'Santoso',
+                'email' => 'budi@example.com',
+                'tanggal_lahir' => 15,
+                'bulan_lahir' => 8,
+                'tahun_lahir' => 1990,
+                'usia' => 35,
+                'password' => Hash::make('password123'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }
