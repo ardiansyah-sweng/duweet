@@ -19,7 +19,7 @@ class AccountController extends Controller
             'description'     => 'nullable|string',
         ]);
 
-        $account = \App\Models\FinancialAccount::create([
+        $financial_account = \App\Models\FinancialAccount::create([
             'name'            => $validated['name'],
             'type'            => $validated['type'],
             'balance'         => $validated['initial_balance'],
@@ -31,15 +31,15 @@ class AccountController extends Controller
 
         \App\Models\UserFinancialAccount::create([
             'user_id'              => $validated['user_id'],
-            'financial_account_id' => $account->id,
-            'balance'              => $account->balance,
-            'initial_balance'      => $account->initial_balance,
+            'financial_account_id' => $financial_account->id,
+            'balance'              => $financial_account->balance,
+            'initial_balance'      => $financial_account->initial_balance,
             'is_active'            => true,
         ]);
 
         return response()->json([
             'message' => 'Akun berhasil dibuat',
-            'data'    => $account,
+            'data'    => $financial_account,
         ], 201);
     }
     public function index(Request $request)

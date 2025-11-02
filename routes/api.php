@@ -13,9 +13,9 @@ Route::get('/accounts', function () {
 });
 
 
-Route::post('/accounts', [AccountController::class, 'store']);
-Route::get('/accounts', [AccountController::class, 'index']);
-Route::get('/accounts/{id}', [AccountController::class, 'show']);
+Route::post('/financial_accounts', [AccountController::class, 'store']);
+Route::get('/financial_accounts', [AccountController::class, 'index']);
+Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
 

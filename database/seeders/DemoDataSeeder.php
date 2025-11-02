@@ -104,33 +104,6 @@ class DemoDataSeeder extends Seeder
                     'updated_at'           => $now,
                 ],
             ]);
-
-            DB::table('transactions')->insert([
-                [
-                    'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => $userIdRafi,
-                    'account_id'           => $accIdKas,
-                    'entry_type'           => 'debit',
-                    'amount'               => 50000,
-                    'balance_effect'       => 'decrease',
-                    'description'          => 'Beli ATK kantor',
-                    'is_balance'           => false,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
-                ],
-                [
-                    'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => $userIdAndi,
-                    'account_id'           => $accIdBiaya,
-                    'entry_type'           => 'credit',
-                    'amount'               => 250000,
-                    'balance_effect'       => 'increase',
-                    'description'          => 'Pendapatan proyek kecil',
-                    'is_balance'           => false,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
-                ],
-            ]);
         });
 
         $this->command->info('✅ DemoDataSeeder selesai tanpa FK error.');
