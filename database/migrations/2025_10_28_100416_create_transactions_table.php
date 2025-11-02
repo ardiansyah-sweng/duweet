@@ -22,29 +22,34 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
 
-            $table->string('transaction_group_id', 36);
+            // ID grup transaksi (opsional, untuk grouping debit/kredit)
+            $table->uuid('transaction_group_id')->nullable();
 
+            // Relasi ke user
             $table->foreignId('user_id')
                 ->constrained($this->userTable)
-                ->onDelete('cascade');
+                ->cascadeOnDelete();
 
+            // Relasi ke akun keuangan (harus cocok dengan tabel financial_accounts)
             $table->foreignId('account_id')
-                ->constrained($this->financialAccountTable)
+                ->references('id')
+                ->on('financial_accounts')   // ⬅️ force the correct table
                 ->onDelete('restrict');
 
-            $table->enum('entry_type', ['debit', 'credit']);
-            $table->unsignedBigInteger('amount');
-            $table->enum('balance_effect', ['increase', 'decrease']);
 
-            $table->string('description');
+            // Detail transaksi
+            $table->enum('entry_type', ['debit', 'credit']);           // tipe jurnal
+            $table->unsignedBigInteger('amount');                      // nominal
+            $table->enum('balance_effect', ['increase', 'decrease']);  // efek ke saldo
+            $table->string('description', 255)->nullable();
             $table->boolean('is_balance')->default(false);
 
             $table->timestamps();
 
-            $table->index('user_id');
-            $table->index('account_id');
-            $table->index('transaction_group_id');
+            // Indexing untuk performa query
             $table->index(['user_id', 'created_at']);
+            $table->index(['account_id', 'created_at']);
+            $table->index(['transaction_group_id']);
         });
     }
 

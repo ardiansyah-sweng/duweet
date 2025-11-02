@@ -30,10 +30,9 @@ return new class extends Migration
             $table->string('email')->unique();
 
             // Data lahir sesuai PRD
-            $table->unsignedTinyInteger('tanggal_lahir');
-            $table->unsignedTinyInteger('bulan_lahir');
-            $table->unsignedSmallInteger('tahun_lahir');
-            $table->unsignedTinyInteger('usia');
+            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
+            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
+            $table->date('tanggal_lahir')->nullable();
 
             // Tambahan umum Laravel
             $table->timestamp('email_verified_at')->nullable();
