@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -54,5 +55,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
+                    ->withPivot(['initial_balance', 'balance', 'is_active'])
+                    ->withTimestamps();
+    }
 
+    public function totalLiquidAsset(): int
+    {
+        return $this->financialAccounts()
+            ->whereIn('type', ['AS', 'LI'])
+            ->sum('user_financial_accounts.balance');
+    }
+
+    public function scopeWithTotalLiquidAsset($query)
+    {
+        return $query->addSelect([
+            'total_liquid_asset' => DB::table('user_financial_accounts as ufa')
+                ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
+                ->whereColumn('ufa.user_id', 'users.id')
+                ->whereIn('fa.type', ['AS','LI'])
+                ->selectRaw('COALESCE(SUM(ufa.balance),0)')
+        ]);
+    }
 }

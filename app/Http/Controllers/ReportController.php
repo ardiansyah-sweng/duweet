@@ -2,39 +2,61 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Constants\UserFinancialAccountColumns as UFA;
-use App\Constants\FinancialAccountColumns as FA;
 
 class ReportController extends Controller
 {
-    public function liquidAssets(Request $request)
+    private function rupiah(int|float $n): string
     {
-        $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
-        ]);
+        return 'Rp ' . number_format((float) $n, 0, ',', '.');
+    }
 
-        $userId = $request->user_id;
+    public function userLiquidAsset(int $id)
+    {
+        try {
+            $liquidTypes = ['AS', 'LI'];
 
-        // total saldo semua akun bertipe 'AS' milik user
-        $total = DB::table(UFA::TABLE . ' as ufa')
-            ->join(FA::TABLE . ' as fa', 'fa.' . FA::ID, '=', 'ufa.' . UFA::FINANCIAL_ACCOUNT_ID)
-            ->where('ufa.' . UFA::USER_ID, $userId)
-            ->where('fa.' . FA::TYPE, FA::TYPE_ASSET)
-            ->sum('ufa.' . UFA::BALANCE);
+            $row = DB::table('users as u')
+                ->leftJoin('user_financial_accounts as ufa', 'ufa.user_id', '=', 'u.id')
+                ->leftJoin('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
+                ->where('u.id', $id)
+                ->whereIn('fa.type', $liquidTypes)
+                ->where(function ($q) {
+                    $q->whereNull('ufa.is_active')->orWhere('ufa.is_active', 1);
+                })
+                ->groupBy('u.id', 'u.name')
+                ->select([
+                    'u.id',
+                    'u.name',
+                    DB::raw('COALESCE(SUM(ufa.balance),0) as total_liquid_asset'),
+                ])
+                ->first();
 
-        $accounts = DB::table(UFA::TABLE . ' as ufa')
-            ->join(FA::TABLE . ' as fa', 'fa.' . FA::ID, '=', 'ufa.' . UFA::FINANCIAL_ACCOUNT_ID)
-            ->where('ufa.' . UFA::USER_ID, $userId)
-            ->where('fa.' . FA::TYPE, FA::TYPE_ASSET)
-            ->select('fa.' . FA::NAME . ' as account_name', 'ufa.' . UFA::BALANCE . ' as balance')
-            ->get();
+            if (!$row) {
+                return response()->json([
+                    'status'  => 'not_found',
+                    'message' => 'User tidak ditemukan',
+                ], 404);
+            }
 
-        return response()->json([
-            'user_id' => $userId,
-            'total_liquid_assets' => $total,
-            'accounts' => $accounts,
-        ], 200);
+            $total = (int) $row->total_liquid_asset;
+
+            return response()->json([
+                'status'             => 'success',
+                'user_id'            => (int) $row->id,
+                'name'               => $row->name,
+                'total_liquid_asset' => $total,
+                'formatted'          => $this->rupiah($total),
+                'generated_at'       => now()->toIso8601String(),
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ], 500);
+        }
     }
 }

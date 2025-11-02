@@ -17,7 +17,8 @@ Route::post('/accounts', [AccountController::class, 'store']);
 Route::get('/accounts', [AccountController::class, 'index']);
 Route::get('/accounts/{id}', [AccountController::class, 'show']);
 
-Route::get('/reports/liquid-assets', [ReportController::class, 'liquidAssets']);
+Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
+
 
 
 

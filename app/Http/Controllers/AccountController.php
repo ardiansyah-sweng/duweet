@@ -37,7 +37,6 @@ class AccountController extends Controller
             'is_active'            => true,
         ]);
 
-        // 🔑 RETURN JSON + STATUS 201
         return response()->json([
             'message' => 'Akun berhasil dibuat',
             'data'    => $account,
@@ -45,7 +44,6 @@ class AccountController extends Controller
     }
     public function index(Request $request)
     {
-        // Ganti 'financial_accounts' jika tabelmu bernama 'accounts'
         $q = DB::table('financial_accounts as fa')
             ->leftJoin('user_financial_accounts as ufa', 'ufa.financial_account_id', '=', 'fa.id')
             ->select(
@@ -64,7 +62,6 @@ class AccountController extends Controller
         return response()->json(['data' => $data], 200);
     }
 
-    // (opsional) GET /api/accounts/{id}
     public function show(int $id)
     {
         $row = DB::table('financial_accounts as fa')

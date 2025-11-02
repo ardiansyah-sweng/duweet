@@ -29,7 +29,6 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('email')->unique();
 
-            // Data lahir sesuai PRD
             $table->unsignedTinyInteger('usia')->nullable();        // 0–255
             $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
             $table->date('tanggal_lahir')->nullable();

@@ -28,24 +28,20 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserFinancialAccountColumns::ID);
 
-            // Foreign keys
             $table->foreignId(UserFinancialAccountColumns::USER_ID)
                 ->constrained($this->userTable)
-                ->onDelete('cascade'); // jika user dihapus, data ini ikut hilang
+                ->onDelete('cascade');
 
             $table->foreignId(UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID)
                 ->constrained($this->financialAccountTable)
-                ->onDelete('restrict'); // akun keuangan tidak boleh dihapus jika masih dipakai user
+                ->onDelete('restrict');
 
-            // Balance columns
             $table->bigInteger(UserFinancialAccountColumns::INITIAL_BALANCE)->default(0);
             $table->bigInteger(UserFinancialAccountColumns::BALANCE)->default(0);
 
-            // Status & audit
             $table->boolean(UserFinancialAccountColumns::IS_ACTIVE)->default(true);
             $table->timestamps();
 
-            // Indexes for performance
             $table->index([
                 UserFinancialAccountColumns::USER_ID,
                 UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID,

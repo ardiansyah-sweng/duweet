@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+
 class DemoDataSeeder extends Seeder
 {
     public function run(): void
@@ -15,9 +16,6 @@ class DemoDataSeeder extends Seeder
         DB::transaction(function () {
             $now = Carbon::now();
 
-            // ==========================
-            // 1) USERS (ambil ID dinamis)
-            // ==========================
             $userIdRafi = DB::table('users')->insertGetId([
                 'name'              => 'Rafi Satya',
                 'email'             => 'rafi@example.com',
@@ -44,12 +42,9 @@ class DemoDataSeeder extends Seeder
                 'updated_at'        => $now,
             ]);
 
-            // ====================================
-            // 2) FINANCIAL ACCOUNTS (ambil ID)
-            // ====================================
             $accIdKas = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Kas Utama',
-                'type'            => 'AS',        // Asset
+                'type'            => 'LI',        // Asset
                 'balance'         => 1000000,
                 'initial_balance' => 1000000,
                 'is_group'        => false,
@@ -63,9 +58,9 @@ class DemoDataSeeder extends Seeder
 
             $accIdBiaya = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Biaya Operasional',
-                'type'            => 'EX',        // Expense
-                'balance'         => 0,
-                'initial_balance' => 0,
+                'type'            => 'AS',        // Expense
+                'balance'         => 500000,
+                'initial_balance' => 500000,
                 'is_group'        => false,
                 'description'     => 'Pengeluaran bulanan kantor',
                 'is_active'       => true,
@@ -78,8 +73,8 @@ class DemoDataSeeder extends Seeder
             $accIdPendapatan = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Pendapatan Penjualan',
                 'type'            => 'IN',        // Income
-                'balance'         => 0,
-                'initial_balance' => 0,
+                'balance'         => 200000,
+                'initial_balance' => 200000,
                 'is_group'        => false,
                 'description'     => 'Pemasukan hasil penjualan produk',
                 'is_active'       => true,
@@ -89,9 +84,6 @@ class DemoDataSeeder extends Seeder
                 'updated_at'      => $now,
             ]);
 
-            // ==================================================
-            // 3) USER_FINANCIAL_ACCOUNTS (pakai ID yang didapat)
-            // ==================================================
             DB::table('user_financial_accounts')->insert([
                 [
                     'user_id'              => $userIdRafi,
@@ -105,17 +97,14 @@ class DemoDataSeeder extends Seeder
                 [
                     'user_id'              => $userIdAndi,
                     'financial_account_id' => $accIdBiaya,
-                    'initial_balance'      => 0,
-                    'balance'              => 0,
+                    'initial_balance'      => 500000,
+                    'balance'              => 500000,
                     'is_active'            => true,
                     'created_at'           => $now,
                     'updated_at'           => $now,
                 ],
             ]);
 
-            // ==========================
-            // 4) TRANSACTIONS (aman FK)
-            // ==========================
             DB::table('transactions')->insert([
                 [
                     'transaction_group_id' => (string) Str::uuid(),
