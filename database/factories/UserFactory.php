@@ -2,43 +2,38 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
+use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+    protected $model = User::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
-        return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
-        ];
-    }
+        $birthYear = $this->faker->numberBetween(1980, 2005);
+        $birthMonth = $this->faker->numberBetween(1, 12);
+        $birthDay = $this->faker->numberBetween(1, 28);
+        $age = date('Y') - $birthYear;
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return [
+            UserColumns::NAME           => $this->faker->name(),
+            UserColumns::FIRST_NAME     => $this->faker->firstName(),
+            UserColumns::MIDDLE_NAME    => $this->faker->optional()->firstName(),
+            UserColumns::LAST_NAME      => $this->faker->lastName(),
+            UserColumns::EMAIL          => $this->faker->unique()->safeEmail(),
+
+            UserColumns::PROVINSI       => $this->faker->state(),
+            UserColumns::KABUPATEN      => $this->faker->city(),
+            UserColumns::KECAMATAN      => $this->faker->citySuffix(),
+            UserColumns::JALAN          => $this->faker->streetAddress(),
+            UserColumns::KODE_POS       => $this->faker->postcode(),
+
+            UserColumns::TANGGAL_LAHIR  => $birthDay,
+            UserColumns::BULAN_LAHIR    => $birthMonth,
+            UserColumns::TAHUN_LAHIR    => $birthYear,
+            UserColumns::USIA           => $age,
+        ];
     }
 }
