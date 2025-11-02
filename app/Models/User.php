@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'photo',      
+        'preference',
     ];
 
     /**
@@ -43,6 +45,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preference' => 'array', //tambahan preferences
         ];
     }
 }
