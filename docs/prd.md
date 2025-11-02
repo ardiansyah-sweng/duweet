@@ -98,7 +98,7 @@ Aplikasi personal finance berbasis gamifikasi
   - Atribut
     - id (Primary Key) - Unique identifier
     - transaction_group_id (string) - UUID untuk mengelompokkan debit-credit pair
-    - user_acoount_id (Foreign Key) - Reference ke user_account.id
+    - user_acoount_id (Foreign Key) - Reference ke user_accounts.id
     - financial_account_id (Foreign Key) - Account yang terpengaruh (single account per record). References ke financial_accounts.id
     - entry_type (enum) - Jenis entry: 'debit', 'credit'
     - amount (big integer) - Nominal (selalu positif)
