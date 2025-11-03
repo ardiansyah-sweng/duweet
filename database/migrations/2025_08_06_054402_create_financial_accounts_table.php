@@ -30,8 +30,8 @@ return new class extends Migration
             $table->text(AccountColumns::DESCRIPTION)->nullable();
             $table->boolean(AccountColumns::IS_ACTIVE)->default(true);
             
-            $table->string('color', 7)->nullable(); // hex color code
-            $table->string('icon', 50)->nullable();
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
             $table->tinyInteger(AccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(AccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
