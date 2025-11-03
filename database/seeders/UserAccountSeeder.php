@@ -23,8 +23,6 @@ class UserAccountSeeder extends Seeder
     'password' => Hash::make('informatika123'),
     'email_verified_at' => now(),
     'is_active' => true,
-    'created_at' => now(),
-    'updated_at' => now(),
 
     ]);
 
