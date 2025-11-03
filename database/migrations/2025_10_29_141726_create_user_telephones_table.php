@@ -5,12 +5,18 @@ use App\Constants\UserTelephoneColumns;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration{
-    protected string $table;
+return new class extends Migration {
+    /**
+     * Table name for user telephones.
+     * Defaults to 'user_telephones' when config key is missing.
+     *
+     * @var string
+     */
+    protected string $table = 'user_telephones';
 
-    public function __construct(){
-
-    $this->table = config('db_tables.user_telephones');
+    public function __construct()
+    {
+        $this->table = config('db_tables.user_telephones', $this->table);
     }
     /**
      * Run the migrations.
@@ -31,7 +37,7 @@ return new class extends Migration{
     public function down(): void
     {
         Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('user_telephones');
+        Schema::dropIfExists($this->table);
         Schema::enableForeignKeyConstraints();
     }
 };
