@@ -1,7 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+// routes/web.php
 
-Route::get('/', function () {
-    return view('welcome');
-});
+
+use App\Http\Controllers\ReportController;
+
+Route::get('/report/income-summary', [ReportController::class, 'getIncomeSumByPeriode']);
+
+// ----> TAMBAHKAN BARIS DI BAWAH INI <----
