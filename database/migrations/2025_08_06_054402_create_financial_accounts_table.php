@@ -3,7 +3,11 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\AccountColumns;
+<<<<<<< HEAD
+use App\Constants\FinancialAccountColumns as AccountColumns;
+=======
+use App\Constants\FinancialAccountColumns;
+>>>>>>> 26c2c7be4050a77bf96e9230c73ba5945132d38e
 
 return new class extends Migration
 {
