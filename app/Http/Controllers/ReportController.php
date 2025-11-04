@@ -58,8 +58,8 @@ class ReportController extends Controller
             $query = DB::table($transactionsTable)
                 ->join($accountsTable, "$transactionsTable.financial_account_id", "=", "$accountsTable.id")
                 ->select(
-                    // Kita tetap kelompokkan per bulan
-                    DB::raw("DATE_FORMAT($transactionsTable.created_at, '%Y-%m') as periode"),
+                    // PERBAIKAN DI SINI: Mengganti DATE_FORMAT dengan strftime untuk SQLite
+                    DB::raw("strftime('%Y-%m', $transactionsTable.created_at) as periode"),
                     DB::raw("SUM($transactionsTable.amount) as total_income")
                 )
                 
@@ -70,6 +70,7 @@ class ReportController extends Controller
                 ->where("$accountsTable.is_group", false)
                 
                 // ---- 3. TAMBAHKAN FILTER RENTANG TANGGAL ----
+                // Catatan: Fungsi DATE() ini kompatibel dengan SQLite.
                 ->whereBetween(DB::raw("DATE($transactionsTable.created_at)"), [$startDate->toDateString(), $endDate->toDateString()])
                 
                 // -------------------------
@@ -89,4 +90,3 @@ class ReportController extends Controller
         }
     }
 }
-
