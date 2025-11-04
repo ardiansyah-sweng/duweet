@@ -14,7 +14,7 @@ return new class extends Migration
     {
         // financial accounts table name is stored in config/db_tables.php
         $this->table = config('db_tables.transaction');
-        $this->financialAccountTable = config('db_tables.financial_account);
+        $this->financialAccountTable = config('db_tables.financial_account');
     }
 
     /**
