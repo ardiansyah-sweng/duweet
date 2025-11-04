@@ -13,9 +13,9 @@ return new class extends Migration
     public function __construct()
     {
         // Mengambil nama tabel dari konfigurasi (sesuai pola migrasi lain)
-        $this->table = config('db_tables.transaction', 'transactions');
-        $this->userTable = config('db_tables.user', 'users');
-        $this->financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+        $this->table = config('db_tables.transaction');
+        $this->userTable = config('db_tables.user');
+        $this->financialAccountTable = config('db_tables.financial_account');
     }
 
     public function up(): void
