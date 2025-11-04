@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Constants\UserAccountColumns;
+use App\Constants\UserColumns;
 
 return new class extends Migration
 {
@@ -26,9 +27,8 @@ return new class extends Migration
             $table->string(UserAccountColumns::PASSWORD);
             $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
             $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);           
-            $table->timestamps();
 
-            $table->foreign(UserAccountColumns::ID_USER)->references(UserAccountColumns::ID_USER)->on($this->table)->onDelete('cascade');
+            $table->foreign(UserAccountColumns::ID_USER)->references(UserColumns::ID)->on($this->table)->onDelete('cascade');
         });
     }
 
