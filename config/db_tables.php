@@ -1,6 +1,5 @@
 <?php
-
-    return [
+return [
         'user' => 'users',
         'user_account'   => 'user_accounts',
         'financial_account' => 'financial_accounts',
