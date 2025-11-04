@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class TransactionColumns
+class TransactionsColums
 {
     // Kunci utama
     public const ID = 'id'; // Primary Key - identitas unik
