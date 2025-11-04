@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     protected string $table;
-    protected string $userTable;
+    protected string $userAccountTable;
     protected string $financialAccountTable;
 
     public function __construct()
     {
-        // Mengambil nama tabel dari konfigurasi (sesuai pola migrasi lain)
-        $this->table = config('db_tables.transaction');
-        $this->userTable = config('db_tables.user');
+        // Samakan dengan config/db_tables.php milikmu
+        $this->table                 = config('db_tables.transaction');
+        $this->userAccountTable      = config('db_tables.user_account');
         $this->financialAccountTable = config('db_tables.financial_account');
     }
 
@@ -22,29 +22,36 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-            $table->uuid('transaction_group_id')->comment('UUID untuk mengelompokkan transaksi terkait');
-            
-            // relasi ke user dan akun finansial
-            $table->foreignId('user_id')
-                ->constrained($this->userTable)
-                ->onDelete('cascade');
 
+            // PRD: UUID untuk mengelompokkan debit–credit pair
+            $table->uuid('transaction_group_id');
+
+            // PRD: relasi ke user_accounts (bukan users)
+            $table->foreignId('user_account_id')
+                  ->constrained($this->userAccountTable)
+                  ->onDelete('cascade');
+
+            // PRD: relasi ke financial_accounts (single account per record)
             $table->foreignId('financial_account_id')
-                ->constrained($this->financialAccountTable)
-                ->onDelete('cascade');
+                  ->constrained($this->financialAccountTable)
+                  ->onDelete('restrict');
 
-            // tipe transaksi
-            $table->enum('entry_type', ['debit', 'credit'])->comment('Jenis entri transaksi');
-            $table->bigInteger('amount')->comment('Jumlah nominal transaksi');
-            $table->enum('balance_effect', ['increase', 'decrease'])->comment('Efek terhadap saldo');
-            $table->string('description')->nullable()->comment('Keterangan transaksi');
-            $table->boolean('is_balance')->default(false)->comment('Apakah transaksi merupakan saldo awal');
-            
+            // PRD: entry_type & balance_effect
+            $table->enum('entry_type', ['debit', 'credit']);
+            $table->unsignedBigInteger('amount'); // selalu positif (PRD)
+            $table->enum('balance_effect', ['increase', 'decrease']);
+
+            // PRD: deskripsi & status keseimbangan grup
+            $table->string('description');
+            $table->boolean('is_balance')->default(false);
+
             $table->timestamps();
 
-            // index untuk performa query
-            $table->index(['user_id', 'financial_account_id']);
-            $table->index('transaction_group_id');
+            // Indexes untuk performa query laporan/periode
+            $table->index('transaction_group_id', $this->table.'_idx_group');
+            $table->index(['user_account_id', 'created_at'], $this->table.'_idx_useracct_date');
+            $table->index(['financial_account_id', 'created_at'], $this->table.'_idx_fa_date');
+            $table->index('entry_type', $this->table.'_idx_entrytype');
         });
     }
 
