@@ -2,7 +2,6 @@
 
 namespace App\Constants;
 
-// Menggunakan nama class dari 'main'
 class FinancialAccountColumns
 {
     // Kolom dari 'main' (bawah)
@@ -19,7 +18,7 @@ class FinancialAccountColumns
     public const SORT_ORDER      = 'sort_order'; // Sort order for the account
     public const LEVEL           = 'level'; // Level in the hierarchy (0 = root, 1 = child, 2 = grandchild)
 
-    // Kolom baru dari 'HEAD' (atas)
+    // Kolom tambahan dari versi HEAD
     public const COLOR           = 'color';
     public const ICON            = 'icon';
 
@@ -33,7 +32,6 @@ class FinancialAccountColumns
     public static function getFillable(): array
     {
         return [
-            // Kolom dari 'main' (sudah diperbaiki dari duplikat)
             self::NAME,
             self::PARENT_ID,
             self::TYPE,
@@ -44,8 +42,6 @@ class FinancialAccountColumns
             self::IS_ACTIVE,
             self::SORT_ORDER,
             self::LEVEL,
-
-            // Kolom baru dari 'HEAD'
             self::COLOR,
             self::ICON,
         ];
