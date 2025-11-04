@@ -1,11 +1,10 @@
 <?php
 
-use App\Constants\FinancialAccountColumns;
 use App\Models\FinancialAccount;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns;
 
 return new class extends Migration
 {
@@ -31,8 +30,10 @@ return new class extends Migration
             $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
-            // $table->string('color', 7)->nullable(); // hex color code
-            // $table->string('icon', 50)->nullable();
+            
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
+            
             $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
@@ -42,7 +43,8 @@ return new class extends Migration
 
             // Indexes for performance
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
-            $table->index([FinancialAccountColumns::TYPE, FinancialAccountColumns::IS_ACTIVE]);
+
+            $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
         });
     }
