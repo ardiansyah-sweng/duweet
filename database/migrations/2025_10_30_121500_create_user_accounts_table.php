@@ -3,11 +3,22 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\UserAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
+use App\Constants\UserColumns;
+use App\Constants\FinancialAccountColumns;
 
 return new class extends Migration
 {
-    protected string $table = 'user_accounts';
+    protected string $table;
+    protected string $userTable;
+    protected string $financialAccountTable;
+
+    public function __construct()
+    {
+        $this->table = config('db_tables.user_financial_account');
+        $this->userTable = config('db_tables.user');
+        $this->financialAccountTable = config('db_tables.financial_account');
+    }
 
     /**
      * Run the migrations.
@@ -15,25 +26,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-            $table->id();
+            $table->id(UserFinancialAccountColumns::ID);
 
-            // Foreign reference to users table
-            $table->unsignedBigInteger(UserAccountColumns::ID_USER)->nullable(false)->index();
+            $table->foreignId(UserFinancialAccountColumns::USER_ID)
+                ->constrained($this->userTable)
+                ->onDelete('cascade');
 
-            // Account fields
-            $table->string(UserAccountColumns::USERNAME)->unique();
-            $table->string(UserAccountColumns::EMAIL)->unique();
-            $table->string(UserAccountColumns::PASSWORD);
-            $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
-            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
+            $table->foreignId(UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID)
+                ->constrained($this->financialAccountTable)
+                ->onDelete('restrict');
 
+            $table->bigInteger(UserFinancialAccountColumns::INITIAL_BALANCE)->default(0);
+            $table->bigInteger(UserFinancialAccountColumns::BALANCE)->default(0);
+
+            $table->boolean(UserFinancialAccountColumns::IS_ACTIVE)->default(true);
             $table->timestamps();
 
-            // Foreign key to users.id
-            $table->foreign(UserAccountColumns::ID_USER)
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('cascade');
+            $table->index([
+                UserFinancialAccountColumns::USER_ID,
+                UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID,
+            ], 'idx_user_financial_account');
+
+            $table->index(UserFinancialAccountColumns::IS_ACTIVE);
         });
     }
 
