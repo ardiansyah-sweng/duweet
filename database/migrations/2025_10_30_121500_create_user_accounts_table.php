@@ -1,58 +1,52 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\UserFinancialAccountColumns;
-use App\Constants\UserColumns;
-use App\Constants\FinancialAccountColumns;
 
 return new class extends Migration
 {
     protected string $table;
-    protected string $userTable;
-    protected string $financialAccountTable;
 
     public function __construct()
     {
-        $this->table = config('db_tables.user_financial_account');
-        $this->userTable = config('db_tables.user');
-        $this->financialAccountTable = config('db_tables.financial_account');
+        // sesuai PRD → tabel utama untuk pengguna
+        $this->table = config('db_tables.user', 'users');
     }
 
     /**
-     * Run the migrations.
+     * Jalankan migration.
      */
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-            $table->id(UserFinancialAccountColumns::ID);
+            $table->id();
 
-            $table->foreignId(UserFinancialAccountColumns::USER_ID)
-                ->constrained($this->userTable)
-                ->onDelete('cascade');
+            // Kolom sesuai PRD
+            $table->string('name', 100);
+            $table->string('first_name')->nullable();
+            $table->string('middle_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->unique();
 
-            $table->foreignId(UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID)
-                ->constrained($this->financialAccountTable)
-                ->onDelete('restrict');
+            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
+            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
+            $table->date('tanggal_lahir')->nullable();
 
-            $table->bigInteger(UserFinancialAccountColumns::INITIAL_BALANCE)->default(0);
-            $table->bigInteger(UserFinancialAccountColumns::BALANCE)->default(0);
-
-            $table->boolean(UserFinancialAccountColumns::IS_ACTIVE)->default(true);
+            // Tambahan umum Laravel
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password')->nullable();
+            $table->rememberToken();
             $table->timestamps();
 
-            $table->index([
-                UserFinancialAccountColumns::USER_ID,
-                UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID,
-            ], 'idx_user_financial_account');
-
-            $table->index(UserFinancialAccountColumns::IS_ACTIVE);
+            // Index tambahan (opsional)
+            $table->index(['last_name', 'first_name']);
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Rollback migration.
      */
     public function down(): void
     {
