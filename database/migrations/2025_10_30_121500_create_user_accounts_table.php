@@ -7,7 +7,11 @@ use App\Constants\UserAccountColumns;
 
 return new class extends Migration
 {
-    protected string $table = 'user_accounts';
+    protected string $table;
+    public function __construct()
+    {
+        $this->table = config('db_tables.user_account');
+    }
 
     /**
      * Run the migrations.
@@ -29,11 +33,11 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Foreign key to users.id
-            $table->foreign(UserAccountColumns::ID_USER)
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('cascade');
+        // Foreign key to users.id (use constant for referenced column)
+        $table->foreign(UserAccountColumns::ID_USER)
+            ->references(UserAccountColumns::ID)
+            ->on('users')
+            ->onDelete('cascade');
         });
     }
 
