@@ -7,13 +7,16 @@ use App\Constants\TransactionColumns;
 
 return new class extends Migration
 {
-    protected string $table = 'transactions';
+    protected string $table;
     protected string $financialAccountTable;
+    protected string $userAccountTable;
 
     public function __construct()
     {
-        // financial accounts table name is stored in config/db_tables.php
-        $this->financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+    // table names are stored in config/db_tables.php
+    $this->table = config('db_tables.transaction');
+    $this->financialAccountTable = config('db_tables.financial_account');
+    $this->userAccountTable = config('db_tables.user_account');
     }
 
     /**
@@ -41,10 +44,10 @@ return new class extends Migration
             $table->timestamps();
 
             // Foreign keys
-            $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
-                  ->references('id')
-                  ->on('user_accounts')
-                  ->onDelete('cascade');
+        $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
+            ->references('id')
+            ->on($this->userAccountTable)
+            ->onDelete('cascade');
 
             $table->foreign(TransactionColumns::FINANCIAL_ACCOUNT_ID)
                   ->references('id')
