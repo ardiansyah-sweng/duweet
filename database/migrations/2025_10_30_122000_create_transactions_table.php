@@ -3,63 +3,51 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\TransactionColumns;
 
 return new class extends Migration
 {
-    protected string $table = 'transactions';
+    protected string $table;
+    protected string $userTable;
     protected string $financialAccountTable;
 
     public function __construct()
     {
-        // financial accounts table name is stored in config/db_tables.php
-        $this->table = config('db_tables.transaction');
-        $this->financialAccountTable = config('db_tables.financial_account');
+        // Mengambil nama tabel dari konfigurasi (sesuai pola migrasi lain)
+        $this->table = config('db_tables.transaction', 'transactions');
+        $this->userTable = config('db_tables.user', 'users');
+        $this->financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
     }
 
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
+            $table->uuid('transaction_group_id')->comment('UUID untuk mengelompokkan transaksi terkait');
+            
+            // relasi ke user dan akun finansial
+            $table->foreignId('user_id')
+                ->constrained($this->userTable)
+                ->onDelete('cascade');
 
-            // Grouping id to tie debit-credit pairs
-            $table->string(TransactionColumns::TRANSACTION_GROUP_ID, 36)->nullable(false)->index();
+            $table->foreignId('financial_account_id')
+                ->constrained($this->financialAccountTable)
+                ->onDelete('cascade');
 
-            // References to user_accounts and financial_accounts
-            $table->unsignedBigInteger(TransactionColumns::USER_ACCOUNT_ID)->nullable(false)->index();
-            $table->unsignedBigInteger(TransactionColumns::FINANCIAL_ACCOUNT_ID)->nullable(false)->index();
-
-            // Transaction details
-            $table->enum(TransactionColumns::ENTRY_TYPE, ['debit', 'credit']);
-            $table->bigInteger(TransactionColumns::AMOUNT)->default(0);
-            $table->enum(TransactionColumns::BALANCE_EFFECT, ['increase', 'decrease']);
-            $table->text(TransactionColumns::DESCRIPTION)->nullable();
-            $table->boolean(TransactionColumns::IS_BALANCE)->default(false);
-
+            // tipe transaksi
+            $table->enum('entry_type', ['debit', 'credit'])->comment('Jenis entri transaksi');
+            $table->bigInteger('amount')->comment('Jumlah nominal transaksi');
+            $table->enum('balance_effect', ['increase', 'decrease'])->comment('Efek terhadap saldo');
+            $table->string('description')->nullable()->comment('Keterangan transaksi');
+            $table->boolean('is_balance')->default(false)->comment('Apakah transaksi merupakan saldo awal');
+            
             $table->timestamps();
 
-            // Foreign keys
-            $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
-                  ->references('id')
-                  ->on('user_accounts')
-                  ->onDelete('cascade');
-
-            $table->foreign(TransactionColumns::FINANCIAL_ACCOUNT_ID)
-                  ->references('id')
-                  ->on($this->financialAccountTable)
-                  ->onDelete('cascade');
-
-            // Additional indexes for common filters
-            $table->index([TransactionColumns::ENTRY_TYPE, TransactionColumns::CREATED_AT]);
+            // index untuk performa query
+            $table->index(['user_id', 'financial_account_id']);
+            $table->index('transaction_group_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists($this->table);
