@@ -11,7 +11,7 @@ return new class extends Migration
 
     public function __construct(){
 
-    $this->table = config('db_tables.user_accounts');
+    $this->table = config('db_tables.user_account');
     }
     /**
      * Run the migrations.
@@ -20,16 +20,13 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserAccountColumns::ID);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId(UserAccountColumns::ID_USER)->constrained('users')->onDelete('cascade');
             $table->string(UserAccountColumns::USERNAME)->unique();
             $table->string(UserAccountColumns::EMAIL)->unique();
             $table->string(UserAccountColumns::PASSWORD);
-
             $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
-
             $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
 
-            $table->timestamps();
         });
     }
 

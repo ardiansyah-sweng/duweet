@@ -7,6 +7,12 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct(){
+
+    $this->table = config('db_tables.user');
+    }
     /**
      * Run the migrations.
      */

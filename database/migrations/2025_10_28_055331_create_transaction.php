@@ -11,7 +11,7 @@ return new class extends Migration
 
     public function __construct(){
 
-    $this->table = config('db_tables.transactions');
+    $this->table = config('db_tables.transaction');
     }
     /**
      * Run the migrations.
@@ -25,10 +25,10 @@ return new class extends Migration
              $table->uuid(TransactionColumns::TRANSACTION_GROUP_ID)->index();
             
             // Siapa yang mencatat
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId(TransactionColumns::USER_ID)->constrained('users')->onDelete('cascade');
             
             // Akun mana yang terpengaruh
-            $table->foreignId('account_id')->constrained('financial_accounts')->onDelete('cascade');
+            $table->foreignId(TransactionColumns::ACCOUNT_ID)->constrained('financial_accounts')->onDelete('cascade');
             
             $table->enum(TransactionColumns::ENTRY_TYPE, ['debit', 'credit']);
 

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Schema;
 use App\Constants\UserTelephoneColumns;
+use App\Models\UserTelephone;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
@@ -10,7 +11,7 @@ return new class extends Migration{
 
     public function __construct(){
 
-    $this->table = config('db_tables.user_telephones');
+    $this->table = config('db_tables.user_telephone');
     }
     /**
      * Run the migrations.
@@ -19,7 +20,7 @@ return new class extends Migration{
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserTelephoneColumns::ID);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId(UserTelephoneColumns::USER_ID)->constrained('users')->onDelete('cascade');
             $table->string(UserTelephoneColumns::NUMBER)
                 ->nullable();
             $table->timestamps();

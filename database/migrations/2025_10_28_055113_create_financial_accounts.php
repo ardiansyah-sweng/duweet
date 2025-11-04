@@ -14,7 +14,7 @@ return new class extends Migration
     public function __construct()
 {
     // Baris ini dijalankan secara otomatis saat migrasi dibuat
-    $this->table = config('db_tables.financial_accounts');
+    $this->table = config('db_tables.financial_account');
 }
 
     /**
@@ -43,7 +43,6 @@ return new class extends Migration
             $table->integer(FinancialAccountColumns::SORT_ORDER)->default(0);
             $table->integer(FinancialAccountColumns::LEVEL)->default(0);
 
-            $table->timestamps();
             $table->foreign('parent_id')
                   ->references('id')
                   ->on('financial_accounts')
