@@ -13,7 +13,7 @@ return new class extends Migration
     public function __construct()
     {
         // financial accounts table name is stored in config/db_tables.php
-        $this->financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+        $this->financialAccountTable = config('db_tables.financial_account');
     }
 
     /**
