@@ -12,7 +12,7 @@ return new class extends Migration
     public function __construct()
     {
         // sesuai PRD → tabel utama untuk pengguna
-        $this->table = config('db_tables.user', 'users');
+        $this->table = config('db_tables.user');
     }
 
     /**
