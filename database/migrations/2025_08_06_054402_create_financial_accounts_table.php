@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\FinancialAccount;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-
 use App\Constants\FinancialAccountColumns;
 
 return new class extends Migration
@@ -13,6 +13,7 @@ return new class extends Migration
     public function __construct()
     {
         $this->table = config('db_tables.financial_account');
+
     }
     
     /**
