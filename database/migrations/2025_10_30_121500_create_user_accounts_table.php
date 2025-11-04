@@ -1,52 +1,47 @@
-
 <?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Constants\UserAccountColumns;
 
 return new class extends Migration
 {
-    protected string $table;
-
+    protected string $table = 'user_account';
     public function __construct()
     {
-        // sesuai PRD → tabel utama untuk pengguna
-        $this->table = config('db_tables.user');
+        $this->table = config('db_tables.user_account');
     }
-
     /**
-     * Jalankan migration.
+     * Run the migrations.
      */
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
 
-            // Kolom sesuai PRD
-            $table->string('name', 100);
-            $table->string('first_name')->nullable();
-            $table->string('middle_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('email')->unique();
+            // Foreign reference to users table
+            $table->unsignedBigInteger(UserAccountColumns::ID_USER)->nullable(false)->index();
 
-            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
-            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
-            $table->date('tanggal_lahir')->nullable();
+            // Account fields
+            $table->string(UserAccountColumns::USERNAME)->unique();
+            $table->string(UserAccountColumns::EMAIL)->unique();
+            $table->string(UserAccountColumns::PASSWORD);
+            $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
+            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
 
-            // Tambahan umum Laravel
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password')->nullable();
-            $table->rememberToken();
             $table->timestamps();
 
-            // Index tambahan (opsional)
-            $table->index(['last_name', 'first_name']);
+            // Foreign key to users.id
+            $table->foreign(UserAccountColumns::ID_USER)
+                  ->references('id')
+                  ->on('users')
+                  ->onDelete('cascade');
         });
     }
 
     /**
-     * Rollback migration.
+     * Reverse the migrations.
      */
     public function down(): void
     {
