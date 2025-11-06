@@ -4,8 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -18,9 +21,8 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+    'name','email','password',
+    'usia','bulan_lahir','tanggal_lahir',
     ];
 
     /**
@@ -45,4 +47,123 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function accounts() {
+        return $this->hasMany(\App\Models\UserAccount::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
+                    ->withPivot(['initial_balance', 'balance', 'is_active'])
+                    ->withTimestamps();
+    }
+
+    public function totalLiquidAsset(): int
+    {
+        return $this->financialAccounts()
+            ->whereIn('type', ['AS', 'LI'])
+            ->sum('user_financial_accounts.balance');
+    }
+
+    public function scopeWithTotalLiquidAsset($query)
+    {
+        return $query->addSelect([
+            'total_liquid_asset' => DB::table('user_financial_accounts as ufa')
+                ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
+                ->whereColumn('ufa.user_id', 'users.id')
+                ->whereIn('fa.type', ['AS','LI'])
+                ->selectRaw('COALESCE(SUM(ufa.balance),0)')
+        ]);
+    }
+
+    public function account()
+    {
+        return $this->hasOne(\App\Models\UserAccount::class, 'user_id');
+    }
+
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(\App\Models\UserFinancialAccount::class, 'user_id');
+    }
+
+    public function scopeSearchUsers($query, $filters)
+{
+    $norm = fn($v) => ($v === null || trim((string)$v) === '') ? null : trim((string)$v);
+
+    $q        = $norm($filters['q'] ?? null);
+    $name     = $norm($filters['name'] ?? null);
+    $username = $norm($filters['username'] ?? null);
+    $email    = $norm($filters['email'] ?? null);
+    $start    = $norm($filters['start'] ?? null);
+    $end      = $norm($filters['end'] ?? null);
+    $sortBy   = $norm($filters['sort_by'] ?? 'id');
+    $sortDir  = strtolower($norm($filters['sort_dir'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
+
+    // SELECT selalu pakai alias yang eksplisit
+    $query->from('users')
+          ->select([
+              'users.id',
+              'users.name',
+              'users.email',
+              DB::raw('COALESCE(ua.username, "") as username'),
+              'users.created_at',
+          ]);
+
+    // Join ke user_accounts hanya jika tabel (dan kolom) tersedia
+    $hasUA   = Schema::hasTable('user_accounts');
+    $hasUser = $hasUA && Schema::hasColumn('user_accounts', 'user_id');
+    $hasUname= $hasUA && Schema::hasColumn('user_accounts', 'username');
+
+    if ($hasUA && $hasUser) {
+        $query->leftJoin('user_accounts as ua', 'ua.user_id', '=', 'users.id');
+        // kalau tidak ada kolom username, fallback jadi string kosong via COALESCE di SELECT
+    } else {
+        // Pastikan SELECT tetap aman saat tidak ada join
+        $query->addSelect(DB::raw('"" as username'));
+    }
+
+    // Keyword global
+    if ($q) {
+        $qLike = '%' . mb_strtolower($q) . '%';
+        $query->where(function ($qq) use ($qLike, $hasUname) {
+            $qq->whereRaw('LOWER(users.name) LIKE ?', [$qLike])
+               ->orWhereRaw('LOWER(users.email) LIKE ?', [$qLike]);
+
+            if ($hasUname) {
+                $qq->orWhereRaw('LOWER(COALESCE(ua.username, "")) LIKE ?', [$qLike]);
+            }
+        });
+    }
+
+    // Filter spesifik
+    if ($name) {
+        $query->whereRaw('LOWER(users.name) LIKE ?', ['%' . mb_strtolower($name) . '%']);
+    }
+    if ($email) {
+        $query->whereRaw('LOWER(users.email) LIKE ?', ['%' . mb_strtolower($email) . '%']);
+    }
+    if ($username && $hasUname) {
+        $query->whereRaw('LOWER(COALESCE(ua.username, "")) LIKE ?', ['%' . mb_strtolower($username) . '%']);
+    }
+    if ($start) {
+        $query->whereDate('users.created_at', '>=', $start);
+    }
+    if ($end) {
+        $query->whereDate('users.created_at', '<=', $end);
+    }
+
+    // Sorting aman
+    $sortable = ['id', 'name', 'email', 'created_at'];
+    if (!in_array($sortBy, $sortable, true)) {
+        $sortBy = 'id';
+    }
+
+    return $query->orderBy("users.$sortBy", $sortDir);
+}
+
 }

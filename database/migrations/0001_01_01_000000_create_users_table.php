@@ -6,44 +6,49 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct()
+    {
+        // sesuai PRD → tabel utama untuk pengguna
+        $this->table = config('db_tables.user', 'users');
+    }
+
     /**
-     * Run the migrations.
+     * Jalankan migration.
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+
+            // Kolom sesuai PRD
+            $table->string('name', 100);
+            $table->string('first_name')->nullable();
+            $table->string('middle_name')->nullable();
+            $table->string('last_name')->nullable();
             $table->string('email')->unique();
+
+            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
+            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
+            $table->date('tanggal_lahir')->nullable();
+
+            // Tambahan umum Laravel
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
-        });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
+            // Index tambahan (opsional)
+            $table->index(['last_name', 'first_name']);
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Rollback migration.
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists($this->table);
     }
 };
