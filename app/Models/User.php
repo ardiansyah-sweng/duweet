@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
 
     /**
      * Table name
@@ -42,16 +41,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array<int,string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
      * The attributes that should be cast.
      *
      * @var array<string,string>
@@ -61,6 +50,8 @@ class User extends Authenticatable
         UserColumns::BULAN_LAHIR => 'integer',
         UserColumns::TAHUN_LAHIR => 'integer',
         UserColumns::USIA => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
@@ -150,6 +141,9 @@ class User extends Authenticatable
         ]);
     }
 
+    /**
+     * Create user using raw query
+     */
     public static function createUserRaw(array $data)
     {
         $checkQuery = "SELECT id FROM users WHERE email = ? LIMIT 1";
@@ -162,7 +156,6 @@ class User extends Authenticatable
         try {
             DB::beginTransaction();
 
-            // Insert user tanpa username dan password
             $insertQuery = "
                 INSERT INTO users 
                     (name, first_name, middle_name, last_name, email, 
