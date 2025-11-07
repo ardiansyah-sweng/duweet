@@ -44,7 +44,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Indexes untuk performa (tanpa duplikat)
             $table->index(TransactionsColumns::TRANSACTION_GROUP_ID);
             $table->index([TransactionsColumns::USER_ACCOUNT_ID, TransactionsColumns::CREATED_AT]);
             $table->index([TransactionsColumns::FINANCIAL_ACCOUNT_ID, TransactionsColumns::CREATED_AT]);
