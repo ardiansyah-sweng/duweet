@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request;
 
-class FinancialAccountColumns extends Controller
+class FinancialAccountController extends Controller
 {
     private function rupiah(int|float $n): string
     {
