@@ -142,30 +142,19 @@ class User extends Model
     }
 
     /**
-     * Create user using raw query dengan validasi email yang robust
+     * Create user using raw query
      */
     public static function createUserRaw(array $data)
     {
-        // Validasi input dasar
-        if (empty($data['email'])) {
-            return 'Email harus diisi.';
-        }
-
-        // Validasi format email
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            return 'Format email tidak valid.';
+        $checkQuery = "SELECT id FROM users WHERE email = ? LIMIT 1";
+        $exists = DB::select($checkQuery, [$data['email']]);
+        
+        if (!empty($exists)) {
+            return 'Email sudah digunakan.';
         }
 
         try {
             DB::beginTransaction();
-
-            $now = now();
-            $usia = null;
-
-            // Hitung usia otomatis jika ada tanggal_lahir
-            if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
-                $usia = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR])->age;
-            }
 
             $insertQuery = "
                 INSERT INTO users 
@@ -176,6 +165,14 @@ class User extends Model
                 VALUES 
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
+
+            $now = now();
+
+            // Hitung usia otomatis jika ada tanggal_lahir
+            $usia = null;
+            if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
+                $usia = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR])->age;
+            }
 
             DB::insert($insertQuery, [
                 $data[UserColumns::NAME] ?? null,
@@ -217,14 +214,6 @@ class User extends Model
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            // Tangani specifically duplicate entry error
-            if (str_contains($e->getMessage(), 'Duplicate entry') || 
-                str_contains($e->getMessage(), '1062') ||
-                str_contains($e->getMessage(), 'unique')) {
-                return 'Email sudah digunakan.';
-            }
-            
             return 'Gagal menyimpan user ke database: ' . $e->getMessage();
         }
     }

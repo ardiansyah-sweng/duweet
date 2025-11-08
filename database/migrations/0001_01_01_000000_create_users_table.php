@@ -15,9 +15,9 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id(UserColumns::ID);
             $table->string(UserColumns::NAME)->nullable();
-            $table->string(UserColumns::FIRST_NAME)->nullable();
+            $table->string(UserColumns::FIRST_NAME);
             $table->string(UserColumns::MIDDLE_NAME)->nullable();
-            $table->string(UserColumns::LAST_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME);
             $table->string(UserColumns::EMAIL)->unique();
             $table->string(UserColumns::PROVINSI)->nullable();
             $table->string(UserColumns::KABUPATEN)->nullable();
@@ -28,8 +28,9 @@ return new class extends Migration
             $table->integer(UserColumns::BULAN_LAHIR)->nullable();
             $table->integer(UserColumns::TAHUN_LAHIR)->nullable();
             $table->integer(UserColumns::USIA)->nullable();
-            $table->timestamps();
         });
+
+        
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
