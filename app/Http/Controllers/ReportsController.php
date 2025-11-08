@@ -18,7 +18,7 @@ class ReportsController extends Controller
      * Query parameters:
      * - user_id: Filter by specific user (optional)
      */
-    public function transactionsPerUser(Request $request)
+    public function getTotalTransactionsPerUser(Request $request)
     {
         // Validate optional parameter
         $validator = Validator::make($request->all(), [
@@ -35,7 +35,7 @@ class ReportsController extends Controller
         $userId = $request->query('user_id');
 
         // Get transaction totals from model
-        $data = User::transactionTotals($userId);
+        $data = User::getTotalTransactionsPerUser($userId);
 
         return response()->json([
             'status' => 'success',

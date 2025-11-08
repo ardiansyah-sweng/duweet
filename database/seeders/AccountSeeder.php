@@ -12,6 +12,8 @@ class AccountSeeder extends Seeder
      */
     public function run(): void
     {
+        $tableName = config('db_tables.financial_account', 'financial_accounts');
+        
         // For SQLite - disable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = OFF;');
@@ -21,7 +23,7 @@ class AccountSeeder extends Seeder
         }
         
         // Truncate the table
-        DB::table('accounts')->truncate();
+        DB::table($tableName)->truncate();
         
         // Re-enable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
@@ -44,6 +46,8 @@ class AccountSeeder extends Seeder
      */
     private function insertAccount(array $accountData, ?int $parentId = null): int
     {
+        $tableName = config('db_tables.financial_account', 'financial_accounts');
+        
         // Prepare account data for insertion
         $account = [
             'parent_id' => $parentId,
@@ -61,7 +65,7 @@ class AccountSeeder extends Seeder
         ];
 
         // Insert the account and get the ID
-        $accountId = DB::table('accounts')->insertGetId($account);
+        $accountId = DB::table($tableName)->insertGetId($account);
 
         // Process children if they exist
         if (isset($accountData['children']) && is_array($accountData['children'])) {

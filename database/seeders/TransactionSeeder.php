@@ -2,108 +2,140 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Constants\TransactionColumns;
-use App\Constants\UserAccountColumns;
 
 class TransactionSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     /**
      * Run the database seeds.
+     * 
+     * Seeder untuk membuat data transaksi dummy.
+     * 
+     * Prerequisites:
+     * - AccountSeeder harus dijalankan terlebih dahulu (untuk financial accounts)
+     * - Database harus sudah memiliki users dan user_accounts
      */
     public function run(): void
     {
-        // Get all users
-        $users = DB::table('users')->get();
-        
-        if ($users->isEmpty()) {
-            $this->command->warn('No users found. Skipping transaction seeding.');
-            return;
+        // Get table names from config
+        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // ===== VALIDATION: Check prerequisites =====
+        $userAccountsCount = DB::table($userAccountsTable)->count();
+        if ($userAccountsCount === 0) {
+            throw new \Exception('No user accounts found! Please run UserSeeder and UserAccountSeeder first.');
         }
-        
-        // Get financial accounts
-        $financialAccounts = DB::table(config('db_tables.financial_account', 'financial_accounts'))
+
+        $financialAccountsCount = DB::table($financialAccountsTable)
             ->where('is_group', false)
+            ->count();
+
+        if ($financialAccountsCount === 0) {
+            throw new \Exception('No financial accounts found! Please run AccountSeeder first.');
+        }
+
+        // ===== GET USER ACCOUNTS =====
+        $userAccounts = DB::table($userAccountsTable)
+            ->select('id', 'id_user', 'username')
             ->limit(5)
             ->get();
-        
-        if ($financialAccounts->isEmpty()) {
-            $this->command->warn('No financial accounts found. Skipping transaction seeding.');
-            return;
+
+        if ($userAccounts->isEmpty()) {
+            throw new \Exception('No user accounts available for seeding!');
         }
-        
+
+        // ===== GET FINANCIAL ACCOUNTS =====
+        $financialAccounts = DB::table($financialAccountsTable)
+            ->where('is_group', false)
+            ->limit(10)
+            ->pluck('id')
+            ->toArray();
+
+        // ===== CREATE TRANSACTIONS =====
+        // Transaction templates untuk masing-masing user account
+        $transactionTemplates = [
+            // Template 1: 5 transaksi
+            [
+                ['amount' => 500000, 'description' => 'Gaji Bulanan', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 150000, 'description' => 'Belanja Bulanan', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 75000, 'description' => 'Transport', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 200000, 'description' => 'Bayar Listrik', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 300000, 'description' => 'Bonus Kinerja', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+            ],
+            // Template 2: 8 transaksi
+            [
+                ['amount' => 600000, 'description' => 'Gaji Bulanan', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 100000, 'description' => 'Belanja Groceries', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 50000, 'description' => 'Makan Siang', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 250000, 'description' => 'Bayar Air', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 400000, 'description' => 'Freelance Project', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 125000, 'description' => 'Bensin', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 80000, 'description' => 'Parkir Bulanan', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 175000, 'description' => 'Internet', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+            ],
+            // Template 3: 3 transaksi
+            [
+                ['amount' => 750000, 'description' => 'Gaji Bulanan', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 300000, 'description' => 'Belanja Elektronik', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 100000, 'description' => 'Makan di Restoran', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+            ],
+            // Template 4: 10 transaksi
+            [
+                ['amount' => 550000, 'description' => 'Gaji Bulanan', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 200000, 'description' => 'Belanja Pakaian', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 90000, 'description' => 'Kosmetik', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 150000, 'description' => 'Gym Membership', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 75000, 'description' => 'Kopi & Snack', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 300000, 'description' => 'Side Hustle', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 180000, 'description' => 'Streaming Services', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 220000, 'description' => 'Belanja Online', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 95000, 'description' => 'Pulsa', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 125000, 'description' => 'Hadiah Ulang Tahun', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+            ],
+            // Template 5: 6 transaksi
+            [
+                ['amount' => 650000, 'description' => 'Gaji Bulanan', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 275000, 'description' => 'Belanja Bulanan', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 120000, 'description' => 'Bayar Token Listrik', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 85000, 'description' => 'Transport Online', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+                ['amount' => 350000, 'description' => 'Konsultasi', 'entry_type' => 'debit', 'balance_effect' => 'increase'],
+                ['amount' => 165000, 'description' => 'Maintenance Motor', 'entry_type' => 'credit', 'balance_effect' => 'decrease'],
+            ],
+        ];
+
         $totalTransactions = 0;
-        
-        // Create transactions for EACH user
-        foreach ($users as $user) {
-            // Create or get user account for this user
-            $userAccount = DB::table('user_accounts')
-                ->where(UserAccountColumns::ID_USER, $user->id)
-                ->first();
-            
-            if (!$userAccount) {
-                // Create user account if not exists
-                $userAccountId = DB::table('user_accounts')->insertGetId([
-                    UserAccountColumns::ID_USER => $user->id,
-                    UserAccountColumns::USERNAME => strtolower(str_replace(' ', '', $user->name)),
-                    UserAccountColumns::EMAIL => $user->email,
-                    UserAccountColumns::PASSWORD => bcrypt('password'),
-                    UserAccountColumns::VERIFIED_AT => now(),
-                    UserAccountColumns::IS_ACTIVE => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+        $userStats = [];
+
+        foreach ($userAccounts as $index => $userAccount) {
+            // Get template for this user (cycle through templates if more users than templates)
+            $template = $transactionTemplates[$index % count($transactionTemplates)];
+
+            foreach ($template as $transaction) {
+                $transactionGroupId = Str::uuid()->toString();
+                $financialAccountId = $financialAccounts[array_rand($financialAccounts)];
+
+                DB::table($transactionsTable)->insert([
+                    'transaction_group_id' => $transactionGroupId,
+                    'user_account_id' => $userAccount->id,
+                    'financial_account_id' => $financialAccountId,
+                    'entry_type' => $transaction['entry_type'],
+                    'amount' => $transaction['amount'],
+                    'balance_effect' => $transaction['balance_effect'],
+                    'description' => $transaction['description'],
+                    'is_balance' => false,
+                    'created_at' => now()->subDays(rand(1, 30)),
+                    'updated_at' => now()->subDays(rand(1, 30)),
                 ]);
-            } else {
-                $userAccountId = $userAccount->id;
+
+                $totalTransactions++;
             }
-            
-            // Create random number of transactions per user (10-30 transactions)
-            $transactionCount = rand(10, 30);
-            $transactions = [];
-            
-            for ($i = 0; $i < $transactionCount; $i++) {
-                $groupId = Str::uuid()->toString();
-                $amount = rand(10000, 500000); // Random amount between 10k and 500k
-                $financialAccount = $financialAccounts->random();
-                
-                // Debit entry
-                $transactions[] = [
-                    TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
-                    TransactionColumns::USER_ACCOUNT_ID => $userAccountId,
-                    TransactionColumns::FINANCIAL_ACCOUNT_ID => $financialAccount->id,
-                    TransactionColumns::ENTRY_TYPE => 'debit',
-                    TransactionColumns::AMOUNT => $amount,
-                    TransactionColumns::BALANCE_EFFECT => 'increase',
-                    TransactionColumns::DESCRIPTION => 'Transaction for ' . $user->name . ' #' . ($i + 1) . ' - Debit',
-                    TransactionColumns::IS_BALANCE => false,
-                    'created_at' => now()->subDays(rand(0, 60)),
-                    'updated_at' => now(),
-                ];
-                
-                // Credit entry (matching debit)
-                $transactions[] = [
-                    TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
-                    TransactionColumns::USER_ACCOUNT_ID => $userAccountId,
-                    TransactionColumns::FINANCIAL_ACCOUNT_ID => $financialAccounts->random()->id,
-                    TransactionColumns::ENTRY_TYPE => 'credit',
-                    TransactionColumns::AMOUNT => $amount,
-                    TransactionColumns::BALANCE_EFFECT => 'decrease',
-                    TransactionColumns::DESCRIPTION => 'Transaction for ' . $user->name . ' #' . ($i + 1) . ' - Credit',
-                    TransactionColumns::IS_BALANCE => false,
-                    'created_at' => now()->subDays(rand(0, 60)),
-                    'updated_at' => now(),
-                ];
-            }
-            
-            // Insert transactions for this user
-            DB::table('transactions')->insert($transactions);
-            $totalTransactions += count($transactions);
-            
-            $this->command->info('Created ' . count($transactions) . ' transactions for user: ' . $user->name);
         }
-        
-        $this->command->info('Total: ' . $totalTransactions . ' sample transactions created for ' . $users->count() . ' users.');
     }
 }

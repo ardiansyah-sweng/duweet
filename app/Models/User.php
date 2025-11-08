@@ -54,13 +54,13 @@ class User extends Model
      * - total_debit & total_credit: Total money per type
      * - net_balance: Net balance (debit - credit)
      *
-     * Usage: \App\Models\User::transactionTotals();
+     * Usage: \App\Models\User::getTotalTransactionsPerUser();
      * Optional parameter: $userId
      *
      * @param  int|null  $userId  Filter by specific user ID
      * @return \Illuminate\Support\Collection
      */
-    public static function transactionTotals(?int $userId = null)
+    public static function getTotalTransactionsPerUser(?int $userId = null)
     {
         $selectFields = [
             // User Information
