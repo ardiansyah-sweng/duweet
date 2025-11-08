@@ -18,6 +18,7 @@ return new class extends Migration {
     {
         $this->table = config('db_tables.user_telephones', $this->table);
     }
+    
     /**
      * Run the migrations.
      */
@@ -27,6 +28,7 @@ return new class extends Migration {
             $table->id(UserTelephoneColumns::ID);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string(UserTelephoneColumns::NUMBER)->nullable();
+            $table->timestamps();
         });
     }
 
@@ -36,7 +38,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists($this->table);
+        Schema::dropIfExists('user_telephones');
         Schema::enableForeignKeyConstraints();
     }
 };
