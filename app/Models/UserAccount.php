@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+
+class UserAccount extends Model
+{
+    protected $table = 'user_accounts';
+
+
+
+    protected $hidden = [
+        'password',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
+        'password' => 'hashed',
+    ];
+
+    /**
+     * Get the user profile that owns this login account.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+    
+    /**
+     * Ambil user yang tidak login dalam periode tertentu (SQL murni).
+     *
+     * @param  \Carbon\Carbon|string  $tanggalMulai
+     * @param  \Carbon\Carbon|string  $tanggalSelesai
+     * @return array
+     */
+
+    public static function query_user_yang_tidak_login_dalam_periode_tertentu($tanggalMulai, $tanggalSelesai)
+    {
+        $sql = "
+        SELECT *
+        FROM user_accounts
+        WHERE last_login_at IS NULL
+           OR last_login_at NOT BETWEEN ? AND ?
+    ";
+    return DB::select($sql, [$tanggalMulai, $tanggalSelesai]);
+    }
+
+
+
+}
