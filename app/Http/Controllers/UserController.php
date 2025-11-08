@@ -59,37 +59,4 @@ class UserController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Get all users
-     */
-    public function getUsers(): JsonResponse
-    {
-        $users = User::with('telephones')->get();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $users
-        ]);
-    }
-
-    /**
-     * Get user by ID
-     */
-    public function getUser($id): JsonResponse
-    {
-        $user = User::with('telephones')->find($id);
-        
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $user
-        ]);
-    }
 }
