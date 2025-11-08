@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\FinancialAccount;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Models\UserAccount;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,15 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-        $this->call([
-            AccountSeeder::class,
-        ]);
-
-        Transaction::factory(50)->create();
+        User::factory(10)->create();
+        UserAccount::factory(15)->create();
+        
+        FinancialAccount::factory(20)->create();
+        FinancialAccount::factory(5)->group()->create();
+        
+        Transaction::factory(100)->create();
     }
 }
