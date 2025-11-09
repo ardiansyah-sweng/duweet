@@ -29,9 +29,10 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('email')->unique();
 
-            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
-            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
-            $table->date('tanggal_lahir')->nullable();
+            $table->unsignedTinyInteger('tanggal_lahir')->nullable(); // 1-31
+            $table->unsignedTinyInteger('bulan_lahir')->nullable();  // 1-12
+            $table->unsignedSmallInteger('tahun_lahir')->nullable(); // tahun lahir
+            $table->unsignedTinyInteger('usia')->nullable();         // 0–255
 
             // Tambahan umum Laravel
             $table->timestamp('email_verified_at')->nullable();

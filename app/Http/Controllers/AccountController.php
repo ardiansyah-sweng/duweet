@@ -19,22 +19,13 @@ class AccountController extends Controller
             'description'     => 'nullable|string',
         ]);
 
-        $financial_account = \App\Models\FinancialAccount::create([
+        $financial_account = \App\Models\FinancialAccount::createForUser([
+            'user_id'         => $validated['user_id'],
             'name'            => $validated['name'],
             'type'            => $validated['type'],
-            'balance'         => $validated['initial_balance'],
-            'initial_balance' => $validated['initial_balance'],
-            'is_group'        => false,
+            'initial_balance' => (int) $validated['initial_balance'],
             'description'     => $validated['description'] ?? null,
-            'is_active'       => true,
-        ]);
-
-        \App\Models\UserFinancialAccount::create([
-            'user_id'              => $validated['user_id'],
-            'financial_account_id' => $financial_account->id,
-            'balance'              => $financial_account->balance,
-            'initial_balance'      => $financial_account->initial_balance,
-            'is_active'            => true,
+            'is_group'        => false,
         ]);
 
         return response()->json([

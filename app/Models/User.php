@@ -62,20 +62,34 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    /**
+     * Hitung total liquid asset user.
+     * Sesuai PRD diasumsikan hanya tipe 'AS' (Asset) yang dianggap liquid
+     * (Jika ke depan ingin memasukkan LI, bisa ditambahkan lewat konfigurasi).
+     * - Hanya akun yang active
+     * - Hanya leaf account (is_group = false)
+     */
     public function totalLiquidAsset(): int
     {
-        return $this->financialAccounts()
-            ->whereIn('type', ['AS', 'LI'])
+        return (int) $this->financialAccounts()
+            ->where('financial_accounts.type', 'AS')
+            ->where('financial_accounts.is_group', false)
+            ->wherePivot('is_active', true)
             ->sum('user_financial_accounts.balance');
     }
 
+    /**
+     * Scope untuk menambahkan kolom agregat total_liquid_asset pada query users.
+     */
     public function scopeWithTotalLiquidAsset($query)
     {
         return $query->addSelect([
             'total_liquid_asset' => DB::table('user_financial_accounts as ufa')
                 ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
                 ->whereColumn('ufa.user_id', 'users.id')
-                ->whereIn('fa.type', ['AS','LI'])
+                ->where('fa.type', 'AS')
+                ->where('fa.is_group', false)
+                ->where('ufa.is_active', true)
                 ->selectRaw('COALESCE(SUM(ufa.balance),0)')
         ]);
     }
