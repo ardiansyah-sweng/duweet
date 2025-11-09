@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AccountSeeder extends Seeder
 {
@@ -12,6 +13,14 @@ class AccountSeeder extends Seeder
      */
     public function run(): void
     {
+        // If the legacy `accounts` table doesn't exist, skip this seeder to avoid errors.
+        if (! Schema::hasTable('accounts')) {
+            if ($this->command) {
+                $this->command->info("Skipping AccountSeeder: table 'accounts' does not exist.");
+            }
+            return;
+        }
+
         // For SQLite - disable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = OFF;');

@@ -13,16 +13,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
+        // Ensure test user exists (idempotent)
+        User::firstOrCreate([
             'email' => 'test@example.com',
+        ], [
+            'name' => 'Test User',
+            'password' => bcrypt('password'),
         ]);
 
-        // Seed accounts with real world data
+        // Seed financial accounts (use FinancialAccountSeeder)
         $this->call([
-            AccountSeeder::class,
+            FinancialAccountSeeder::class,
         ]);
     }
 }
