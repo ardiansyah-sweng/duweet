@@ -29,15 +29,15 @@ class FinancialAccount extends Model
      * Sesuaikan dengan nama konstanta Anda
      */
     protected $fillable = [
-        AccountColumns::PARENT_ID,
-        AccountColumns::NAME,
-        AccountColumns::TYPE,
-        AccountColumns::BALANCE,
-        AccountColumns::INITIAL_BALANCE,
-        AccountColumns::IS_GROUP,
-        AccountColumns::DESCRIPTION,
-        AccountColumns::IS_ACTIVE,
-        AccountColumns::SORT_ORDER,
-        AccountColumns::LEVEL,
+        FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::NAME,
+        FinancialAccountColumns::TYPE,
+        FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
     ];
 }
