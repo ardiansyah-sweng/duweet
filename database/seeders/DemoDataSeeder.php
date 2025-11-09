@@ -5,9 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User; // Asumsi Anda punya model User di app/Models/User.php
+use App\Models\User;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Schema; // <-- 1. TAMBAHKAN INI
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema; 
 
 class DemoDataSeeder extends Seeder
 {
@@ -16,81 +17,99 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
-        // 2. NONAKTIFKAN FOREIGN KEY CHECKS
-        Schema::disableForeignKeyConstraints();
-
-        // Dapatkan nama tabel dari config
+        // Ambil nama tabel dari konfigurasi
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
-        $transactionsTable = config('db_tables.transactions', 'transactions');
+        $transactionsTable = 'transactions'; // Ganti dari config jika bug persists, tapi kita pakai default dulu
+        $userAccountsTable = config('db_tables.user_account', 'user_accounts'); 
+        
+        // 🚨 SOLUSI MUTLAK: Menonaktifkan perintah DELETE yang menyebabkan bug timing
+        Schema::disableForeignKeyConstraints();
+        DB::reconnect(); 
+        
+        // 🔑 BARIS DELETE DIKOMENTARI UNTUK MENGHINDARI BUG TIMING PADA INSERT/DELETE
+        // DB::statement("DELETE FROM `{$transactionsTable}`"); 
+        // DB::statement("DELETE FROM `{$userAccountsTable}`");
+        // DB::statement("DELETE FROM `{$accountsTable}`");
+        // DB::statement("DELETE FROM `users`"); 
 
-        // Bersihkan data lama (sekarang aman karena foreign key dimatikan)
-        DB::table($transactionsTable)->truncate();
-        DB::table('user_accounts')->truncate(); 
-        DB::table($accountsTable)->truncate();
-        DB::table('users')->truncate();
-
-        // ---- 1. Buat User ----
+        // ---- 1. Buat User & User Account ----
         $user = User::create([
-            'name' => 'Demo User',
-            'email' => 'demo@duweet.com',
-            'password' => Hash::make('password'),
+            'name' => 'Demo User Lengkap',
+            'email' => 'demo_full@duweet.com', 
+            'password' => Hash::make('password'), 
         ]);
 
-        // ---- 2. Buat User Account (untuk login, sesuai PRD) ----
-        $userAccount = DB::table('user_accounts')->insertGetId([
-            'user_id' => $user->id,
-            'username' => 'demouser',
-            'email' => 'demo@duweet.com',
+        // Insert ke tabel user_accounts
+        $userAccount = DB::table($userAccountsTable)->insertGetId([
+            'id_user' => $user->id, 
+            'username' => 'demofull',
+            'email' => 'demo_full@duweet.com',
             'password' => Hash::make('password'),
             'is_active' => true,
-            'email_verified_at' => now(),
+            'verified_at' => now(), 
         ]);
 
-        // ---- 3. Buat Financial Account (Tipe 'IN' - Income) ----
+        // ---- 2. Buat Financial Accounts ----
         $incomeAccount = DB::table($accountsTable)->insertGetId([
-            'name' => 'Gaji Bulanan',
-            'type' => 'IN',
-            'balance' => 0,
-            'initial_balance' => 0,
-            'is_group' => false,
-            'is_active' => true,
-            'level' => 0,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // ---- 4. Buat Transaksi (Income) ----
-        
-        // Transaksi 1 (Bulan Ini)
-        DB::table($transactionsTable)->insert([
-            'transaction_group_id' => (string) Str::uuid(),
-            'user_account_id' => $userAccount, 
-            'financial_account_id' => $incomeAccount, 
-            'entry_type' => 'credit', 
-            'amount' => 5000000,
-            'balance_effect' => 'increase',
-            'description' => 'Gaji November',
-            'is_balance' => true,
-            'created_at' => now(), 
-            'updated_at' => now(),
-        ]);
-
-        // Transaksi 2 (Bulan Lalu)
-        DB::table($transactionsTable)->insert([
-            'transaction_group_id' => (string) Str::uuid(),
-            'user_account_id' => $userAccount,
-            'financial_account_id' => $incomeAccount,
-            'entry_type' => 'credit',
-            'amount' => 2500000,
-            'balance_effect' => 'increase',
-            'description' => 'Bonus Proyek Oktober',
-            'is_balance' => true,
-            'created_at' => now()->subMonth(), 
-            'updated_at' => now()->subMonth(),
+            'name' => 'Gaji Bulanan', 'type' => 'IN', 'balance' => 0, 'initial_balance' => 0, 'is_group' => false, 'is_active' => true, 'level' => 0, 'created_at' => now(), 'updated_at' => now(),
         ]);
         
-        // 3. AKTIFKAN KEMBALI FOREIGN KEY CHECKS
+        $expenseAccountRent = DB::table($accountsTable)->insertGetId([
+            'name' => 'Biaya Sewa / Cicilan', 'type' => 'EX', 'balance' => 0, 'initial_balance' => 0, 'is_group' => false, 'is_active' => true, 'level' => 0, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        // ---- 3. Buat Transaksi (Januari - Desember 2025) ----
+        
+        $startDate = Carbon::create(2025, 1, 1);
+        $endDate = Carbon::create(2025, 12, 1); 
+        $currentDate = $startDate->copy();
+        
+        $baseIncome = 8000000;
+        $baseRent = 2000000;
+
+        while ($currentDate->lte($endDate)) {
+            
+            $month = $currentDate->month;
+            $transactionDate = $currentDate->copy()->day(5);
+
+            // 1. PENDAPATAN
+            $incomeAmount = $baseIncome;
+            if ($month == 5) { // Bonus di bulan Mei
+                 $incomeAmount += 5000000;
+            }
+
+            DB::table($transactionsTable)->insert([
+                'transaction_group_id' => (string) Str::uuid(), 
+                'user_account_id' => $userAccount, 
+                'financial_account_id' => $incomeAccount, 
+                'entry_type' => 'credit', 
+                'amount' => $incomeAmount, 
+                'balance_effect' => 'increase', 
+                'description' => 'Gaji Bulanan ' . $transactionDate->format('M Y'), 
+                'is_balance' => true, 
+                'created_at' => $transactionDate, 
+                'updated_at' => $transactionDate,
+            ]);
+
+
+            // 2. PENGELUARAN
+            DB::table($transactionsTable)->insert([
+                'transaction_group_id' => (string) Str::uuid(), 
+                'user_account_id' => $userAccount, 
+                'financial_account_id' => $expenseAccountRent, 
+                'entry_type' => 'debit', 
+                'amount' => $baseRent, 
+                'balance_effect' => 'decrease', 
+                'description' => 'Biaya Sewa Bulanan ' . $transactionDate->format('M Y'), 
+                'is_balance' => true, 
+                'created_at' => $currentDate->copy()->day(1), 
+                'updated_at' => $currentDate->copy()->day(1),
+            ]);
+
+
+            $currentDate->addMonth();
+        }
+        
         Schema::enableForeignKeyConstraints();
     }
 }
-
