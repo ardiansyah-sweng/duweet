@@ -11,8 +11,14 @@ class UserAccount extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    // Nama tabel (opsional jika tabel = "user_accounts")
+    // Nama tabel sesuai config
     protected $table = 'user_accounts';
+
+    // Primary key
+    protected $primaryKey = 'id';
+
+    // Nonaktifkan timestamps karena migration tidak membuat created_at & updated_at
+    public $timestamps = false;
 
     // Kolom yang bisa diisi secara mass-assignment
     protected $fillable = [
@@ -20,17 +26,16 @@ class UserAccount extends Authenticatable
         'username',
         'email',
         'password',
-        'email_verified_at',
+        'verified_at',
         'is_active',
     ];
 
     // Hidden field saat diubah jadi JSON
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
-    // Tipe data otomatis dikonversi
+    // Casting tipe data
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
@@ -40,11 +45,12 @@ class UserAccount extends Authenticatable
      * Relasi ke model User
      * UserAccount dimiliki oleh satu User
      */
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class);
-    // }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
+    // Contoh tambahan relasi jika nanti ada transaksi
     // public function transactions()
     // {
     //     return $this->hasMany(Transaction::class, 'account_id');

@@ -24,7 +24,7 @@ class UserFinancialAccountSeeder extends Seeder
         foreach ($userIds as $userId) {
             foreach ($financialAccountIds as $accountId) {
                 $userFinancialAccounts[] = [
-                    'user_id' => $userId,
+                    'id_user' => $userId,
                     'financial_account_id' => $accountId,
                     'balance' => 1000000,
                     'initial_balance' => 1000000,

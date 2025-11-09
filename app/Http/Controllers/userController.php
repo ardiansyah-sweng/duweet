@@ -24,7 +24,7 @@ class UserController extends Controller
         try {
             // 1️⃣ Ambil semua user_account milik user
             $userAccountIds = DB::table('user_accounts')
-                ->where('user_id', $id)
+                ->where('id_user', $id)
                 ->pluck('id');
 
             // 2️⃣ Hapus semua transaksi yang terkait user_account
@@ -36,12 +36,12 @@ class UserController extends Controller
 
             // 3️⃣ Hapus semua user_financial_accounts milik user
             DB::table('user_financial_accounts')
-                ->where('user_id', $id)
+                ->where('id_user', $id)
                 ->delete();
 
             // 4️⃣ Hapus semua nomor telepon milik user
             DB::table('user_telephones')
-                ->where('user_id', $id)
+                ->where('id_user', $id)
                 ->delete();
 
             // 5️⃣ Hapus semua akun login milik user (user_accounts)

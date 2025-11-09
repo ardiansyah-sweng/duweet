@@ -18,7 +18,7 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
+            $table->foreignId('id_user')
                   ->constrained('users')
                   ->onDelete('cascade');
             
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Untuk mencegah duplikasi relasi user ↔ akun finansial
-            $table->unique(['user_id', 'financial_account_id']);
+            $table->unique(['id_user', 'financial_account_id']);
         });
     }
 

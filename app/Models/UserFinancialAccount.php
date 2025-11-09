@@ -12,7 +12,7 @@ class UserFinancialAccount extends Model
     protected $table = 'user_financial_accounts';
 
     protected $fillable = [
-        'user_id',
+        'id_user',
         'financial_account_id',
         'balance',
         'initial_balance',
