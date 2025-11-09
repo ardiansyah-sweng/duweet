@@ -20,8 +20,8 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-    'name','email','password',
-    'usia','bulan_lahir','tanggal_lahir',
+        'name','email','password',
+        'usia','bulan_lahir','tahun_lahir','tanggal_lahir',
     ];
 
     /**
@@ -43,7 +43,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'tanggal_lahir'     => 'date',
+            'password'          => 'hashed',
         ];
     }
 
@@ -72,7 +73,7 @@ class User extends Authenticatable
     public function totalLiquidAsset(): int
     {
         return (int) $this->financialAccounts()
-            ->where('financial_accounts.type', 'AS')
+            ->whereIn('financial_accounts.type', ['AS','LI'])
             ->where('financial_accounts.is_group', false)
             ->wherePivot('is_active', true)
             ->sum('user_financial_accounts.balance');
@@ -87,7 +88,7 @@ class User extends Authenticatable
             'total_liquid_asset' => DB::table('user_financial_accounts as ufa')
                 ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
                 ->whereColumn('ufa.user_id', 'users.id')
-                ->where('fa.type', 'AS')
+                ->whereIn('fa.type', ['AS','LI'])
                 ->where('fa.is_group', false)
                 ->where('ufa.is_active', true)
                 ->selectRaw('COALESCE(SUM(ufa.balance),0)')

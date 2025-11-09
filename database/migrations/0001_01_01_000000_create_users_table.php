@@ -29,10 +29,11 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('email')->unique();
 
-            $table->unsignedTinyInteger('tanggal_lahir')->nullable(); // 1-31
-            $table->unsignedTinyInteger('bulan_lahir')->nullable();  // 1-12
-            $table->unsignedSmallInteger('tahun_lahir')->nullable(); // tahun lahir
-            $table->unsignedTinyInteger('usia')->nullable();         // 0–255
+            // Ubah kembali ke model tanggal penuh sesuai kebutuhan aplikasi
+            $table->date('tanggal_lahir')->nullable();      // full birth date (YYYY-MM-DD)
+            $table->unsignedTinyInteger('bulan_lahir')->nullable();  // 1-12 (opsional indexing / legacy)
+            $table->unsignedSmallInteger('tahun_lahir')->nullable(); // tahun lahir (opsional indexing)
+            $table->unsignedTinyInteger('usia')->nullable();         // usia (denormalized)
 
             // Tambahan umum Laravel
             $table->timestamp('email_verified_at')->nullable();

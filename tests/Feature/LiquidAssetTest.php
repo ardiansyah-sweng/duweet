@@ -12,7 +12,7 @@ class LiquidAssetTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_total_liquid_asset_only_counts_active_leaf_asset_accounts(): void
+    public function test_total_liquid_asset_counts_active_leaf_as_and_li_accounts(): void
     {
         $user = User::factory()->create();
 
@@ -36,7 +36,7 @@ class LiquidAssetTest extends TestCase
             'balance' => 500, 'initial_balance' => 500, 'is_active' => false,
         ]);
 
-        // Liability (not counted)
+        // Liability (now counted as part of liquid per requirement)
         $fa3 = FinancialAccount::create([
             'name' => 'Debt', 'type' => 'LI', 'balance' => 700, 'initial_balance' => 700,
             'is_group' => false, 'description' => null, 'is_active' => true,
@@ -46,6 +46,7 @@ class LiquidAssetTest extends TestCase
             'balance' => 700, 'initial_balance' => 700, 'is_active' => true,
         ]);
 
-        $this->assertEquals(1000, $user->fresh()->totalLiquidAsset());
+        // AS(1000 active) + LI(700 active) = 1700. Inactive AS(500) excluded.
+        $this->assertEquals(1700, $user->fresh()->totalLiquidAsset());
     }
 }

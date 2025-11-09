@@ -15,18 +15,27 @@ class AccountController extends Controller
             'user_id'         => 'required|integer|exists:users,id',
             'name'            => 'required|string|max:100',
             'type'            => 'required|in:AS,LI,IN,EX,SP',
-            'initial_balance' => 'required|numeric|min:0',
+            'initial_balance' => 'required|numeric|min:0', // Catatan: LI negatif tidak diizinkan oleh validasi ini
             'description'     => 'nullable|string',
+            'parent_id'       => 'nullable|integer|exists:financial_accounts,id',
+            'is_group'        => 'sometimes|boolean',
         ]);
 
-        $financial_account = \App\Models\FinancialAccount::createForUser([
-            'user_id'         => $validated['user_id'],
-            'name'            => $validated['name'],
-            'type'            => $validated['type'],
-            'initial_balance' => (int) $validated['initial_balance'],
-            'description'     => $validated['description'] ?? null,
-            'is_group'        => false,
-        ]);
+        try {
+            $financial_account = \App\Models\FinancialAccount::createForUser([
+                'user_id'         => $validated['user_id'],
+                'name'            => $validated['name'],
+                'type'            => $validated['type'],
+                'initial_balance' => (int) $validated['initial_balance'],
+                'description'     => $validated['description'] ?? null,
+                'parent_id'       => $validated['parent_id'] ?? null,
+                'is_group'        => (bool)($validated['is_group'] ?? false),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Akun berhasil dibuat',

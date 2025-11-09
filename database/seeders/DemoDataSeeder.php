@@ -22,6 +22,7 @@ class DemoDataSeeder extends Seeder
                 'password'          => Hash::make('rahasia123'),
                 'usia'              => 21,
                 'bulan_lahir'       => 8,
+                'tahun_lahir'       => 2002,
                 'tanggal_lahir'     => '2002-08-15',
                 'email_verified_at' => $now,
                 'remember_token'    => Str::random(10),
@@ -35,6 +36,7 @@ class DemoDataSeeder extends Seeder
                 'password'          => Hash::make('rahasia123'),
                 'usia'              => 22,
                 'bulan_lahir'       => 11,
+                'tahun_lahir'       => 2001,
                 'tanggal_lahir'     => '2001-11-20',
                 'email_verified_at' => $now,
                 'remember_token'    => Str::random(10),
@@ -85,6 +87,15 @@ class DemoDataSeeder extends Seeder
             ]);
 
             DB::table('user_financial_accounts')->insert([
+                [
+                    'user_id'              => $userIdRafi,
+                    'financial_account_id' => $accIdKas,
+                    'initial_balance'      => 1000000,
+                    'balance'              => 1000000,
+                    'is_active'            => true,
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ],
                 [
                     'user_id'              => $userIdRafi,
                     'financial_account_id' => $accIdKas,

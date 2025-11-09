@@ -18,8 +18,8 @@ class ReportController extends Controller
                 ->leftJoin('user_financial_accounts as ufa', 'ufa.user_id', '=', 'u.id')
                 ->leftJoin('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
                 ->where('u.id', $id)
-                // Hanya tipe Asset yang dihitung sebagai liquid asset
-                ->where('fa.type', 'AS')
+                // Hitung tipe Asset (AS) dan Liability (LI) sebagai "liquid"
+                ->whereIn('fa.type', ['AS','LI'])
                 // Hanya leaf account (non-group)
                 ->where('fa.is_group', false)
                 // Hanya relasi yang aktif

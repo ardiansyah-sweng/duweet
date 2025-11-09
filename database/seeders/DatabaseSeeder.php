@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
                 'remember_token'    => Str::random(10),
                 'usia'              => 21,
                 'bulan_lahir'       => 8,
+                'tahun_lahir'       => 2002,
                 'tanggal_lahir'     => '2002-08-15',
                 'created_at'        => now(),
                 'updated_at'        => now(),
