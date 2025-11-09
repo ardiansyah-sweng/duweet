@@ -5,7 +5,6 @@ use App\Models\FinancialAccount;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\AccountColumns;
 
 return new class extends Migration
 {
@@ -15,7 +14,7 @@ return new class extends Migration
     {
         $this->table = config('db_tables.financial_account');
     }
-    
+
     /**
      * Run the migrations.
      */
@@ -36,7 +35,7 @@ return new class extends Migration
             $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
-            
+
             // Foreign key constraint
             $table->foreign(FinancialAccountColumns::PARENT_ID)->references(FinancialAccountColumns::ID)->on($this->table)->onDelete('cascade');
 
