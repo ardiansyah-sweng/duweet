@@ -18,18 +18,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create($this->table, function (Blueprint $table) {
-            $table->id();
-            $table->foreignId(UserAccountColumns::ID_USER)
-                ->constrained('users')
-                ->onDelete('cascade');
-
-            $table->string(UserAccountColumns::USERNAME)->unique();
-            $table->string(UserAccountColumns::EMAIL)->unique();
-            $table->string(UserAccountColumns::PASSWORD);
-            $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
-            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);           
-        });
+        // No-op: superseded by 2025_11_05_101756_create_user_accounts_table.php
+        // Dibiarkan kosong agar tidak bentrok saat test (sqlite in-memory)
     }
 
 

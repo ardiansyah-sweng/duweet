@@ -14,16 +14,16 @@ class ReportController extends Controller
     public function userLiquidAsset(int $id)
     {
         try {
-            $liquidTypes = ['AS', 'LI'];
-
             $row = DB::table('users as u')
                 ->leftJoin('user_financial_accounts as ufa', 'ufa.user_id', '=', 'u.id')
                 ->leftJoin('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
                 ->where('u.id', $id)
-                ->whereIn('fa.type', $liquidTypes)
-                ->where(function ($q) {
-                    $q->whereNull('ufa.is_active')->orWhere('ufa.is_active', 1);
-                })
+                // Hanya tipe Asset yang dihitung sebagai liquid asset
+                ->where('fa.type', 'AS')
+                // Hanya leaf account (non-group)
+                ->where('fa.is_group', false)
+                // Hanya relasi yang aktif
+                ->where('ufa.is_active', 1)
                 ->groupBy('u.id', 'u.name')
                 ->select([
                     'u.id',
