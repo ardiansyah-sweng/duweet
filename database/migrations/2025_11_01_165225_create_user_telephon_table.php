@@ -29,6 +29,11 @@ return new class extends Migration
                   ->on(config('db_tables.users', 'users'))
                   ->onDelete('cascade'); // Jika user dihapus, telepon ikut terhapus
         });
+
+        Schema::table($this->table, function (Blueprint $table) {
+            $table->index(Columns::NUMBER, 'idx_user_telephone_number');
+            $table->index(Columns::ID_USER, 'idx_user_telephone_user_id');
+        });
     }
 
     /**
