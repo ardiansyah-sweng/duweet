@@ -46,4 +46,39 @@ class Transaksi extends Model
 
         return Validator::make($data, $rules);
     }
+
+
+    public static function createValidated(array $data)
+	{
+		$validator = self::validator($data);
+		if ($validator->fails()) {
+			return $validator;
+		}
+
+		return self::create($data);
+	}
+
+	/**
+	 * Update a transaksi safely. Returns the model or Validator on failure.
+	 */
+	public function updateValidated(array $data)
+	{
+		$validator = self::validator($data, true);
+		if ($validator->fails()) {
+			return $validator;
+		}
+
+		$this->fill($data);
+		$this->save();
+
+		return $this;
+	}
+
+	/**
+	 * Simple helper to find by id or fail gracefully (return null).
+	 */
+	public static function findOrNull($id)
+	{
+		return self::find($id);
+	}
 }
