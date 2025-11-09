@@ -20,9 +20,10 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // Seed accounts with real world data
+        // Seed accounts and financial accounts for development/testing
         $this->call([
             AccountSeeder::class,
+            \Database\Seeders\FinancialAccountSeeder::class,
         ]);
     }
 }
