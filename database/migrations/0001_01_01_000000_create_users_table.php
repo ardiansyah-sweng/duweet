@@ -1,48 +1,59 @@
 <?php
 
-namespace App\Models;
+use App\Constants\UserColumns;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
-
-class User extends Model
+return new class extends Migration
 {
-    use HasFactory;
+    protected string $table;
 
-    protected $table = 'users';
-    protected $primaryKey = 'ID_User';
+    public function __construct(){
 
-    protected $fillable = [
-        'nama_awal',
-        'nama_tengah',
-        'nama_akhir',
-        'email',
-        'provinsi',
-        'kabupaten',
-        'kecamatan',
-        'jalan',
-        'kode_pos',
-        'nomor_telepon',
-        'tanggal',
-        'bulan',
-        'tahun',
-    ];
-
-    protected $casts = [
-        'nomor_telepon' => 'array', 
-    ];
-
- 
-    public function usia()
+    $this->table = config('db_tables.user');
+    }
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string(UserColumns::NAME);
+            $table->string(UserColumns::FIRST_NAME);
+            $table->string(UserColumns::MIDDLE_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME);
+            $table->string(UserColumns::EMAIL)->unique();
+            $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
+            $table->enum(UserColumns::JENIS_KELAMIN, ['L', 'P'])->nullable();
+            $table->string(UserColumns::PROVINSI)->nullable();
+            $table->string(UserColumns::KABUPATEN)->nullable();
+            $table->string(UserColumns::KECAMATAN)->nullable();
+            $table->string(UserColumns::JALAN)->nullable();
+            $table->string(UserColumns::KODE_POS)->nullable();
+            $table->timestamps();
+        });
 
-        $tanggal_lahir = Carbon::createFromDate($this->tahun, $this->bulan, $this->tanggal);
-        return $tanggal_lahir->age;
+        
+
+        Schema::create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
+        });
     }
 
-    public function getNamaLengkapAttribute()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
-        return trim("{$this->nama_awal} {$this->nama_tengah} {$this->nama_akhir}");
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('sessions');
     }
-}
+};
