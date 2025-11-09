@@ -3,14 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-<<<<<<< HEAD
-
-return new class extends Migration
-{
-    protected string $table = 'financial_accounts';
-
-=======
 use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns;
 
 return new class extends Migration
 {
@@ -21,7 +15,6 @@ return new class extends Migration
         $this->table = config('db_tables.financial_account');
     }
     
->>>>>>> 6f3325679e06485059f2a5f2fe38054cb01314bf
     /**
      * Run the migrations.
      */
@@ -29,30 +22,8 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-<<<<<<< HEAD
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->string('name', 100);
-            $table->enum('type', ['IN', 'EX', 'SP', 'LI', 'AS']);
-            $table->bigInteger('balance')->default(0);
-            $table->bigInteger('initial_balance')->default(0);
-            $table->boolean('is_group')->default(false);
-            $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->tinyInteger('sort_order')->default(0);
-            $table->tinyInteger('level')->default(0); // 0 = root, 1 = child, 2 = grandchild
-            $table->timestamps();
-
-            // Foreign key constraint
-            $table->foreign('parent_id')
-                ->references('id')
-                ->on($this->table)
-                ->onDelete('cascade');
-
-            // Indexes for performance
-            $table->index(['parent_id', 'sort_order']);
-            $table->index(['type', 'is_active']);
-            $table->index('level');
-=======
+          
+            // AccountColumns
             $table->unsignedBigInteger(AccountColumns::PARENT_ID)->nullable();
             $table->string(AccountColumns::NAME, 100);
             $table->enum(AccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
@@ -65,16 +36,34 @@ return new class extends Migration
             // $table->string('icon', 50)->nullable();
             $table->tinyInteger(AccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(AccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
+          
+            // FinancialAccountColumns
+            $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();
+            $table->string(FinancialAccountColumns::NAME, 100);
+            $table->enum(FinancialAccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
+            $table->bigInteger(FinancialAccountColumns::BALANCE)->default(0);
+            $table->bigInteger(FinancialAccountColumns::INITIAL_BALANCE)->default(0);
+            $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
+            $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
+            $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
+            
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
+            
+            $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
+            $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
             
             // Foreign key constraint
-            $table->foreign(AccountColumns::PARENT_ID)->references(AccountColumns::ID)->on($this->table)->onDelete('cascade');
+            $table->foreign(FinancialAccountColumns::PARENT_ID)
+              ->references(FinancialAccountColumns::ID)
+              ->on($this->table)
+              ->onDelete('cascade');
 
             // Indexes for performance
-            $table->index([AccountColumns::PARENT_ID, AccountColumns::SORT_ORDER]);
-            $table->index([AccountColumns::TYPE, AccountColumns::IS_ACTIVE]);
-            $table->index(AccountColumns::LEVEL);
->>>>>>> 6f3325679e06485059f2a5f2fe38054cb01314bf
+            $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
+            $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
+            $table->index(FinancialAccountColumns::LEVEL);
         });
     }
 
