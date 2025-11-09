@@ -25,7 +25,7 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             $table->string(UserAccountColumns::USERNAME)->unique();
-            $table->string(UserAccountColumns::EMAIL)->unique();
+            $table->string(UserAccountColumns::EMAIL);
             $table->string(UserAccountColumns::PASSWORD);
             $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
             $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);           
