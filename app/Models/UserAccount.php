@@ -11,14 +11,7 @@ class UserAccount extends Model
 {
     protected $table = 'user_accounts';
 
-    protected $fillable = [
-        UserAccountColumns::ID_USER,
-        UserAccountColumns::USERNAME,
-        UserAccountColumns::EMAIL,
-        UserAccountColumns::PASSWORD,
-        UserAccountColumns::VERIFIED_AT,
-        UserAccountColumns::IS_ACTIVE,
-    ];
+    protected $fillable = UserAccountColumns::getFillable();
 
     protected $casts = [
         UserAccountColumns::IS_ACTIVE => 'boolean',
