@@ -9,14 +9,14 @@ return new class extends Migration
 {
     protected string $table;
     protected string $financialAccountTable;
-    protected string $userAccountTable;
+    protected string $userAccount;
 
     public function __construct()
     {
     // table names are stored in config/db_tables.php
     $this->table = config('db_tables.transaction');
     $this->financialAccountTable = config('db_tables.financial_account');
-    $this->userAccountTable = config('db_tables.user_account');
+    $this->userAccount = config('db_tables.user_account');
     }
 
     /**
