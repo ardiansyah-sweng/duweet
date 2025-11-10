@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\UserAccountColumns;
+use App\Constants\UserTelephoneColumns;
 
 return new class extends Migration
 {
@@ -11,8 +11,9 @@ return new class extends Migration
 
     public function __construct()
     {
-        $this->table = config('db_tables.user_account');
+        $this->table = config('db_tables.user_telephone', 'user_telephones');
     }
+
     /**
      * Run the migrations.
      */
@@ -20,21 +21,15 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-            $table->foreignId(UserAccountColumns::ID_USER)
+            $table->foreignId(UserTelephoneColumns::USER_ID)
                 ->constrained('users')
                 ->onDelete('cascade');
-
-            $table->string(UserAccountColumns::USERNAME)->unique();
-            $table->string(UserAccountColumns::EMAIL)->unique();
-            $table->string(UserAccountColumns::PASSWORD);
-            $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
-            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
+            $table->string(UserTelephoneColumns::NUMBER)->nullable();
             
-            // Timestamps
-            $table->timestamps();
+            // Index untuk performa
+            $table->index(UserTelephoneColumns::USER_ID);
         });
     }
-
 
     /**
      * Reverse the migrations.
