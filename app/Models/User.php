@@ -45,4 +45,28 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * ===============================
+     * 🔗 Relasi antar tabel
+     * ===============================
+     */
+
+    // Relasi ke tabel user_accounts
+    public function accounts()
+    {
+        return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    // Relasi ke tabel user_financial_accounts
+    public function financialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+    }
+
+    // Relasi ke tabel user_telephones
+    public function telephones()
+    {
+        return $this->hasMany(UserTelephone::class, 'user_id');
+    }
 }
