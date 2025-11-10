@@ -1,0 +1,36 @@
+Seiring bertambahnya volume data dalam basis data hingga mendekati kapasitas maksimumnya, bagaimana dampaknya terhadap kinerja sistem seperti kecepatan akses dan efisiensi pengelolaan data?
+
+Jawabannya:
+1. Kecepatan akses menurun
+
+Saat jumlah data semakin besar, proses pencarian, pengurutan, dan join tabel membutuhkan waktu lebih lama.
+
+Sistem perlu membaca lebih banyak blok data dari disk, sehingga waktu respon query meningkat.
+
+
+
+2. Efisiensi pengelolaan data menurun
+
+Proses seperti backup, indexing, dan update membutuhkan waktu lebih lama karena ukuran data yang besar.
+
+Fragmentasi pada tabel dan indeks juga menurunkan efisiensi penyimpanan.
+
+
+
+3. Beban I/O dan memori meningkat
+
+Data yang melebihi kapasitas cache atau buffer pool memaksa sistem sering mengakses disk.
+
+Akibatnya, latency I/O meningkat dan throughput transaksi menurun.
+
+
+
+4. Kemungkinan terjadinya bottleneck dan locking
+
+Banyak transaksi yang mengakses data besar secara bersamaan dapat menimbulkan konflik (deadlock) dan memperlambat sistem.
+
+
+
+5. Risiko kerusakan atau kehilangan data meningkat
+
+Saat kapasitas hampir penuh, proses penulisan data baru bisa gagal, dan sistem menjadi tidak stabil.
