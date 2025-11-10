@@ -4,24 +4,27 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Constants\UserAccountColumns;
 
 class UserAccount extends Model
 {
     use HasFactory;
 
-    // Kolom yang boleh diisi massal (mass assignment)
-    protected $fillable = [
-        'user_id',
-        'username',
-        'email',    
-        'password',
-        'email_verified_at',
-        'is_active',
+    protected $table = 'user_accounts';
+    public $timestamps = false;
+
+    protected $casts = [
+        UserAccountColumns::IS_ACTIVE   => 'boolean',
+        UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
-    public $timestamps = false;
-    public function user()
+    public function getFillable()
     {
-        return $this->belongsTo(User::class);
+        return UserAccountColumns::getFillable();
+    }
+
+    public function getKeyName()
+    {
+        return UserAccountColumns::getPrimaryKey();
     }
 }

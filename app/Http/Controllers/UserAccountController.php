@@ -1,33 +1,40 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\UserAccount;
+use App\Constants\UserAccountColumns;
 
 class UserAccountController extends Controller
 {
     // Fungsi untuk query insert
     public function store(Request $request)
     {
-
         $validated = $request->validate([
-            'user_id' => 'required|integer',
-            'username' => 'required|string|unique:user_accounts,username',
-            'email' => 'required|email|unique:user_accounts,email',
-            'password' => 'required|string|min:6',
+            UserAccountColumns::ID_USER     => 'required|integer',
+            UserAccountColumns::USERNAME    => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME,
+            UserAccountColumns::EMAIL       => 'required|email|unique:user_accounts,' . UserAccountColumns::EMAIL,
+            UserAccountColumns::PASSWORD    => 'required|string|min:6',
         ]);
+
+        // Hash password
+        $validated[UserAccountColumns::PASSWORD] = Hash::make($validated[UserAccountColumns::PASSWORD]);
         
-        $validated['password'] = Hash::make($validated['password']);
-        $validated['email_verified_at'] = now();
-        $validated['is_active'] = true;
+        // Tambahan kolom lain
+        $validated[UserAccountColumns::VERIFIED_AT] = now();
+        $validated[UserAccountColumns::IS_ACTIVE]   = true;
 
         // Simpan ke database menggunakan model
         $userAccount = UserAccount::create($validated);
 
         return response()->json([
             'message' => 'UserAccount berhasil ditambahkan!',
-            'data' => $request->only(['username', 'email'])
+            'data' => [
+                UserAccountColumns::USERNAME => $userAccount->{UserAccountColumns::USERNAME},
+                UserAccountColumns::EMAIL    => $userAccount->{UserAccountColumns::EMAIL},
+            ],
         ]);
     }
 }
