@@ -45,4 +45,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relationship: user has many user_account_totals
+     */
+    public function accountTotals()
+    {
+        return $this->hasMany(\App\Models\UserAccountTotal::class, 'user_id');
+    }
 }
