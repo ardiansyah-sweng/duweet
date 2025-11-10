@@ -11,8 +11,6 @@ class UserColumns
     public const MIDDLE_NAME    = 'middle_name';      // Nama tengah (nullable)
     public const LAST_NAME      = 'last_name';        // Nama belakang (nullable)
     public const EMAIL          = 'email';            // Email utama (unique)
-    public const PHOTO          = 'photo';            // Foto profil user
-    public const PREFERENCE     = 'preference';       // Preferensi user
 
     // Data Alamat (Users)
     public const PROVINSI       = 'provinsi';         // Nama provinsi tempat tinggal
@@ -44,9 +42,6 @@ class UserColumns
             self::BULAN_LAHIR,
             self::TAHUN_LAHIR,
             self::USIA,
-            self::PHOTO,//menambahkan photo user
-            self::PREFERENCE,//menambahkan preference user
-
         ];
     }
 
