@@ -4,7 +4,7 @@ namespace App\Constants;
 
 class TransactionColumns
 {
-    // Kunci utama
+    //  Kunci utama
     public const ID = 'id';
 
     // Relasi antar tabel
