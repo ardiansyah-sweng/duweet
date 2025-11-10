@@ -55,25 +55,25 @@ class DemoDataSeedeer extends Seeder
              * 2️⃣ USER ACCOUNTS (login credentials)
              * ---------------------------------------------------- */
             $uaRafi = DB::table('user_accounts')->insertGetId([
-                'user_id'           => $userRafi,
+                'id_user'           => $userRafi,
                 'username'          => 'Dimas',
                 'email'             => 'dimas@example.com',
                 'password'          => Hash::make('rahasia123'),
-                'email_verified_at' => $now,
+                'verified_at' => $now,
                 'is_active'         => true,
-                'created_at'        => $now,
-                'updated_at'        => $now,
+                // 'created_at'        => $now,
+                // 'updated_at'        => $now,
             ]);
 
             $uaAndi = DB::table('user_accounts')->insertGetId([
-                'user_id'           => $userAndi,
+                'id_user'           => $userAndi,
                 'username'          => 'Sarah',
                 'email'             => 'sarah@example.com',
                 'password'          => Hash::make('rahasia123'),
-                'email_verified_at' => $now,
+                'verified_at' => $now,
                 'is_active'         => false, // Nonaktif untuk uji query
-                'created_at'        => $now,
-                'updated_at'        => $now,
+                // 'created_at'        => $now,
+                // 'updated_at'        => $now,
             ]);
 
             // Budi tidak punya akun login — untuk menguji “tanpa user_account”

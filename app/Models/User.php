@@ -105,23 +105,32 @@ class User extends Authenticatable
     $sortDir  = strtolower($norm($filters['sort_dir'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
 
     // SELECT selalu pakai alias yang eksplisit
-    $query->from('users')
-          ->select([
-              'users.id',
-              'users.name',
-              'users.email',
-              DB::raw('COALESCE(ua.username, "") as username'),
-              'users.created_at',
-          ]);
+    // Build select list depending on whether user_accounts join will be added
+    $select = [
+        'users.id',
+        'users.name',
+        'users.email',
+        'users.created_at',
+    ];
+
+    // We'll append a username expression later after checking table/column availability
+    $query->from('users')->select($select);
 
     // Join ke user_accounts hanya jika tabel (dan kolom) tersedia
     $hasUA   = Schema::hasTable('user_accounts');
     $hasUser = $hasUA && Schema::hasColumn('user_accounts', 'user_id');
-    $hasUname= $hasUA && Schema::hasColumn('user_accounts', 'username');
+    // Ensure username is considered available only when the join can be made (user_id exists)
+    $hasUname= $hasUA && $hasUser && Schema::hasColumn('user_accounts', 'username');
 
     if ($hasUA && $hasUser) {
         $query->leftJoin('user_accounts as ua', 'ua.user_id', '=', 'users.id');
-        // kalau tidak ada kolom username, fallback jadi string kosong via COALESCE di SELECT
+        // jika kolom username tersedia gunakan COALESCE terhadap ua.username
+        if ($hasUname) {
+            $query->addSelect(DB::raw('COALESCE(ua.username, "") as username'));
+        } else {
+            // fallback jadi string kosong
+            $query->addSelect(DB::raw('"" as username'));
+        }
     } else {
         // Pastikan SELECT tetap aman saat tidak ada join
         $query->addSelect(DB::raw('"" as username'));
