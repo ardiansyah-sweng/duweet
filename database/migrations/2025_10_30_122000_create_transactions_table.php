@@ -8,15 +8,15 @@ use App\Constants\TransactionColumns;
 return new class extends Migration
 {
     protected string $table;
-    protected string $financialAccountTable;
     protected string $userAccount;
+    protected string $financialAccountTable;
 
     public function __construct()
     {
-    // table names are stored in config/db_tables.php
-    $this->table = config('db_tables.transaction');
-    $this->financialAccountTable = config('db_tables.financial_account');
-    $this->userAccount = config('db_tables.user_account');
+        // table names are stored in config/db_tables.php
+        $this->table = config('db_tables.transaction');
+        $this->userAccount = config('db_tables.user_account');
+        $this->financialAccountTable = config('db_tables.financial_account');
     }
 
     /**
@@ -27,12 +27,12 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
 
-            // Grouping id to tie debit-credit pairs
-            $table->string(TransactionColumns::TRANSACTION_GROUP_ID, 36)->nullable(false)->index();
-
-            // References to user_accounts and financial_accounts
+            // Foreign key references (urutan: user_account -> financial_account)
             $table->unsignedBigInteger(TransactionColumns::USER_ACCOUNT_ID)->nullable(false)->index();
             $table->unsignedBigInteger(TransactionColumns::FINANCIAL_ACCOUNT_ID)->nullable(false)->index();
+
+            // Grouping id to tie debit-credit pairs
+            $table->string(TransactionColumns::TRANSACTION_GROUP_ID, 36)->nullable(false)->index();
 
             // Transaction details
             $table->enum(TransactionColumns::ENTRY_TYPE, ['debit', 'credit']);
@@ -43,16 +43,16 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Foreign keys
-        $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
-            ->references('id')
-            ->on($this->userAccountTable)
-            ->onDelete('cascade');
+            // Foreign key constraints
+            $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
+                ->references('id')
+                ->on($this->userAccount)
+                ->onDelete('cascade');
 
             $table->foreign(TransactionColumns::FINANCIAL_ACCOUNT_ID)
-                  ->references('id')
-                  ->on($this->financialAccountTable)
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on($this->financialAccountTable)
+                ->onDelete('cascade');
 
             // Additional indexes for common filters
             $table->index([TransactionColumns::ENTRY_TYPE, TransactionColumns::CREATED_AT]);
