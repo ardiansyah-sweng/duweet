@@ -46,7 +46,7 @@ return new class extends Migration
             // Foreign key constraints
             $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
                 ->references('id')
-                ->on($this->userAccount)
+                ->on($this->userAccountTable)
                 ->onDelete('cascade');
 
             $table->foreign(TransactionColumns::FINANCIAL_ACCOUNT_ID)
