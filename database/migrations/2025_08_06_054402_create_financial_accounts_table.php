@@ -11,7 +11,7 @@ return new class extends Migration
 
     public function __construct()
     {
-        $this->table = config('db_tables.financial_account');
+    $this->table = config('db_tables.financial_account');
     }
     
     /**
