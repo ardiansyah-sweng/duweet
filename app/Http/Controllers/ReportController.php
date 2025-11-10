@@ -3,6 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\FinancialAccount;
+use App\Models\UserFinancialAccount;
+
+
+use App\Constants\UserColumns;
+use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
 
 class ReportController extends Controller
 {
