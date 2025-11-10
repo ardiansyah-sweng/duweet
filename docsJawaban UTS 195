@@ -1,0 +1,11 @@
+Dampak langsung:
+- Latency meningkat: pencarian/scan tabel besar tanpa index menjadi lambat (full table scan).
+- Throughput turun: lebih banyak I/O (disk) → lebih sedikit request yang dapat dilayani per detik.
+- Locking/contention: operasi tulis bisa memicu lock yang memblokir pembacaan/penulisan.
+- Performa backup/maintenance: backup, restore, vacuum/garbage collection memakan waktu lebih lama.
+- Ukuran indeks & cache: indeks besar bisa melebihi cache/RAM → lebih sering membaca dari disk.
+- Biaya: perlu storage lebih, instance lebih kuat → biaya naik.
+Penyebab teknis utama :
+- Tidak terindex dengan baik 
+- Query tidak efisien
+- Skema desain tidak sesuai
