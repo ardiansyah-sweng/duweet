@@ -1,0 +1,13 @@
+
+seiring bertambahnya data dalam basis data hingga mendekati kapasitas maksimumnya, kinerja sistemm umumnya akan mengalami penurunan. 
+hal ini karena karena sistem harus menampung dan memproses volume data yang semakin besar, sehingga beban kerja pada CPU, memori, dan penyimpanan meningkat.
+Proses akses,pencarian data menjadi lebih lambat, terutama jika struktur indeks dan manajemen penyimpanannya tidak di optimalkan.
+efesiensi pengelola data juga menurun juga karena ruang penyimpanan hampir penuh dapat menyebabkan fragmentasi, menurunkan performa i/o, 
+serta memperlama waktu respon saat menjalankan query.
+
+jumlah entitas dan relasi antar tabel seperti antara users dan user_accounts juga memengaruhi performa. Semakin kompleks relasinya 
+(misalnya banyak foreign key atau join antar tabel), semakin besar pula beban proses query yang dilakukan sistem. Jika tidak dioptimasi dengan indeks, normalisasi, 
+atau caching, maka efisiensi pengelolaan data menurun dan sistem bisa terasa lambat bahkan berpotensi error ketika menangani data dalam jumlah besar.
+
+`terus struktur penyimpanan bisa mengalami fragmentasi yang membuat proses baca tulis data makin tidak efesien. untuk menghindari hal hal tersebut, biasanya dilakukan
+beberapa lanngkah seperti membuat index pada tabel, melakukan pembersih data yang sudah tidak dipakai, dan memperbesar kapasitas penyimpanan. 
