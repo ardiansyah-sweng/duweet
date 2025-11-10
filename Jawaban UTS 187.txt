@@ -1,0 +1,21 @@
+Dampak Peningkatan Volume Data Pada Kinerja Sistem
+
+Dampak dari peningkatan volume data hingga kapasitas maks secara drastic akan menurunkan kinerja siste sistemnya,baik dari sisi kecepatan akses maupun efisiensi pengelolaan.penurunan ini terlihat pada beban setiap elemen dalam perancangan basis data.
+
+Dampak-Dampak nya :
+Peningkatan Disk input/output :
+Semakin Besar Volume data,maka semakin besar pula ukuran file data dan file indekx secara keseluruhan.Peningkatan I/O adalah penyebab Utama bottleneck kinerja.
+
+
+Pelambatan Akses Data Utama (PK) :
+setiap pencarian data berdasarkan PK membutuhkan Langkah penulusuran(traversal) yang lebih banyak,sehingga Waktu pengambilan data (fetch time) secara keseluruhan meningkat.
+
+
+Penurunan Kecepatan Operasi tulis (Unique Constraint) :
+Dengan volme data yang tinggi, memindai seluruh indeks unik untuk menverivikasi ketiadaan suplikasi menjadi proses yang memakan Waktu dan sumber daya komputasi yang tinggi sehingga memperlambat proses penulisan data.
+
+Krisis memori dan Buffer Thrashing (pemilihan indeks):
+Jika Volume data dan indeks terlalu besar untuk di tamping di RAM,database akan sering melakukan Buffer Thrashing (memindahkan data indeks dari memori ke disk dan sebaliknya. hal ini menyebabkan kinerja jadi anjlok drastic karena system harus menunggu operasi disk nya.
+
+Peningkatan Beban TRansaksional (Foreign Key)
+Ketika data pada table induk di hapus atau di perbarui(misalnya,menghapus User yang memiliki ribuan post),system harus memeriksa atau memproses semua barisnya terkait di table anak yang jumlah nya massif.hail ini yang memperlama Waktu penyelesaian transaksi dan membuat proses maintenance menjadi tidak efisien.
