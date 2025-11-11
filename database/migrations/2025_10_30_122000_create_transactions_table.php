@@ -24,15 +24,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Step 1: Create table structure first
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
 
-            // Foreign key references (urutan: user_account -> financial_account)
-            $table->unsignedBigInteger(TransactionColumns::USER_ACCOUNT_ID)->nullable(false)->index();
-            $table->unsignedBigInteger(TransactionColumns::FINANCIAL_ACCOUNT_ID)->nullable(false)->index();
+            // Foreign key columns (without constraints yet)
+            $table->unsignedBigInteger(TransactionColumns::USER_ACCOUNT_ID)->index();
+            $table->unsignedBigInteger(TransactionColumns::FINANCIAL_ACCOUNT_ID)->index();
 
             // Grouping id to tie debit-credit pairs
-            $table->string(TransactionColumns::TRANSACTION_GROUP_ID, 36)->nullable(false)->index();
+            $table->string(TransactionColumns::TRANSACTION_GROUP_ID, 36)->index();
 
             // Transaction details
             $table->enum(TransactionColumns::ENTRY_TYPE, ['debit', 'credit']);
@@ -43,19 +44,23 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Foreign key constraints
+            // Composite index for filtering
+            $table->index([TransactionColumns::ENTRY_TYPE, TransactionColumns::CREATED_AT]);
+        });
+
+        // Step 2: Add foreign key constraints after table exists
+        Schema::table($this->table, function (Blueprint $table) {
             $table->foreign(TransactionColumns::USER_ACCOUNT_ID)
                 ->references('id')
                 ->on($this->userAccountTable)
-                ->onDelete('cascade');
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
 
             $table->foreign(TransactionColumns::FINANCIAL_ACCOUNT_ID)
                 ->references('id')
                 ->on($this->financialAccountTable)
-                ->onDelete('cascade');
-
-            // Additional indexes for common filters
-            $table->index([TransactionColumns::ENTRY_TYPE, TransactionColumns::CREATED_AT]);
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
         });
     }
 
