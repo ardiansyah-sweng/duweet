@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-// use Illuminate\Support\Facades\Schema; // HAPUS INI
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,11 +11,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Kontrol Foreign Key sudah dipindahkan ke DemoDataSeeder.php
-        
+        // Run seeders in order: users -> user_accounts -> transactions
         $this->call([
-            DemoDataSeeder::class, 
-            // Panggil Seeder lain di sini jika ada...
+            UserSeeder::class,
+            UserAccountSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
