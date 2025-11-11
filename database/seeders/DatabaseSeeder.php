@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+<<<<<<< HEAD
 use App\Models\User;
+=======
+>>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -11,6 +14,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+<<<<<<< HEAD
         User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
@@ -29,6 +33,12 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             DemoDataSeeder::class,
+=======
+        $this->call([
+            UserSeeder::class,
+            UserAccountSeeder::class,
+            //AccountSeeder::class,
+>>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
         ]);
     }
 }

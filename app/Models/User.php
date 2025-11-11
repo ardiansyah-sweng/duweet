@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\DB;
+=======
+use App\Models\UserAccount;
+>>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
 
 class User extends Authenticatable
 {
@@ -19,9 +23,32 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    /**
+     * Disable automatic timestamps because users table does not have created_at/updated_at
+     *
+     * @var bool
+     */
+    public $timestamps = false;
     protected $fillable = [
+<<<<<<< HEAD
         'name','email','password',
         'usia','bulan_lahir','tahun_lahir','tanggal_lahir',
+=======
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
+>>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
     ];
 
     /**
@@ -35,17 +62,28 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
+    /**
+     * One user can have many user accounts (credentials)
+     */
+    public function userAccounts()
     {
+<<<<<<< HEAD
         return [
             'email_verified_at' => 'datetime',
             'tanggal_lahir'     => 'date',
             'password'          => 'hashed',
         ];
+=======
+        return $this->hasMany(UserAccount::class, 'id_user');
+>>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
     }
 
     public function accounts() {
