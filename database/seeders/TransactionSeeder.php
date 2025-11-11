@@ -9,65 +9,137 @@ use Illuminate\Support\Str;
 
 class TransactionSeeder extends Seeder
 {
+    // Konstanta untuk nama akun yang sering digunakan
+    private const BCA_AYAH = 'BCA Ayah';
+    private const TAGIHAN_LISTRIK = 'Tagihan Listrik';
+    private const TAGIHAN_INTERNET = 'Tagihan Internet dan Komunikasi';
+    private const TAGIHAN_AIR_PDAM = 'Tagihan Air PDAM';
+    private const RDN_MIRAE = 'RDN - Mirae';
+    private const BIAYA_TRANSPORTASI = 'Transportation';
+    private const BIAYA_EDUCATION = 'Education';
+    private const BIAYA_HIBURAN_LIBURAN = 'Hiburan dan Liburan';
+    private const BIAYA_FOOD_DINING = 'Food & Dining';
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        // === TRANSAKSI 1: Pembayaran Tagihan Listrik ===
-        $this->createElectricityBillTransaction();
-        
-        // === TRANSAKSI 2: Pembayaran Tagihan Air PDAM ===
-        $this->createWaterBillTransaction();
+        $userAccountId = 1;
+        $transactionDate = '2025-11-10 00:00:00';
+
+        // Data transaksi yang akan dibuat
+        $transactionData = [
+            [
+                'description' => 'Pembayaran tagihan listrik bulan November 2025',
+                'debit_account' => self::TAGIHAN_LISTRIK,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 315055,
+            ],
+            [
+                'description' => 'Pembayaran tagihan air PDAM bulan November 2025',
+                'debit_account' => self::TAGIHAN_AIR_PDAM,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 93000,
+            ],
+            [
+                'description' => 'Transfer dana investasi ke RDN Mirae',
+                'debit_account' => self::RDN_MIRAE,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 100000000,
+            ],
+            [
+                'description' => 'Pembayaran tagihan IndiHome bulan November 2025',
+                'debit_account' => self::TAGIHAN_INTERNET,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 290157,
+            ],
+            [
+                'description' => 'Bayar ongkir Kaos Ronin',
+                'debit_account' => self::BIAYA_TRANSPORTASI,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 9000,
+            ],
+            [
+                'description' => 'Biaya Bensin Brio KRKB Gembiraloka KK BCA 08-10-2025',
+                'debit_account' => self::BIAYA_TRANSPORTASI,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 364000,
+            ],
+            [
+                'description' => 'Biaya Github Copilot bulanan $10 x 16883 KKBCA 04-10-2025',
+                'debit_account' => self::BIAYA_EDUCATION,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 168337,
+            ],
+            [
+                'description' => 'Biaya langganan Netflix bulan November 2025 KKBCA 09-10-2025',
+                'debit_account' => self::BIAYA_HIBURAN_LIBURAN,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 65000,
+            ],
+            [
+                'description' => 'Biaya makan keluarga dengan mas Heri Maulana di Restoran Klatea Yk KKBC 08-10-2025',
+                'debit_account' => self::BIAYA_FOOD_DINING,
+                'credit_account' => self::BCA_AYAH,
+                'amount' => 533720,
+            ],
+        ];
+
+        // Proses setiap transaksi
+        foreach ($transactionData as $data) {
+            $this->createDoubleEntryTransaction(
+                $userAccountId,
+                $transactionDate,
+                $data['description'],
+                $data['debit_account'],
+                $data['credit_account'],
+                $data['amount']
+            );
+        }
     }
-    
+
     /**
-     * Transaksi pembayaran tagihan listrik
+     * Membuat transaksi double entry (debit & kredit)
      */
-    private function createElectricityBillTransaction(): void
-    {
+    private function createDoubleEntryTransaction(
+        int $userAccountId,
+        string $transactionDate,
+        string $description,
+        string $debitAccountName,
+        string $creditAccountName,
+        int $amount
+    ): void {
         // Generate UUID untuk grup transaksi
         $transactionGroupId = Str::uuid()->toString();
-        
-        // Tanggal transaksi: 10/11/2025
-        $transactionDate = '2025-11-10 00:00:00';
-        
-        // User account ID (ID yang sebenarnya dari database)
-        $userAccountId = 1;
-        
-        // Cari ID financial account berdasarkan nama
-        $bcaAyahId = DB::table(config('db_tables.financial_account', 'financial_accounts'))
-            ->where('name', 'BCA Ayah')
-            ->value('id');
-            
-        $tagihanListrikId = DB::table(config('db_tables.financial_account', 'financial_accounts'))
-            ->where('name', 'Tagihan Listrik')
-            ->value('id');
-        
+
+        // Ambil ID financial accounts
+        $debitAccountId = $this->getFinancialAccountId($debitAccountName);
+        $creditAccountId = $this->getFinancialAccountId($creditAccountName);
+
         $transactions = [
-            // Transaksi Debit - Tagihan Listrik
+            // Transaksi Debit
             [
                 'transaction_group_id' => $transactionGroupId,
                 'user_account_id' => $userAccountId,
-                'financial_account_id' => $tagihanListrikId,
+                'financial_account_id' => $debitAccountId,
                 'entry_type' => 'debit',
-                'amount' => 321000,
+                'amount' => $amount,
                 'balance_effect' => 'increase',
-                'description' => 'Pembayaran tagihan listrik bulan November 2025',
+                'description' => $description,
                 'is_balance' => false,
                 'created_at' => $transactionDate,
                 'updated_at' => $transactionDate,
             ],
-            
-            // Transaksi Kredit - BCA Ayah
+            // Transaksi Kredit
             [
                 'transaction_group_id' => $transactionGroupId,
                 'user_account_id' => $userAccountId,
-                'financial_account_id' => $bcaAyahId,
+                'financial_account_id' => $creditAccountId,
                 'entry_type' => 'kredit',
-                'amount' => 321000,
+                'amount' => $amount,
                 'balance_effect' => 'decrease',
-                'description' => 'Pembayaran tagihan listrik dari rekening BCA Ayah',
+                'description' => $description . ' (pembayaran dari ' . $creditAccountName . ')',
                 'is_balance' => false,
                 'created_at' => $transactionDate,
                 'updated_at' => $transactionDate,
@@ -77,84 +149,26 @@ class TransactionSeeder extends Seeder
         // Insert transaksi ke database
         foreach ($transactions as $transaction) {
             DB::table(config('db_tables.transaction', 'transactions'))->insert($transaction);
-            
             $this->command->info("Created transaction: {$transaction['entry_type']} - {$transaction['description']} (Amount: Rp " . number_format($transaction['amount']) . ")");
         }
-        
-        // Update balance di financial accounts
+
+        // Update balance
         $this->updateFinancialAccountBalances($transactions);
-        
-        $this->command->info("Electricity bill transaction group created with ID: {$transactionGroupId}");
-        $this->command->info("Total electricity transactions created: " . count($transactions));
+
+        $this->command->info("Transaction group created with ID: {$transactionGroupId}");
+        $this->command->info("Total transactions created: " . count($transactions));
     }
-    
+
     /**
-     * Transaksi pembayaran tagihan air PDAM
+     * Ambil ID financial account berdasarkan nama
      */
-    private function createWaterBillTransaction(): void
+    private function getFinancialAccountId(string $accountName): int
     {
-        // Generate UUID untuk grup transaksi baru
-        $transactionGroupId = Str::uuid()->toString();
-        
-        // Tanggal transaksi: 10/11/2025
-        $transactionDate = '2025-11-10 00:00:00';
-        
-        // User account ID (ID yang sebenarnya dari database)
-        $userAccountId = 1;
-        
-        // Cari ID financial account berdasarkan nama
-        $bcaAyahId = DB::table(config('db_tables.financial_account', 'financial_accounts'))
-            ->where('name', 'BCA Ayah')
+        return DB::table(config('db_tables.financial_account', 'financial_accounts'))
+            ->where('name', $accountName)
             ->value('id');
-            
-        $tagihanAirId = DB::table(config('db_tables.financial_account', 'financial_accounts'))
-            ->where('name', 'Tagihan Air PDAM')
-            ->value('id');
-        
-        $transactions = [
-            // Transaksi Debit - Tagihan Air PDAM
-            [
-                'transaction_group_id' => $transactionGroupId,
-                'user_account_id' => $userAccountId,
-                'financial_account_id' => $tagihanAirId,
-                'entry_type' => 'debit',
-                'amount' => 90000,
-                'balance_effect' => 'increase',
-                'description' => 'Pembayaran tagihan air PDAM bulan November 2025',
-                'is_balance' => false,
-                'created_at' => $transactionDate,
-                'updated_at' => $transactionDate,
-            ],
-            
-            // Transaksi Kredit - BCA Ayah
-            [
-                'transaction_group_id' => $transactionGroupId,
-                'user_account_id' => $userAccountId,
-                'financial_account_id' => $bcaAyahId,
-                'entry_type' => 'kredit',
-                'amount' => 90000,
-                'balance_effect' => 'decrease',
-                'description' => 'Pembayaran tagihan air PDAM dari rekening BCA Ayah',
-                'is_balance' => false,
-                'created_at' => $transactionDate,
-                'updated_at' => $transactionDate,
-            ],
-        ];
-
-        // Insert transaksi ke database
-        foreach ($transactions as $transaction) {
-            DB::table(config('db_tables.transaction', 'transactions'))->insert($transaction);
-            
-            $this->command->info("Created transaction: {$transaction['entry_type']} - {$transaction['description']} (Amount: Rp " . number_format($transaction['amount']) . ")");
-        }
-        
-        // Update balance di financial accounts
-        $this->updateFinancialAccountBalances($transactions);
-        
-        $this->command->info("Water bill transaction group created with ID: {$transactionGroupId}");
-        $this->command->info("Total water transactions created: " . count($transactions));
     }
-    
+
     /**
      * Update balance di financial accounts berdasarkan transaksi
      */
@@ -164,21 +178,21 @@ class TransactionSeeder extends Seeder
             $currentBalance = DB::table(config('db_tables.financial_account', 'financial_accounts'))
                 ->where('id', $transaction['financial_account_id'])
                 ->value('balance');
-                
+
             if ($transaction['balance_effect'] === 'increase') {
                 $newBalance = $currentBalance + $transaction['amount'];
             } else {
                 $newBalance = $currentBalance - $transaction['amount'];
             }
-            
+
             DB::table(config('db_tables.financial_account', 'financial_accounts'))
                 ->where('id', $transaction['financial_account_id'])
                 ->update(['balance' => $newBalance]);
-                
+
             $accountName = DB::table(config('db_tables.financial_account', 'financial_accounts'))
                 ->where('id', $transaction['financial_account_id'])
                 ->value('name');
-                
+
             $this->command->info("Updated balance for {$accountName}: " . number_format($newBalance));
         }
     }

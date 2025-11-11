@@ -703,7 +703,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 50 9.1. Water (Child of Expenses)
+            // 50 9.2. Water (Child of Expenses)
             [
                 Cols::NAME => 'Tagihan Air PDAM',
                 Cols::PARENT_ID => 8,
@@ -717,8 +717,35 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
+            // 51 9.3. Internet & Communication (Child of Expenses)
+            [
+                Cols::NAME => 'Tagihan Internet dan Komunikasi',
+                Cols::PARENT_ID => 8,
+                Cols::TYPE => AccountType::EXPENSES->value,
+                Cols::IS_GROUP => false,
+                Cols::IS_ACTIVE => true,
+                Cols::BALANCE => 0,
+                Cols::INITIAL_BALANCE => 0,
+                Cols::DESCRIPTION => 'Biaya tagihan Internet dan Komunikasi bulanan',
+                Cols::SORT_ORDER => 7,
+                Cols::LEVEL => 1,
+            ],
 
-            // 51 9.1. Perawatan Kendaraan (Child of Spending)
+            // 52 9.4. Entertainment & Leisure (Child of Expenses)
+            [
+                Cols::NAME => 'Hiburan dan Liburan',
+                Cols::PARENT_ID => 8,
+                Cols::TYPE => AccountType::EXPENSES->value,
+                Cols::IS_GROUP => false,
+                Cols::IS_ACTIVE => true,
+                Cols::BALANCE => 0,
+                Cols::INITIAL_BALANCE => 0,
+                Cols::DESCRIPTION => 'Biaya hiburan dan liburan',
+                Cols::SORT_ORDER => 8,
+                Cols::LEVEL => 1,
+            ],
+
+            // 53 10.1. Perawatan Kendaraan (Child of Spending)
             [
                 Cols::NAME => 'Vehicle Mintenance',
                 Cols::PARENT_ID => 9,
