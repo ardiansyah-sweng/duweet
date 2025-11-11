@@ -3,12 +3,18 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
 {
+    /**
+     * The current password being used by the factory.
+     */
+    protected static ?string $password;
 
     /**
      * Define the model's default state.
@@ -17,12 +23,6 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $birthYear = fake()->numberBetween(1960, 2005);
-        $birthMonth = fake()->numberBetween(1, 12);
-        $birthDay = fake()->numberBetween(1, 28);
-        $currentYear = date('Y');
-        $age = $currentYear - $birthYear;
-
         return [
             'name' => fake()->name(),
             'first_name' => fake()->firstName(),
