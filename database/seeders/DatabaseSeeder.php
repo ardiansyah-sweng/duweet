@@ -22,7 +22,9 @@ class DatabaseSeeder extends Seeder
 
         // Seed accounts with real world data
         $this->call([
-            AccountSeeder::class,
+            FinancialAccountSeeder::class,
+            UserAccountSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
