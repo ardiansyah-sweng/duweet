@@ -493,7 +493,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 356.1. Assets - Electronics & Equipment - Laptop Lenovo Ayah (Child of Electonics & Equipment)
+            // 35 6.1. Assets - Electronics & Equipment - Laptop Lenovo Ayah (Child of Electonics & Equipment)
             [
                 Cols::NAME => 'Laptop Lenovo Ayah',
                 Cols::PARENT_ID => 6,
@@ -521,7 +521,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
             
-            // 7.1. Salary Ayah (Child of Income)
+            // 37 7.1. Salary Ayah (Child of Income)
             [
                 Cols::NAME => 'Gaji Ayah',
                 Cols::PARENT_ID => 7,
@@ -535,7 +535,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.2. Salary Istri (Child of Income)
+            // 38 7.2. Salary Istri (Child of Income)
             [
                 Cols::NAME => 'Gaji Istri',
                 Cols::PARENT_ID => 7,
@@ -549,7 +549,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.3. Income Tunjangan (Child of Income)
+            // 39 7.3. Income Tunjangan (Child of Income)
             [
                 Cols::NAME => 'Tunjangan Serdos Ayah',
                 Cols::PARENT_ID => 7,
@@ -563,7 +563,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.4. Income Tunjangan (Child of Income)
+            // 40 7.4. Income Tunjangan (Child of Income)
             [
                 Cols::NAME => 'Tunjangan Serdos Istri',
                 Cols::PARENT_ID => 7,
@@ -577,7 +577,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.5. Income Proyek-Freelance Ayah (Child of Income)
+            // 41 7.5. Income Proyek-Freelance Ayah (Child of Income)
             [
                 Cols::NAME => 'Proyek-Freelance Ayah',
                 Cols::PARENT_ID => 7,
@@ -591,7 +591,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.6. Income Proyek-Freelance Istri (Child of Income)
+            // 42 7.6. Income Proyek-Freelance Istri (Child of Income)
             [
                 Cols::NAME => 'Proyek-Freelance Istri',
                 Cols::PARENT_ID => 7,
@@ -605,7 +605,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.7. Investing Income (Child of Income)
+            // 43 7.7. Investing Income (Child of Income)
             [
                 Cols::NAME => 'Dividen Saham',
                 Cols::PARENT_ID => 7,
@@ -619,7 +619,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 7.8. Interest Income (Child of Income)
+            // 44 7.8. Interest Income (Child of Income)
             [
                 Cols::NAME => 'Interest-Bunga',
                 Cols::PARENT_ID => 7,
@@ -633,7 +633,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
             
-            // 8.1. Food & Dining (Child of Expenses)
+            // 45 8.1. Food & Dining (Child of Expenses)
             [
                 Cols::NAME => 'Food & Dining',
                 Cols::PARENT_ID => 8,
@@ -647,7 +647,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
             
-            // 8.2. Transportation (Child of Expenses)
+            // 46 8.2. Transportation (Child of Expenses)
             [
                 Cols::NAME => 'Transportation',
                 Cols::PARENT_ID => 8,
@@ -661,7 +661,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 8.3. Education (Child of Expenses)
+            // 47 8.3. Education (Child of Expenses)
             [
                 Cols::NAME => 'Education',
                 Cols::PARENT_ID => 8,
@@ -675,7 +675,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 8.4. Tax (Child of Expenses)
+            // 48 8.4. Tax (Child of Expenses)
             [
                 Cols::NAME => 'Tax',
                 Cols::PARENT_ID => 8,
@@ -689,7 +689,36 @@ class FinancialAccountSeeder extends Seeder
                 Cols::LEVEL => 1,
             ],
 
-            // 9.1. Perawatan Kendaraan (Child of Spending)
+            // 49 9.1. Electricity (Child of Expenses)
+            [
+                Cols::NAME => 'Tagihan Listrik',
+                Cols::PARENT_ID => 8,
+                Cols::TYPE => AccountType::EXPENSES->value,
+                Cols::IS_GROUP => false,
+                Cols::IS_ACTIVE => true,
+                Cols::BALANCE => 0,
+                Cols::INITIAL_BALANCE => 0,
+                Cols::DESCRIPTION => 'Biaya tagihan listrik bulanan',
+                Cols::SORT_ORDER => 5,
+                Cols::LEVEL => 1,
+            ],
+
+            // 50 9.1. Water (Child of Expenses)
+            [
+                Cols::NAME => 'Tagihan Air PDAM',
+                Cols::PARENT_ID => 8,
+                Cols::TYPE => AccountType::EXPENSES->value,
+                Cols::IS_GROUP => false,
+                Cols::IS_ACTIVE => true,
+                Cols::BALANCE => 0,
+                Cols::INITIAL_BALANCE => 0,
+                Cols::DESCRIPTION => 'Biaya tagihan Air PDAM bulanan',
+                Cols::SORT_ORDER => 6,
+                Cols::LEVEL => 1,
+            ],
+
+
+            // 51 9.1. Perawatan Kendaraan (Child of Spending)
             [
                 Cols::NAME => 'Vehicle Mintenance',
                 Cols::PARENT_ID => 9,
