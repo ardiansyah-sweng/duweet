@@ -11,7 +11,7 @@ class UserAccount extends Model
 {
     protected $table = 'user_accounts';
 
-    protected $fillable = UserAccountColumns::getFillable();
+    public $timestamps = false;
 
     protected $casts = [
         UserAccountColumns::IS_ACTIVE => 'boolean',
@@ -21,6 +21,17 @@ class UserAccount extends Model
     protected $hidden = [
         UserAccountColumns::PASSWORD,
     ];
+
+    /**
+     * Get the fillable attributes for the model.
+     * Uses centralized definition from UserAccountColumns constant class.
+     *
+     * @return array<string>
+     */
+    public function getFillable()
+    {
+        return UserAccountColumns::getFillable();
+    }
 
     /**
      * Relasi ke User
