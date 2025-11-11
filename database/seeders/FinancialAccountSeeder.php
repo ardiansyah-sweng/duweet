@@ -264,7 +264,8 @@ class FinancialAccountSeeder extends Seeder
                 Cols::IS_ACTIVE => true,
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
-                Cols::DESCRIPTION => 'Saham PT Kencana Energi Lestari Tbk (KEEN)',
+                Cols::DESCRIPTION => 'Saham PT Keen Indonesia Tbk (KEEN)',
+                Cols::STOCK_SYMBOL => 'KEEN',
                 Cols::SORT_ORDER => 1,
                 Cols::LEVEL => 1,
             ],
@@ -279,6 +280,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::DESCRIPTION => 'Saham PT Pulau Subur Tbk (PTPS)',
+                Cols::STOCK_SYMBOL => 'PTPS',
                 Cols::SORT_ORDER => 2,
                 Cols::LEVEL => 1,
             ],
@@ -293,6 +295,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::DESCRIPTION => 'Saham PT Bank Rakyat Indonesia Tbk (BBRI)',
+                Cols::STOCK_SYMBOL => 'BBRI',
                 Cols::SORT_ORDER => 3,
                 Cols::LEVEL => 1,
             ],
@@ -307,6 +310,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::DESCRIPTION => 'Saham PT Essa Industries Tbk (ESSA)',
+                Cols::STOCK_SYMBOL => 'ESSA',
                 Cols::SORT_ORDER => 4,
                 Cols::LEVEL => 1,
             ],
@@ -321,6 +325,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::DESCRIPTION => 'Saham PT Mitra Pinasthika Mustika Tbk (MPMX)',
+                Cols::STOCK_SYMBOL => 'MPMX',
                 Cols::SORT_ORDER => 5,
                 Cols::LEVEL => 1,
             ],
@@ -334,11 +339,12 @@ class FinancialAccountSeeder extends Seeder
                 Cols::IS_ACTIVE => true,
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
-                Cols::DESCRIPTION => 'Saham PT Ramayana Lestari Sentosa Tbk (MPMX)',
+                Cols::DESCRIPTION => 'Saham PT Ramayana Lestari Sentosa Tbk (RALS)',
+                Cols::STOCK_SYMBOL => 'RALS',
                 Cols::SORT_ORDER => 6,
                 Cols::LEVEL => 1,
             ],
-            
+
             // 24 2.7. Assets - Paper Asset - Saham BEST (Child of Paper Asset)
             [
                 Cols::NAME => 'Saham BEST',
@@ -348,7 +354,8 @@ class FinancialAccountSeeder extends Seeder
                 Cols::IS_ACTIVE => true,
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
-                Cols::DESCRIPTION => 'Saham PT Bekasi Fajar Industrial Estate Tbk (MPMX)',
+                Cols::DESCRIPTION => 'Saham PT Bestprofit Futures Tbk (BEST)',
+                Cols::STOCK_SYMBOL => 'BEST',
                 Cols::SORT_ORDER => 7,
                 Cols::LEVEL => 1,
             ],
@@ -362,7 +369,8 @@ class FinancialAccountSeeder extends Seeder
                 Cols::IS_ACTIVE => true,
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
-                Cols::DESCRIPTION => 'Saham PT Bank Pan Indonesia Tbk (MPMX)',
+                Cols::DESCRIPTION => 'Saham PT Bank Pan Indonesia Tbk (PNBN)',
+                Cols::STOCK_SYMBOL => 'PNBN',
                 Cols::SORT_ORDER => 8,
                 Cols::LEVEL => 1,
             ],
@@ -376,7 +384,8 @@ class FinancialAccountSeeder extends Seeder
                 Cols::IS_ACTIVE => true,
                 Cols::BALANCE => 0, // Will be updated by AssetSeeder
                 Cols::INITIAL_BALANCE => 0, // Will be updated by AssetSeeder
-                Cols::DESCRIPTION => 'Saham PT Pakuwon Jati Tbk (MPMX)',
+                Cols::DESCRIPTION => 'Saham PT Pakuwon Jati Tbk (PWON)',
+                Cols::STOCK_SYMBOL => 'PWON',
                 Cols::SORT_ORDER => 9,
                 Cols::LEVEL => 1,
             ],
@@ -788,6 +797,7 @@ class FinancialAccountSeeder extends Seeder
                 Cols::BALANCE => $accountData[Cols::BALANCE],
                 Cols::INITIAL_BALANCE => $accountData[Cols::INITIAL_BALANCE],
                 Cols::DESCRIPTION => $accountData[Cols::DESCRIPTION],
+                Cols::STOCK_SYMBOL => $accountData[Cols::STOCK_SYMBOL] ?? null,
                 Cols::SORT_ORDER => $accountData[Cols::SORT_ORDER],
                 Cols::LEVEL => $accountData[Cols::LEVEL],
                 Cols::CREATED_AT => now(),

@@ -181,10 +181,10 @@ class AssetSeeder extends Seeder
             [
                 Cols::ACCOUNT_ID => 26,
                 Cols::ACQUISITION_DATE => '2023-06-07',
-                Cols::BOUGHT_PRICE => 484,     // Initial buy
+                Cols::BOUGHT_PRICE => 434,     // Initial buy
                 Cols::BUY_QTY => 579,
                 'stock_symbol' => 'PWON',      // For Yahoo Finance API
-                'current_market_price' => 484, // Fallback if API fails
+                'current_market_price' => 434, // Fallback if API fails
                 Cols::IS_LIQUID => true,
                 Cols::IS_PRODUCTIVE => true,
                 Cols::MEASUREMENT => 'lot',
@@ -382,17 +382,28 @@ class AssetSeeder extends Seeder
 
         // Update the corresponding FinancialAccount with both values
         if ($initialBalance > 0 || $currentBalance > 0) {
+            $updateData = [
+                'initial_balance' => $initialBalance,  // Historical cost basis
+                'balance' => $currentBalance,          // Current market value
+                'updated_at' => now(),
+            ];
+
+            // If this is a stock asset, also update current_price and price_updated_at
+            if (isset($assetData['stock_symbol']) && $currentMarketPrice > 0) {
+                $updateData['current_price'] = $currentMarketPrice;
+                $updateData['price_updated_at'] = now();
+            }
+
             DB::table(config('db_tables.financial_account', 'financial_accounts'))
                 ->where('id', $assetData[Cols::ACCOUNT_ID])
-                ->update([
-                    'initial_balance' => $initialBalance,  // Historical cost basis
-                    'balance' => $currentBalance,          // Current market value
-                    'updated_at' => now(),
-                ]);
+                ->update($updateData);
 
             $this->command->info("   ✅ Updated FinancialAccount ID {$assetData[Cols::ACCOUNT_ID]}:");
             $this->command->info("      Initial Balance: " . number_format($initialBalance));
             $this->command->info("      Current Balance: " . number_format($currentBalance));
+            if (isset($assetData['stock_symbol']) && $currentMarketPrice > 0) {
+                $this->command->info("      Current Price: Rp " . number_format($currentMarketPrice));
+            }
         }
     }
 
