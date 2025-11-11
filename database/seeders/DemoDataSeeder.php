@@ -17,36 +17,43 @@ class DemoDataSeeder extends Seeder
             $now = Carbon::now();
 
             $userIdRafi = DB::table('users')->insertGetId([
-                'name'              => 'Rafi Satya',
-                'email'             => 'rafi@example.com',
-                'password'          => Hash::make('rahasia123'),
-                'usia'              => 21,
-                'bulan_lahir'       => 8,
-                'tahun_lahir'       => 2002,
-                'tanggal_lahir'     => '2002-08-15',
-                'email_verified_at' => $now,
-                'remember_token'    => Str::random(10),
-                'created_at'        => $now,
-                'updated_at'        => $now,
+                'name'          => 'Rafi Satya',
+                'first_name'    => 'Rafi',
+                'middle_name'   => null,
+                'last_name'     => 'Satya',
+                'email'         => 'rafi@example.com',
+                'provinsi'      => 'Jawa Barat',
+                'kabupaten'     => 'Bandung',
+                'kecamatan'     => 'Coblong',
+                'jalan'         => 'Jl. Dago No. 123',
+                'kode_pos'      => '40135',
+                'usia'          => 21,
+                'tanggal_lahir' => 15,
+                'bulan_lahir'   => 8,
+                'tahun_lahir'   => 2002,
             ]);
 
             $userIdAndi = DB::table('users')->insertGetId([
-                'name'              => 'Andi Nugraha',
-                'email'             => 'andi@example.com',
-                'password'          => Hash::make('rahasia123'),
-                'usia'              => 22,
-                'bulan_lahir'       => 11,
-                'tahun_lahir'       => 2001,
-                'tanggal_lahir'     => '2001-11-20',
-                'email_verified_at' => $now,
-                'remember_token'    => Str::random(10),
-                'created_at'        => $now,
-                'updated_at'        => $now,
+                'name'          => 'Andi Nugraha',
+                'first_name'    => 'Andi',
+                'middle_name'   => null,
+                'last_name'     => 'Nugraha',
+                'email'         => 'andi@example.com',
+                'provinsi'      => 'Jawa Barat',
+                'kabupaten'     => 'Sumedang',
+                'kecamatan'     => 'Jatinangor',
+                'jalan'         => 'Jl. Raya No. 45',
+                'kode_pos'      => '45363',
+                'usia'          => 22,
+                'tanggal_lahir' => 20,
+                'bulan_lahir'   => 11,
+                'tahun_lahir'   => 2001,
             ]);
 
+            // Asset (AS)
             $accIdKas = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Kas Utama',
-                'type'            => 'LI',        // Asset
+                'type'            => 'AS',        // Asset
                 'balance'         => 1000000,
                 'initial_balance' => 1000000,
                 'is_group'        => false,
@@ -60,7 +67,7 @@ class DemoDataSeeder extends Seeder
 
             $accIdBiaya = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Biaya Operasional',
-                'type'            => 'AS',        // Expense
+                'type'            => 'LI',     
                 'balance'         => 500000,
                 'initial_balance' => 500000,
                 'is_group'        => false,
@@ -72,9 +79,10 @@ class DemoDataSeeder extends Seeder
                 'updated_at'      => $now,
             ]);
 
+            // Income (IN)
             $accIdPendapatan = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Pendapatan Penjualan',
-                'type'            => 'IN',        // Income
+                'type'            => 'AS',    
                 'balance'         => 200000,
                 'initial_balance' => 200000,
                 'is_group'        => false,
@@ -89,9 +97,9 @@ class DemoDataSeeder extends Seeder
             DB::table('user_financial_accounts')->insert([
                 [
                     'user_id'              => $userIdRafi,
-                    'financial_account_id' => $accIdKas,
-                    'initial_balance'      => 1000000,
-                    'balance'              => 1000000,
+                    'financial_account_id' => $accIdPendapatan,
+                    'initial_balance'      => 200000,
+                    'balance'              => 200000,
                     'is_active'            => true,
                     'created_at'           => $now,
                     'updated_at'           => $now,

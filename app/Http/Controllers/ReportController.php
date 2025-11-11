@@ -23,41 +23,68 @@ class ReportController extends Controller
     public function userLiquidAsset(int $id)
     {
         try {
-            $row = DB::table('users as u')
-                ->leftJoin('user_financial_accounts as ufa', 'ufa.user_id', '=', 'u.id')
-                ->leftJoin('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
-                ->where('u.id', $id)
-                // Hitung tipe Asset (AS) dan Liability (LI) sebagai "liquid"
-                ->whereIn('fa.type', ['AS','LI'])
-                // Hanya leaf account (non-group)
-                ->where('fa.is_group', false)
-                // Hanya relasi yang aktif
-                ->where('ufa.is_active', 1)
-                ->groupBy('u.id', 'u.name')
-                ->select([
-                    'u.id',
-                    'u.name',
-                    DB::raw('COALESCE(SUM(ufa.balance),0) as total_liquid_asset'),
-                ])
-                ->first();
+            // Validasi query parameters (optional)
+            $validated = request()->validate([
+                'type'             => 'nullable|string|in:AS,LI,AS+LI',  // Filter by account type
+                'include_inactive' => 'nullable|boolean',                 // Include inactive accounts
+                'min_balance'      => 'nullable|numeric',                 // Minimum balance filter
+                'format'           => 'nullable|string|in:json,formatted' // Response format
+            ]);
 
-            if (!$row) {
+            // Find user using Eloquent
+            $user = User::find($id);
+            
+            if (!$user) {
                 return response()->json([
                     'status'  => 'not_found',
                     'message' => 'User tidak ditemukan',
                 ], 404);
             }
 
-            $total = (int) $row->total_liquid_asset;
+            // Prepare filter options for model method
+            $options = [];
+            
+            // Filter by type (default: AS + LI)
+            $typeParam = request('type', 'AS+LI');
+            if ($typeParam === 'AS+LI') {
+                $options['type'] = ['AS', 'LI'];
+            } else {
+                $options['type'] = $typeParam;
+            }
 
-            return response()->json([
+            // Filter by active status
+            if (request()->boolean('include_inactive')) {
+                $options['include_inactive'] = true;
+            }
+
+            // Filter by minimum balance
+            if (request()->filled('min_balance')) {
+                $options['min_balance'] = request('min_balance');
+            }
+
+            // Call model method instead of raw query
+            $total = $user->totalLiquidAsset($options);
+
+            // Response format
+            $response = [
                 'status'             => 'success',
-                'user_id'            => (int) $row->id,
-                'name'               => $row->name,
+                'user_id'            => $user->id,
+                'name'               => $user->name,
                 'total_liquid_asset' => $total,
-                'formatted'          => $this->rupiah($total),
+                'filters'            => [
+                    'type'             => $typeParam,
+                    'include_inactive' => request()->boolean('include_inactive'),
+                    'min_balance'      => request('min_balance'),
+                ],
                 'generated_at'       => now()->toIso8601String(),
-            ], 200);
+            ];
+
+            // Add formatted version if requested
+            if (request('format') !== 'json') {
+                $response['formatted'] = $this->rupiah($total);
+            }
+
+            return response()->json($response, 200);
 
         } catch (\Throwable $e) {
             return response()->json([

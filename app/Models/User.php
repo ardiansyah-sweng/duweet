@@ -7,11 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\DB;
-=======
-use App\Models\UserAccount;
->>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
 
 class User extends Authenticatable
 {
@@ -30,25 +26,8 @@ class User extends Authenticatable
      */
     public $timestamps = false;
     protected $fillable = [
-<<<<<<< HEAD
         'name','email','password',
         'usia','bulan_lahir','tahun_lahir','tanggal_lahir',
-=======
-        'name',
-        'first_name',
-        'middle_name',
-        'last_name',
-        'email',
-        'provinsi',
-        'kabupaten',
-        'kecamatan',
-        'jalan',
-        'kode_pos',
-        'tanggal_lahir',
-        'bulan_lahir',
-        'tahun_lahir',
-        'usia',
->>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
     ];
 
     /**
@@ -75,15 +54,11 @@ class User extends Authenticatable
      */
     public function userAccounts()
     {
-<<<<<<< HEAD
         return [
             'email_verified_at' => 'datetime',
             'tanggal_lahir'     => 'date',
             'password'          => 'hashed',
         ];
-=======
-        return $this->hasMany(UserAccount::class, 'id_user');
->>>>>>> 42bc9f3bbf5a55c80294b126bd1d842b97ae94cb
     }
 
     public function accounts() {
@@ -102,19 +77,38 @@ class User extends Authenticatable
     }
 
     /**
-     * Hitung total liquid asset user.
-     * Sesuai PRD diasumsikan hanya tipe 'AS' (Asset) yang dianggap liquid
-     * (Jika ke depan ingin memasukkan LI, bisa ditambahkan lewat konfigurasi).
-     * - Hanya akun yang active
-     * - Hanya leaf account (is_group = false)
+     * Hitung total liquid asset user dengan filter opsional.
+     * 
+     * @param array $options Filter options:
+     *   - type: string|array - Account type filter ('AS', 'LI', ['AS','LI'], etc)
+     *   - include_inactive: bool - Include inactive accounts (default: false)
+     *   - min_balance: int|float - Minimum balance filter
+     * @return int Total liquid asset
      */
-    public function totalLiquidAsset(): int
+    public function totalLiquidAsset(array $options = []): int
     {
-        return (int) $this->financialAccounts()
-            ->whereIn('financial_accounts.type', ['AS','LI'])
-            ->where('financial_accounts.is_group', false)
-            ->wherePivot('is_active', true)
-            ->sum('user_financial_accounts.balance');
+        $query = $this->financialAccounts()
+            ->where('financial_accounts.is_group', false);
+
+        // Filter by type (default: AS + LI)
+        $type = $options['type'] ?? ['AS', 'LI'];
+        if (is_string($type)) {
+            $query->where('financial_accounts.type', $type);
+        } else {
+            $query->whereIn('financial_accounts.type', $type);
+        }
+
+        // Filter by active status (default: active only)
+        if (empty($options['include_inactive'])) {
+            $query->wherePivot('is_active', true);
+        }
+
+        // Filter by minimum balance
+        if (isset($options['min_balance'])) {
+            $query->wherePivot('balance', '>=', $options['min_balance']);
+        }
+
+        return (int) ($query->sum('user_financial_accounts.balance') ?? 0);
     }
 
     /**

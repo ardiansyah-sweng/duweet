@@ -21,10 +21,13 @@ class AccountController extends Controller
             'user_id'         => 'required|integer|exists:users,id',
             'name'            => 'required|string|max:100',
             'type'            => 'required|in:AS,LI,IN,EX,SP',
-            'initial_balance' => 'required|numeric|min:0', // Catatan: LI negatif tidak diizinkan oleh validasi ini
+            'initial_balance' => 'required|numeric|min:0',
             'description'     => 'nullable|string',
             'parent_id'       => 'nullable|integer|exists:financial_accounts,id',
             'is_group'        => 'sometimes|boolean',
+            // Query parameters untuk kontrol tambahan
+            'auto_activate'   => 'sometimes|boolean', // Auto activate account (default: true)
+            'return_detail'   => 'sometimes|boolean', // Return detailed info (default: false)
         ]);
 
         try {
@@ -37,16 +40,41 @@ class AccountController extends Controller
                 'parent_id'       => $validated['parent_id'] ?? null,
                 'is_group'        => (bool)($validated['is_group'] ?? false),
             ]);
+
+            // Response basic
+            $response = [
+                'status'  => 'success',
+                'message' => 'Akun berhasil dibuat',
+                'data'    => [
+                    'id'              => $financial_account->id,
+                    'name'            => $financial_account->name,
+                    'type'            => $financial_account->type,
+                    'initial_balance' => $financial_account->initial_balance,
+                ],
+            ];
+
+            // Include detailed info if requested
+            if (request()->boolean('return_detail')) {
+                $response['data'] = $financial_account->toArray();
+                $response['data']['pivot'] = DB::table('user_financial_accounts')
+                    ->where('user_id', $validated['user_id'])
+                    ->where('financial_account_id', $financial_account->id)
+                    ->first();
+                    
+                // Include parent info if exists
+                if ($financial_account->parent_id) {
+                    $response['data']['parent'] = FinancialAccount::find($financial_account->parent_id);
+                }
+            }
+
+            return response()->json($response, 201);
+            
         } catch (\InvalidArgumentException $e) {
             return response()->json([
+                'status'  => 'error',
                 'message' => $e->getMessage(),
             ], 422);
         }
-
-        return response()->json([
-            'message' => 'Akun berhasil dibuat',
-            'data'    => $financial_account,
-        ], 201);
     }
     public function index(Request $request)
     {
