@@ -54,7 +54,7 @@ class User extends Authenticatable
     ];
 
     // Relasi ke UserAccount
-    public function accounts()
+    public function useAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }

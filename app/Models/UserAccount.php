@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,10 +27,10 @@ class UserAccount extends Model
         'is_active',
     ];
 
-    // Hidden field saat diubah jadi JSON
-    protected $hidden = [
-        'password',
-    ];
+    // // Hidden field saat diubah jadi JSON
+    // protected $hidden = [
+    //     'password',
+    // ];
 
     // Casting tipe data
     protected $casts = [
@@ -44,7 +44,6 @@ class UserAccount extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
         return $this->belongsTo(User::class, 'id_user');
     }
 

@@ -21,12 +21,11 @@ class DatabaseSeeder extends Seeder
         // Seed accounts with real world data
         $this->call([
             UserSeeder::class,
+            UserAccountSeeder::class,
             AccountSeeder::class,
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
-            UserAccountSeeder::class,
             TransactionSeeder::class,
-            UserAccountSeeder::class,
             //AccountSeeder::class,
         ]);
     }
