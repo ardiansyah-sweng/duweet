@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\FinancialAccount;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +12,6 @@ return new class extends Migration
     public function __construct()
     {
         $this->table = config('db_tables.financial_account');
-
     }
     
     /**
@@ -32,8 +30,8 @@ return new class extends Migration
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
             
-            $table->string('color', 7)->nullable(); // hex color code
-            $table->string('icon', 50)->nullable();
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
             
             $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
