@@ -11,7 +11,8 @@ use App\Constants\UserAccountColumns;
 
 class User extends Model
 {
-    use HasFactory;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
