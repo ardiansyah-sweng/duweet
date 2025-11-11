@@ -26,13 +26,25 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'first_name' => fake()->firstName(),
-            'middle_name' => fake()->optional()->firstName(),
+            'middle_name' => fake()->boolean(50) ? fake()->firstName() : null,
             'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
-            'tanggal_lahir' => $birthDay,
-            'bulan_lahir' => $birthMonth,
-            'tahun_lahir' => $birthYear,
-            'usia' => $age,
+            
+            // Address data
+            'provinsi' => fake()->state(),
+            'kabupaten' => fake()->city(),
+            'kecamatan' => fake()->cityPrefix() . ' ' . fake()->citySuffix(),
+            'jalan' => fake()->streetAddress(),
+            'kode_pos' => fake()->postcode(),
+            
+            // Birth data
+            'tanggal_lahir' => fake()->numberBetween(1, 31),
+            'bulan_lahir' => fake()->numberBetween(1, 12),
+            'tahun_lahir' => fake()->numberBetween(1950, 2010),
+            'usia' => function (array $attributes) {
+                $currentYear = now()->year;
+                return $currentYear - $attributes['tahun_lahir'];
+            },
         ];
     }
 }
