@@ -9,9 +9,7 @@ use App\Constants\UserAccountColumns;
 
 class UserAccountSeeder extends Seeder
 {
-    /**
-     * Jalankan seeder untuk tabel user_accounts.
-     */
+
     public function run(): void
     {
         DB::table('user_accounts')->insert([
