@@ -20,8 +20,8 @@ class AccountSeeder extends Seeder
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         }
         
-        // Truncate the table
-        DB::table('accounts')->truncate();
+    // Truncate the table (use configured table name for financial accounts)
+    DB::table(config('db_tables.financial_account'))->truncate();
         
         // Re-enable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
@@ -61,7 +61,7 @@ class AccountSeeder extends Seeder
         ];
 
         // Insert the account and get the ID
-        $accountId = DB::table('accounts')->insertGetId($account);
+    $accountId = DB::table(config('db_tables.financial_account'))->insertGetId($account);
 
         // Process children if they exist
         if (isset($accountData['children']) && is_array($accountData['children'])) {
