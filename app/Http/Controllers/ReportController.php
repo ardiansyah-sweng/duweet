@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\UserAccount; // Asumsi Model ini ada atau dibuat
+use App\Constants\TransactionColumns;
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -44,15 +45,19 @@ class ReportController extends Controller
         // 3. LOGIKA QUERY DATABASE
         // ----------------------------------------------------
         try {
-            $transactionsTable = config('db_tables.transactions', 'transactions');
+            // Use the same config key used by migrations (singular 'transaction') for consistency
+            $transactionsTable = config('db_tables.transaction', 'transactions');
             $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
-            $summaryQuery = DB::table($transactionsTable)
-                ->join($accountsTable, "$transactionsTable.financial_account_id", '=', "$accountsTable.id")
-                ->where("$transactionsTable.user_account_id", $userAccountId)
-                ->where("$accountsTable.type", 'IN')
-                ->where("$transactionsTable.balance_effect", 'increase')
-                ->where("$accountsTable.is_group", false);
+            $t = $transactionsTable; // alias for readability
+            $a = $accountsTable;
+
+            $summaryQuery = DB::table($t)
+                ->join($a, "$t." . TransactionColumns::FINANCIAL_ACCOUNT_ID, '=', "$a.id")
+                ->where("$t." . TransactionColumns::USER_ACCOUNT_ID, $userAccountId)
+                ->where("$a.type", 'IN')
+                ->where("$t." . TransactionColumns::BALANCE_EFFECT, 'increase')
+                ->where("$a.is_group", false);
 
             // Pilih expression periode berdasarkan driver DB agar portable
             try {
@@ -62,17 +67,17 @@ class ReportController extends Controller
             }
 
             if ($driver === 'sqlite') {
-                $periodeExpr = "strftime('%Y-%m', $transactionsTable.created_at)";
+                $periodeExpr = "strftime('%Y-%m', $t." . TransactionColumns::CREATED_AT . ")";
             } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-                $periodeExpr = "to_char($transactionsTable.created_at, 'YYYY-MM')";
+                $periodeExpr = "to_char($t." . TransactionColumns::CREATED_AT . ", 'YYYY-MM')";
             } else {
-                $periodeExpr = "DATE_FORMAT($transactionsTable.created_at, '%Y-%m')";
+                $periodeExpr = "DATE_FORMAT($t." . TransactionColumns::CREATED_AT . ", '%Y-%m')";
             }
 
             $summary = $summaryQuery
                 ->selectRaw("$periodeExpr as periode")
-                ->selectRaw("SUM($transactionsTable.amount) as total_income")
-                ->whereBetween("$transactionsTable.created_at", [$startDate->toDateTimeString(), $endDate->toDateTimeString()])
+                ->selectRaw("COALESCE(SUM($t." . TransactionColumns::AMOUNT . "), 0) as total_income")
+                ->whereBetween("$t." . TransactionColumns::CREATED_AT, [$startDate->toDateTimeString(), $endDate->toDateTimeString()])
                 ->groupBy(DB::raw($periodeExpr))
                 ->orderBy('periode', 'asc')
                 ->get();
