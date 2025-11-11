@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Constants\UserAccountColumns;
 use App\Models\User;
 use App\Models\UserAccount;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class UserAccountSeeder extends Seeder

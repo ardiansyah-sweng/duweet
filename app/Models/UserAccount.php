@@ -3,14 +3,22 @@
 namespace App\Models;
 
 use App\Constants\UserAccountColumns;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
 class UserAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'user_accounts';
 
+    /**
+     * This table does not use created_at/updated_at timestamps.
+     *
+     * @var bool
+     */
     public $timestamps = false;
 
     protected $casts = [
