@@ -3,26 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable; // agar bisa digunakan untuk login
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
 
-class UserAccount extends Authenticatable
+class UserAccount extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
 
-    // Nama tabel sesuai config
-    protected $table = 'user_accounts';
-
-    // Primary key
-    protected $primaryKey = 'id';
-
-    // Nonaktifkan timestamps karena migration tidak membuat created_at & updated_at
+    /**
+     * This table does not use created_at/updated_at timestamps.
+     *
+     * @var bool
+     */
     public $timestamps = false;
 
-    // Kolom yang bisa diisi secara mass-assignment
+    protected $table = 'user_accounts';
+
     protected $fillable = [
-        'user_id',
+        'id_user',
         'username',
         'email',
         'password',
@@ -37,7 +34,7 @@ class UserAccount extends Authenticatable
 
     // Casting tipe data
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'verified_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 
@@ -48,6 +45,7 @@ class UserAccount extends Authenticatable
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id_user');
     }
 
     // Contoh tambahan relasi jika nanti ada transaksi

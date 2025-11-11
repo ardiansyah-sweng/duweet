@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserAccount;
 
 class User extends Authenticatable
 {
@@ -13,17 +14,27 @@ class User extends Authenticatable
     /**
      * Kolom yang bisa diisi (mass assignable)
      */
+    /**
+     * Disable automatic timestamps because users table does not have created_at/updated_at
+     *
+     * @var bool
+     */
+    public $timestamps = false;
     protected $fillable = [
         'name',
         'first_name',
         'middle_name',
         'last_name',
         'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
         'tanggal_lahir',
         'bulan_lahir',
         'tahun_lahir',
         'usia',
-        'password',
     ];
 
     /**
@@ -45,7 +56,7 @@ class User extends Authenticatable
     // Relasi ke UserAccount
     public function accounts()
     {
-        return $this->hasMany(UserAccount::class);
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
 
     // Relasi ke Transaction
@@ -60,7 +71,6 @@ class User extends Authenticatable
         return $this->hasMany(UserFinancialAccount::class);
     }
 
-    
     /**
      * Opsional: method bantu untuk mendapatkan nama lengkap secara dinamis
      */
