@@ -12,7 +12,7 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     /**
-     * Mengambil ringkasan total pendapatan (Income) per bulan
+     * Mengambil ringkasan total pendapatan (Income) per bulan dengan metadata lengkap
      */
     public function incomeSummary(Request $request)
     {
@@ -29,6 +29,22 @@ class ReportController extends Controller
             return response()->json(['error' => 'User account configuration not found.'], 404);
         }
         $userAccountId = $userAccount->id;
+        
+        // Siapkan data user untuk metadata
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'provinsi' => $user->provinsi,
+            'kabupaten' => $user->kabupaten,
+        ];
+        
+        // Siapkan data user_account untuk metadata
+        $userAccountData = [
+            'id' => $userAccount->id,
+            'username' => $userAccount->username,
+            'email' => $userAccount->email,
+        ];
 
         // Default periode
         $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
@@ -82,7 +98,14 @@ class ReportController extends Controller
                 ->orderBy('periode', 'asc')
                 ->get();
 
-            return response()->json($summary);
+            // Format response dengan metadata lengkap
+            $response = [
+                'user' => $userData,
+                'user_account' => $userAccountData,
+                'summary' => $summary,
+            ];
+
+            return response()->json($response);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Query gagal dieksekusi.',
