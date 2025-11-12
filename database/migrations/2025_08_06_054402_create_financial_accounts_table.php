@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Schema;
-<<<<<<< HEAD
+<<<<<<<<< Temporary merge branch 1
 use Illuminate\Database\Schema\Blueprint;
 use App\Constants\FinancialAccountColumns;
 use Illuminate\Database\Migrations\Migration;
-=======
+=========
 use App\Constants\FinancialAccountColumns;
->>>>>>> efc72c84f81e7c2b35b1c4b61e0e57b691daa99f
+>>>>>>>>> Temporary merge branch 2
 
 return new class extends Migration
 {
@@ -27,7 +27,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-<<<<<<< HEAD
+<<<<<<<<< Temporary merge branch 1
            $table->id(FinancialAccountColumns::ID);
 
             $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();
@@ -53,7 +53,7 @@ return new class extends Migration
                   ->references('id')
                   ->on('financial_accounts')
                   ->onDelete('set null'); // onDelete('restrict') juga bisa
-=======
+=========
             $table->id();
             $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();
             $table->string(FinancialAccountColumns::NAME, 100);
@@ -78,7 +78,7 @@ return new class extends Migration
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
             $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
->>>>>>> efc72c84f81e7c2b35b1c4b61e0e57b691daa99f
+>>>>>>>>> Temporary merge branch 2
         });
     }
 
