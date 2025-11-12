@@ -1,0 +1,32 @@
+PENGARUH BERTAMBAHNYA VOLUME DATA TERHADAP KINERJA SISTEM: 
+Saat volume data mendekati kapasitas maksimum,  ada beberapa dampak nyata yang akan muncul:
+
+1. Akses lebih lambat (latency naik)
+Query yang membaca banyak baris jadi lebih lama karena lebih banyak I/O disk.
+Index yang tidak tepat/terfragmentasi menyebabkan full scan sehingga memakan waktu lebih lama.
+
+2. Throughput turun / konkurensi menurun
+Banyak transaksi simultan akan berkompetisi pada resource (disk I/O, CPU, buffer cache) → lock contention dan antrean meningkat.
+Waktu transaksi lebih panjang → lebih banyak transaksi bersamaan menunggu → performa keseluruhan menurun.
+
+3. Tekanan pada memori dan cache (cache miss lebih sering)
+Buffer/cache database (mis. InnoDB buffer pool, PostgreSQL shared_buffers) tidak cukup menampung working set → lebih sering baca dari disk → lambat.
+
+4. Fragmentasi dan ukuran indeks membesar
+Index menjadi besar dan terfragmentasi → operasi pencarian dan update index lebih lambat; reindexing jadi mahal.
+
+5. Operasi pemeliharaan jadi lebih berat dan lama
+Backup, restore, reindex, vacuum/compaction memakan waktu jauh lebih lama dan bisa mengganggu layanan.
+Downtime window menjadi lebih panjang bila maintenance dilakukan offline.
+
+6. Risiko kehabisan storage / konsistensi bermasalah
+Jika storage habis, transaksi bisa gagal, log tidak bisa ditulis → database bisa corrupt atau aplikasi error.
+
+7. CPU I/O bound & latensi jaringan meningkat (untuk arsitektur terdistribusi)
+Jika banyak node/replica, sinkronisasi/replicasi memakan bandwidth dan menambah latency.
+
+- Dampak pada efisiensi pengelolaan data: 
+Backup/restore dan migrasi menjadi lebih susah dan lama, Analisis dan query ad-hoc menjadi mahal (biaya waktu dan resource), Perlu strategi retensi/arsip yang jelas untuk mengurangi working set aktif.
+
+- Solusi / mitigasi (praktik yang sering diuji):
+Optimasi query & indeks, Partitioning / sharding, Arsip / purge, Caching, Konfigurasi DB, Connection pooling, Proses maintenance terjadwal, Monitoring & capacity planning
