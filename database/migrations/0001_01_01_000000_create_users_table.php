@@ -3,44 +3,31 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Constants\UserColumns;
 
 return new class extends Migration
 {
-    protected string $table;
-
-    public function __construct()
-    {
-        $this->table = config('db_tables.user');
-    }
-
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create($this->table, function (Blueprint $table) {
-            $table->id(UserColumns::ID);
-            $table->string(UserColumns::NAME);
-            $table->string(UserColumns::FIRST_NAME)->nullable();
-            $table->string(UserColumns::MIDDLE_NAME)->nullable();
-            $table->string(UserColumns::LAST_NAME)->nullable();
-            $table->string(UserColumns::EMAIL)->unique();
-            
-            // Address data
-            $table->string(UserColumns::PROVINSI);
-            $table->string(UserColumns::KABUPATEN);
-            $table->string(UserColumns::KECAMATAN);
-            $table->string(UserColumns::JALAN);
-            $table->string(UserColumns::KODE_POS);
-            
-            // Birth data
-            $table->integer(UserColumns::TANGGAL_LAHIR);
-            $table->integer(UserColumns::BULAN_LAHIR);
-            $table->integer(UserColumns::TAHUN_LAHIR);
-            $table->integer(UserColumns::USIA);
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('first_name')->nullable();
+            $table->string('middle_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->unique();
+            $table->string('provinsi');
+            $table->string('kabupaten');
+            $table->string('kecamatan');
+            $table->string('jalan');
+            $table->string('kode_pos');
+            $table->integer('tanggal_lahir');
+            $table->integer('bulan_lahir');
+            $table->integer('tahun_lahir');
+            $table->integer('usia');
         });
-
     }
 
     /**
