@@ -16,6 +16,37 @@ class DemoDataSeeder extends Seeder
         DB::transaction(function () {
             $now = Carbon::now();
 
+            // Add financial accounts for existing users (ID 1-11)
+            // Get existing users
+            $existingUsers = DB::table('users')->whereIn('id', range(1, 11))->pluck('id');
+            
+            foreach ($existingUsers as $userId) {
+                // Create 1-2 accounts per user with varied balances
+                $balanceAS = rand(100000, 2000000);
+                $balanceLI = rand(50000, 800000);
+                
+                FinancialAccount::createForUser([
+                    'user_id'         => $userId,
+                    'name'            => "Kas User {$userId}",
+                    'type'            => 'AS',
+                    'initial_balance' => $balanceAS,
+                    'description'     => "Asset account for user {$userId}",
+                    'is_group'        => false,
+                ]);
+                
+                // 70% chance to also create liability account
+                if (rand(1, 10) > 3) {
+                    FinancialAccount::createForUser([
+                        'user_id'         => $userId,
+                        'name'            => "Hutang User {$userId}",
+                        'type'            => 'LI',
+                        'initial_balance' => $balanceLI,
+                        'description'     => "Liability account for user {$userId}",
+                        'is_group'        => false,
+                    ]);
+                }
+            }
+
             $userIdRafi = DB::table('users')->insertGetId([
                 'name'          => 'Rafi Satya',
                 'first_name'    => 'Rafi',
@@ -82,7 +113,9 @@ class DemoDataSeeder extends Seeder
             ]);
         });
 
-        $this->command->info('✅ DemoDataSeeder selesai tanpa FK error.');
+        $this->command->info('✅ DemoDataSeeder selesai.');
+        $this->command->info('📌 Semua user (1-11) sekarang punya akun keuangan dengan saldo.');
+        $this->command->info('💡 Jalankan: php check_data.php untuk melihat total liquid asset semua user.');
 
     }
 }
