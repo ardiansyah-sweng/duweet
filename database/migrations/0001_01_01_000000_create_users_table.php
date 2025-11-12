@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Constants\UserColumns;
 
 return new class extends Migration
 {
@@ -10,47 +11,43 @@ return new class extends Migration
 
     public function __construct()
     {
-        // sesuai PRD → tabel utama untuk pengguna
-        $this->table = config('db_tables.user', 'users');
+        $this->table = config('db_tables.user');
     }
 
     /**
-     * Jalankan migration.
+     * Run the migrations.
      */
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-            $table->id();
-
-            // Kolom sesuai PRD
-            $table->string('name', 100);
-            $table->string('first_name')->nullable();
-            $table->string('middle_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('email')->unique();
-
-            // Ubah kembali ke model tanggal penuh sesuai kebutuhan aplikasi
-            $table->date('tanggal_lahir')->nullable();      // full birth date (YYYY-MM-DD)
-            $table->unsignedTinyInteger('bulan_lahir')->nullable();  // 1-12 (opsional indexing / legacy)
-            $table->unsignedSmallInteger('tahun_lahir')->nullable(); // tahun lahir (opsional indexing)
-            $table->unsignedTinyInteger('usia')->nullable();         // usia (denormalized)
-
-            // Tambahan umum Laravel
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password')->nullable();
-            $table->rememberToken();
-            $table->timestamps();
-
-            // Index tambahan (opsional)
-            $table->index(['last_name', 'first_name']);
+            $table->id(UserColumns::ID);
+            $table->string(UserColumns::NAME);
+            $table->string(UserColumns::FIRST_NAME)->nullable();
+            $table->string(UserColumns::MIDDLE_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME)->nullable();
+            $table->string(UserColumns::EMAIL)->unique();
+            
+            // Address data
+            $table->string(UserColumns::PROVINSI);
+            $table->string(UserColumns::KABUPATEN);
+            $table->string(UserColumns::KECAMATAN);
+            $table->string(UserColumns::JALAN);
+            $table->string(UserColumns::KODE_POS);
+            
+            // Birth data
+            $table->integer(UserColumns::TANGGAL_LAHIR);
+            $table->integer(UserColumns::BULAN_LAHIR);
+            $table->integer(UserColumns::TAHUN_LAHIR);
+            $table->integer(UserColumns::USIA);
         });
+
     }
 
     /**
-     * Rollback migration.
+     * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists($this->table);
+        Schema::dropIfExists('users');
     }
 };

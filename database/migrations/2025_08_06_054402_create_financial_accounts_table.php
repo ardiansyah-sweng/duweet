@@ -29,13 +29,14 @@ return new class extends Migration
             $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
-
             
-
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
+            
             $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
-
+            
             // Foreign key constraint
             $table->foreign(FinancialAccountColumns::PARENT_ID)->references(FinancialAccountColumns::ID)->on($this->table)->onDelete('cascade');
 
