@@ -2,54 +2,78 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\UserAccount;
+use App\Models\Transaction;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Disable automatic timestamps because users table does not have created_at/updated_at
      *
-     * @var list<string>
+     * @var bool
      */
+    public $timestamps = false;
+
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',
-        'password',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * One user can have many user accounts (credentials)
      *
-     * @return array<string, string>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    protected function casts(): array
+    public function userAccounts(): HasMany
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
 
-     public function transactions()
+    /**
+     * User transactions relation
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class, 'user_id');
     }
+    
+    public function deleteTransaction(int $transactionId): bool
+    {
+        $transaction = $this->transactions()->find($transactionId);
 
+        if (! $transaction) {
+            return false;
+        }
 
+        return (bool) $transaction->delete();
+    }
 }
