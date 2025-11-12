@@ -3,27 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Constants\UserAccountColumns;
 
 class UserController extends Controller
 {
-    /**
-     * Tampilkan semua akun user berdasarkan user ID
-     */
-    public function showAccounts($id)
+    public function getAllAccounts($id)
     {
         $user = User::find($id);
 
         if (!$user) {
-            return "User dengan ID {$id} tidak ditemukan.";
+            return response()->json([
+                'message' => 'User tidak ditemukan'
+            ], 404);
         }
 
-        $accounts = $user->getAllAccounts();
+        $accounts = $user->userAccounts()->get();
 
-        $output = "";
-        foreach ($accounts as $account) {
-            $output .= $account->username . " - " . $account->email . "<br>";
-        }
+        $data = $accounts->map(function($account) {
+            return [
+                'ID User'   => $account->{UserAccountColumns::ID_USER},
+                'Username'  => $account->{UserAccountColumns::USERNAME},
+                'Email'     => $account->{UserAccountColumns::EMAIL},
+                'Verified'  => $account->{UserAccountColumns::VERIFIED_AT},
+                'Is Active' => $account->{UserAccountColumns::IS_ACTIVE} ? 'Yes' : 'No',
+            ];
+        });
 
-        return $output;
+        return response()->json([
+            'User ID' => $user->id,
+            'Name'    => $user->name,
+            'Accounts'=> $data
+        ], 200);
     }
 }

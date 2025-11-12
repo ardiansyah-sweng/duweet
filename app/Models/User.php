@@ -48,10 +48,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Ambil semua akun user
+     * Ambil semua akun user sebagai JSON
      */
     public function getAllAccounts()
     {
-        return $this->userAccounts;
+        return $this->userAccounts()->get()->toJson();
     }
 }
