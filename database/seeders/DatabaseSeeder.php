@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed the application's database.
+     */
     public function run(): void
     {
         // Sesuaikan dengan skema users saat ini (tidak ada password / timestamps / email_verified_at)
@@ -44,6 +47,8 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(['email' => $attrs['email']], $attrs);
 
         $this->call([
+            UserSeeder::class,
+            UserAccountSeeder::class,
             DemoDataSeeder::class,
         ]);
     }
