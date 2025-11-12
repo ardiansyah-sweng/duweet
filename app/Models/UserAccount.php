@@ -2,44 +2,38 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Constants\UserAccountColumns;
-use Illuminate\Support\Facades\DB;
 
 class UserAccount extends Model
 {
+    use HasFactory;
+
+    /**
+     * This table does not use created_at/updated_at timestamps.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
     protected $table = 'user_accounts';
-    protected $primaryKey = UserAccountColumns::ID;
 
-    // Cannot call a method to initialize a property at compile time in PHP.
-    // Initialize fillable in the constructor instead.
-    protected $fillable = [];
+    protected $fillable = [
+        'id_user',
+        'username',
+        'email',
+        'password',
+        'verified_at',
+        'is_active',
+    ];
 
-    public function __construct(array $attributes = [])
+    protected $casts = [
+        'verified_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    public function user()
     {
-        parent::__construct($attributes);
-        $this->fillable = UserAccountColumns::getFillable();
-    }
-
-    /**
-     * Query murni mencari user berdasarkan email.
-     */
-    public static function cariUserByEmail(string $email)
-    {
-        return DB::table('user_accounts')
-                 ->where(UserAccountColumns::EMAIL, $email)
-                 ->first();
-    }
-
-    /**
-     * Reset password user berdasarkan email.
-     */
-    public static function resetPasswordByEmail(string $email, string $newPassword)
-    {
-        return DB::table('user_accounts')
-                 ->where(UserAccountColumns::EMAIL, $email)
-                 ->update([
-                     UserAccountColumns::PASSWORD => bcrypt($newPassword),
-                 ]);
+        return $this->belongsTo(User::class, 'id_user');
     }
 }
