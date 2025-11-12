@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
 use Illuminate\Support\Facades\Validator;
-use App\Models\User;
+use App\Models\Transaction;
 
 class ReportsController extends Controller
 {
@@ -35,7 +35,7 @@ class ReportsController extends Controller
         $userId = $request->query('user_id');
 
         // Get transaction totals from model
-        $data = User::getTotalTransactionsPerUser($userId);
+        $data = Transaction::getTotalTransactionsPerUser($userId);
 
         return response()->json([
             'status' => 'success',
