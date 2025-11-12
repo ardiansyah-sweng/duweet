@@ -35,7 +35,7 @@ class FinancialAccountColumns
             self::IS_ACTIVE,
             self::SORT_ORDER,
             self::LEVEL,
-            // description already included above
+            self::DESCRIPTION
         ];
     }
 }
