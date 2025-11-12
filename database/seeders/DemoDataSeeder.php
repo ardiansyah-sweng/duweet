@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Models\User;
 
 class DemoDataSeeder extends Seeder
 {
@@ -18,30 +19,28 @@ class DemoDataSeeder extends Seeder
             // ==========================================
             // 1️⃣ USERS
             // ==========================================
-            $userIdRafi = DB::table('users')->insertGetId([
-                'name'              => 'Rafi Satya',
-                'email'             => 'rafi@example.com',
-                'password'          => Hash::make('rahasia123'),
-                'usia'              => 21,
-                'bulan_lahir'       => 8,
-                'tanggal_lahir'     => '2002-08-15',
-                'email_verified_at' => $now,
+            User::create([
+                'name'          => 'Rafi Satya',
+                'email'         => 'rafi@example.com',
+                'password'      => Hash::make('password'),
+                'usia'          => 21,
+                'bulan_lahir'   => 8,      // month
+                'tanggal_lahir' => 15,     // day-of-month (1–31)
+                'tahun_lahir'   => 2002,   // year (smallint)
+                'email_verified_at' => now(),
                 'remember_token'    => Str::random(10),
-                'created_at'        => $now,
-                'updated_at'        => $now,
             ]);
 
-            $userIdAndi = DB::table('users')->insertGetId([
-                'name'              => 'Andi Nugraha',
-                'email'             => 'andi@example.com',
-                'password'          => Hash::make('rahasia123'),
-                'usia'              => 22,
-                'bulan_lahir'       => 11,
-                'tanggal_lahir'     => '2001-11-20',
-                'email_verified_at' => $now,
+            User::create([
+                'name'          => 'Andi Nugraha',
+                'email'         => 'andi@example.com',
+                'password'      => Hash::make('password'),
+                'usia'          => 22,
+                'bulan_lahir'   => 11,     // month
+                'tanggal_lahir' => 20,     // day-of-month (1–31)
+                'tahun_lahir'   => 2001,   // year (smallint)
+                'email_verified_at' => now(),
                 'remember_token'    => Str::random(10),
-                'created_at'        => $now,
-                'updated_at'        => $now,
             ]);
 
             // ==========================================
@@ -94,7 +93,7 @@ class DemoDataSeeder extends Seeder
             // ==========================================
             DB::table('user_financial_accounts')->insert([
                 [
-                    'user_id'              => $userIdRafi,
+                    'user_id'              => 1,
                     'financial_account_id' => $accIdKas,
                     'initial_balance'      => 1000000,
                     'balance'              => 1000000,
@@ -103,7 +102,7 @@ class DemoDataSeeder extends Seeder
                     'updated_at'           => $now,
                 ],
                 [
-                    'user_id'              => $userIdAndi,
+                    'user_id'              => 2,
                     'financial_account_id' => $accIdBiaya,
                     'initial_balance'      => 500000,
                     'balance'              => 500000,
@@ -120,7 +119,7 @@ class DemoDataSeeder extends Seeder
                 // === Rafi: beberapa transaksi dengan tanggal berbeda ===
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => $userIdRafi,
+                    'user_id'              => 1,
                     'financial_account_id'  => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 150000,
@@ -132,7 +131,7 @@ class DemoDataSeeder extends Seeder
                 ],
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => $userIdRafi,
+                    'user_id'              => 1,
                     'financial_account_id'           => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 200000,
@@ -146,7 +145,7 @@ class DemoDataSeeder extends Seeder
                 // === Andi: transaksi dalam periode berbeda ===
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => $userIdAndi,
+                    'user_id'              => 2,
                     'financial_account_id'           => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 50000,
@@ -158,7 +157,7 @@ class DemoDataSeeder extends Seeder
                 ],
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => $userIdAndi,
+                    'user_id'              => 2,
                     'financial_account_id'  => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 100000,

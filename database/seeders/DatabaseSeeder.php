@@ -20,7 +20,8 @@ class DatabaseSeeder extends Seeder
                 'remember_token'    => Str::random(10),
                 'usia'              => 21,
                 'bulan_lahir'       => 8,
-                'tanggal_lahir'     => '2002-08-15',
+                'tanggal_lahir'     => 15,    // 1–31
+                'tahun_lahir'       => 2002,  // smallint
                 'created_at'        => now(),
                 'updated_at'        => now(),
             ]
@@ -28,8 +29,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             DemoDataSeeder::class,
-        ]);
-        $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
         ]);

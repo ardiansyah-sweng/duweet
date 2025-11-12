@@ -30,19 +30,20 @@ class Transaction extends Model
         'balance_effect' => 'string',
     ];
 
-    /**
-     * Get the user that owns the transaction.
-     */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class); // uses user_id
     }
 
-    /**
-     * Get the account that owns the transaction.
-     */
+    // Relasi yang benar ke financial_account_id
+    public function financialAccount(): BelongsTo
+    {
+        return $this->belongsTo(FinancialAccount::class, 'financial_account_id');
+    }
+
+    // Opsional: alias jika kode lama masih memanggil $tx->account
     public function account(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->financialAccount();
     }
 }
