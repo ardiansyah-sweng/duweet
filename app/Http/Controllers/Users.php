@@ -11,14 +11,12 @@ class Users extends Controller
     public function index()
     {
         try {
-            $data = Users_account::with('user')
-                ->where('is_active', true)
-                ->get();
+            $data = Users_account::getAllUserAccounts();
 
             return response()->json([
                 'status' => 'success',
                 'data' => $data,
-                'message' => 'Data berhasil diambil'
+                'message' => 'Semua data user account berhasil diambil'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

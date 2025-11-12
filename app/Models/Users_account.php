@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 
 class Users_account extends Model
 {
@@ -29,8 +30,11 @@ class Users_account extends Model
         'is_active' => 'boolean'
     ];
 
-    public function user()
+    public static function getAllUserAccounts()
     {
-        return $this->belongsTo(User::class, 'id_user', 'id');
+        return DB::table('user_accounts')
+            ->join('users', 'user_accounts.id_user', '=', 'users.id')
+            ->select('user_accounts.*', 'users.*')
+            ->get();
     }
 }
