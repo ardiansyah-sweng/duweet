@@ -14,7 +14,7 @@ class Transaction extends Model
      *
      * @var string
      */
-    protected $table = 'transactions';
+    protected $table;
 
     /**
      * Disable automatic timestamps if the table doesn't have created_at/updated_at
@@ -22,6 +22,15 @@ class Transaction extends Model
      * @var bool
      */
     public $timestamps = false;
+
+    /**
+     * Initialize the model with table name from config.
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = config('db_tables.transaction');
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -63,9 +72,14 @@ class Transaction extends Model
      */
     public static function getTotalTransactionsPerUser(?int $userId = null)
     {
+        // Get table names from config
+        $transactionTable = config('db_tables.transaction');
+        $userAccountTable = config('db_tables.user_account');
+        $userTable = config('db_tables.user');
+
         // Build a subquery that aggregates transactions grouped by the owning user (via user_accounts)
-        $txSub = DB::table('transactions as t')
-            ->join('user_accounts as ua', 't.' . TransactionColumns::USER_ACCOUNT_ID, '=', 'ua.' . UserAccountColumns::ID)
+        $txSub = DB::table($transactionTable . ' as t')
+            ->join($userAccountTable . ' as ua', 't.' . TransactionColumns::USER_ACCOUNT_ID, '=', 'ua.' . UserAccountColumns::ID)
             ->selectRaw('ua.' . UserAccountColumns::ID_USER . ' as user_id')
             ->selectRaw('COUNT(t.id) as transaction_count')
             ->selectRaw('SUM(CASE WHEN t.' . TransactionColumns::ENTRY_TYPE . ' = ? THEN 1 ELSE 0 END) as debit_count', ['debit'])
@@ -76,7 +90,7 @@ class Transaction extends Model
             ->groupBy('ua.' . UserAccountColumns::ID_USER);
 
         // Wrap subquery as a derived table and join with users
-        $query = DB::table('users as u')
+        $query = DB::table($userTable . ' as u')
             ->leftJoinSub($txSub, 'tx', 'tx.user_id', '=', 'u.id')
             ->select([
                 'u.id as user_id',
