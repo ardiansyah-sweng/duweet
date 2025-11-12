@@ -10,7 +10,7 @@ return new class extends Migration
 
     public function __construct()
     {
-        // sesuai PRD → tabel utama untuk pengguna
+        // gunakan config dengan default 'users'
         $this->table = config('db_tables.user', 'users');
     }
 
@@ -22,24 +22,33 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
 
-            // Kolom sesuai PRD
+            // Identitas
             $table->string('name', 100);
             $table->string('first_name')->nullable();
             $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('email')->unique();
 
-            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
-            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
-            $table->date('tanggal_lahir')->nullable();
+            // Alamat
+            $table->string('provinsi')->nullable();
+            $table->string('kabupaten')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('jalan')->nullable();
+            $table->string('kode_pos', 10)->nullable();
 
-            // Tambahan umum Laravel
+            // Data lahir
+            $table->unsignedTinyInteger('tanggal_lahir')->nullable(); // 1–31
+            $table->unsignedTinyInteger('bulan_lahir')->nullable();   // 1–12
+            $table->unsignedSmallInteger('tahun_lahir')->nullable();  // contoh: 1900–2100
+            $table->unsignedTinyInteger('usia')->nullable();          // 0–255
+
+            // Laravel defaults
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
 
-            // Index tambahan (opsional)
+            // Index opsional
             $table->index(['last_name', 'first_name']);
         });
     }
