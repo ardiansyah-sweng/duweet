@@ -7,23 +7,34 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct()
+    {
+        $this->table = config('db_tables.user', 'users');
+    }
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserColumns::ID);
             $table->string(UserColumns::NAME)->nullable();
             $table->string(UserColumns::FIRST_NAME)->nullable();
             $table->string(UserColumns::MIDDLE_NAME)->nullable();
             $table->string(UserColumns::LAST_NAME)->nullable();
             $table->string(UserColumns::EMAIL)->unique();
+            
+            // Address data
             $table->string(UserColumns::PROVINSI)->nullable();
             $table->string(UserColumns::KABUPATEN)->nullable();
             $table->string(UserColumns::KECAMATAN)->nullable();
             $table->text(UserColumns::JALAN)->nullable();
             $table->string(UserColumns::KODE_POS)->nullable();
+            
+            // Birth data
             $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
             $table->integer(UserColumns::BULAN_LAHIR)->nullable();
             $table->integer(UserColumns::TAHUN_LAHIR)->nullable();
@@ -46,8 +57,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists($this->table);
         Schema::dropIfExists('sessions');
     }
 };

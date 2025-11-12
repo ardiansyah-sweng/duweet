@@ -5,11 +5,14 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use App\Models\UserAccount;
+use App\Models\UserTelephone;
 
-class User extends Model
+class User extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     /**
      * Table name
@@ -52,6 +55,7 @@ class User extends Model
         UserColumns::USIA => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     /**
@@ -71,6 +75,14 @@ class User extends Model
     public function telephones()
     {
         return $this->hasMany(UserTelephone::class, 'user_id');
+    }
+
+    /**
+     * One user can have many user accounts (credentials)
+     */
+    public function userAccounts()
+    {
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
 
     /**
