@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,20 +9,10 @@ use App\Models\UserAccount;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    /**
-     * Disable automatic timestamps because users table does not have created_at/updated_at
-     *
-     * @var bool
-     */
     public $timestamps = false;
+
     protected $fillable = [
         'name',
         'first_name',
@@ -41,30 +30,28 @@ class User extends Authenticatable
         'usia',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
-     */
     protected $casts = [
         'password' => 'hashed',
     ];
 
     /**
-     * One user can have many user accounts (credentials)
+     * Relasi: satu user bisa punya banyak UserAccount
      */
     public function userAccounts()
     {
-        return $this->hasMany(UserAccount::class, 'id_user');
+        return $this->hasMany(UserAccount::class, 'id_user'); // sesuai migration: id_user
+    }
+
+    /**
+     * Ambil semua akun user
+     */
+    public function getAllAccounts()
+    {
+        return $this->userAccounts;
     }
 }
