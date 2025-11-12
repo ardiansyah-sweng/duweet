@@ -44,8 +44,6 @@ class Transaction extends Model
                 transaction_group_id = ?
         ";
 
-        // Menggunakan parameter binding [?] untuk keamanan
-        // Ini akan menghapus kedua baris (debit & credit)
         return DB::delete($query, [$transactionGroupId]);
     }
 
