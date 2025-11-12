@@ -69,7 +69,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
-
+    
     public function accounts() {
         return $this->hasMany(\App\Models\UserAccount::class);
     }
