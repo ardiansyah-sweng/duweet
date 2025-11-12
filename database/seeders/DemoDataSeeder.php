@@ -4,10 +4,10 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Constants\UserFinancialAccountColumns;
 
 class DemoDataSeeder extends Seeder
 {
@@ -20,27 +20,35 @@ class DemoDataSeeder extends Seeder
             // 1️⃣ USERS
             // ==========================================
             User::create([
-                'name'          => 'Rafi Satya',
-                'email'         => 'rafi@example.com',
-                'password'      => Hash::make('password'),
-                'usia'          => 21,
-                'bulan_lahir'   => 8,      // month
-                'tanggal_lahir' => 15,     // day-of-month (1–31)
-                'tahun_lahir'   => 2002,   // year (smallint)
-                'email_verified_at' => now(),
-                'remember_token'    => Str::random(10),
+                'name'           => 'Rafi Aulia',
+                'first_name'     => 'Rafi',
+                'last_name'      => 'Aulia',
+                'email'          => 'rafi@example.com',
+                'provinsi'       => 'Jawa Barat',
+                'kabupaten'      => 'Purwakarta',
+                'kecamatan'      => 'Wanayasa',
+                'jalan'          => 'Kp. Krajan No. 35',
+                'kode_pos'       => '41174',
+                'usia'           => 23,
+                'bulan_lahir'    => 8,
+                'tanggal_lahir'  => 15,
+                'tahun_lahir'    => 2002,
             ]);
 
             User::create([
-                'name'          => 'Andi Nugraha',
-                'email'         => 'andi@example.com',
-                'password'      => Hash::make('password'),
-                'usia'          => 22,
-                'bulan_lahir'   => 11,     // month
-                'tanggal_lahir' => 20,     // day-of-month (1–31)
-                'tahun_lahir'   => 2001,   // year (smallint)
-                'email_verified_at' => now(),
-                'remember_token'    => Str::random(10),
+                'name'           => 'Siti Nurhaliza',
+                'first_name'     => 'Siti',
+                'last_name'      => 'Nurhaliza',
+                'email'          => 'siti@example.com',
+                'provinsi'       => 'DKI Jakarta',
+                'kabupaten'      => 'Jakarta Pusat',
+                'kecamatan'      => 'Menteng',
+                'jalan'          => 'Jl. Thamrin No. 1',
+                'kode_pos'       => '10310',
+                'usia'           => 23,
+                'bulan_lahir'    => 3,
+                'tanggal_lahir'  => 20,
+                'tahun_lahir'    => 2000,
             ]);
 
             // ==========================================
@@ -91,36 +99,35 @@ class DemoDataSeeder extends Seeder
             // ==========================================
             // 3️⃣ USER-FINANCIAL ACCOUNTS
             // ==========================================
-            DB::table('user_financial_accounts')->insert([
+            DB::table(config('db_tables.user_financial_account'))->insert([
                 [
-                    'user_id'              => 1,
-                    'financial_account_id' => $accIdKas,
-                    'initial_balance'      => 1000000,
-                    'balance'              => 1000000,
-                    'is_active'            => true,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
+                    UserFinancialAccountColumns::USER_ID              => 1,
+                    UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID => $accIdKas,
+                    UserFinancialAccountColumns::INITIAL_BALANCE      => 1000000,
+                    UserFinancialAccountColumns::BALANCE              => 1000000,
+                    UserFinancialAccountColumns::IS_ACTIVE            => true,
+                    'created_at'                                      => $now,
+                    'updated_at'                                      => $now,
                 ],
                 [
-                    'user_id'              => 2,
-                    'financial_account_id' => $accIdBiaya,
-                    'initial_balance'      => 500000,
-                    'balance'              => 500000,
-                    'is_active'            => true,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
+                    UserFinancialAccountColumns::USER_ID              => 2,
+                    UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID => $accIdBiaya,
+                    UserFinancialAccountColumns::INITIAL_BALANCE      => 500000,
+                    UserFinancialAccountColumns::BALANCE              => 500000,
+                    UserFinancialAccountColumns::IS_ACTIVE            => true,
+                    'created_at'                                      => $now,
+                    'updated_at'                                      => $now,
                 ],
             ]);
 
             // ==========================================
-            // 4️⃣ TRANSACTIONS (biar bisa diuji by period)
+            // 4️⃣ TRANSACTIONS
             // ==========================================
             DB::table('transactions')->insert([
-                // === Rafi: beberapa transaksi dengan tanggal berbeda ===
                 [
                     'transaction_group_id' => (string) Str::uuid(),
                     'user_id'              => 1,
-                    'financial_account_id'  => $accIdBiaya,
+                    'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 150000,
                     'balance_effect'       => 'decrease',
@@ -132,7 +139,7 @@ class DemoDataSeeder extends Seeder
                 [
                     'transaction_group_id' => (string) Str::uuid(),
                     'user_id'              => 1,
-                    'financial_account_id'           => $accIdBiaya,
+                    'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 200000,
                     'balance_effect'       => 'decrease',
@@ -141,12 +148,10 @@ class DemoDataSeeder extends Seeder
                     'created_at'           => '2025-11-05 10:00:00',
                     'updated_at'           => '2025-11-05 10:00:00',
                 ],
-
-                // === Andi: transaksi dalam periode berbeda ===
                 [
                     'transaction_group_id' => (string) Str::uuid(),
                     'user_id'              => 2,
-                    'financial_account_id'           => $accIdBiaya,
+                    'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 50000,
                     'balance_effect'       => 'decrease',
@@ -158,7 +163,7 @@ class DemoDataSeeder extends Seeder
                 [
                     'transaction_group_id' => (string) Str::uuid(),
                     'user_id'              => 2,
-                    'financial_account_id'  => $accIdBiaya,
+                    'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 100000,
                     'balance_effect'       => 'decrease',
@@ -170,6 +175,6 @@ class DemoDataSeeder extends Seeder
             ]);
         });
 
-        $this->command->info('✅ DemoDataSeeder selesai dan siap untuk query by period test.');
+        $this->command->info('✅ DemoDataSeeder selesai.');
     }
 }

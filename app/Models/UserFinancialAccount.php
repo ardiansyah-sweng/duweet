@@ -7,9 +7,31 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserFinancialAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'user_financial_accounts';
+
     protected $fillable = [
-        'user_id','financial_account_id','balance','initial_balance','is_active'
+        'id_user',
+        'financial_account_id',
+        'balance',
+        'initial_balance',
+        'is_active',
     ];
-    public $timestamps = true;
+
+    /**
+     * Relasi ke User
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relasi ke FinancialAccount
+     */
+    public function financialAccount()
+    {
+        return $this->belongsTo(FinancialAccount::class);
+    }
 }
