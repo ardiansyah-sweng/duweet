@@ -46,5 +46,30 @@ class Transaction extends Model
 
         return DB::delete($query, [$transactionGroupId]);
     }
+    /**
+     * Hapus satu transaksi dengan raw SQL, mengembalikan jumlah baris terhapus.
+     */
+    public static function deleteByIdRaw(int $transactionId): int
+    {
+        $query = "DELETE FROM transactions WHERE id = ?";
+        return DB::delete($query, [$transactionId]);
+    }
+
+    /**
+     * Hapus satu transaksi milik user tertentu (cek kepemilikan).
+     */
+    public static function deleteByIdForUserRaw(int $transactionId, int $userId): int
+    {
+        $query = "DELETE FROM transactions WHERE id = ? AND user_id = ?";
+        return DB::delete($query, [$transactionId, $userId]);
+    }
+
+    /**
+     * Hapus satu transaksi menggunakan Eloquent, mengembalikan true jika terhapus.
+     */
+    public static function deleteById(int $transactionId): bool
+    {
+        return (bool) static::where('id', $transactionId)->delete();
+    }
 
 }
