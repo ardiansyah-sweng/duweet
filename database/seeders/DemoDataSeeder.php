@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use App\Models\User;
+use App\Models\FinancialAccount;
 use Carbon\Carbon;
 
 
@@ -50,78 +50,35 @@ class DemoDataSeeder extends Seeder
                 'tahun_lahir'   => 2001,
             ]);
 
-            // Asset (AS)
-            $accIdKas = DB::table('financial_accounts')->insertGetId([
+            // Create Financial Accounts using Model method (not raw query)
+            // Asset (AS) - Kas Utama
+            $accountKas = FinancialAccount::createForUser([
+                'user_id'         => $userIdRafi,
                 'name'            => 'Kas Utama',
-                'type'            => 'AS',        // Asset
-                'balance'         => 1000000,
+                'type'            => 'AS',
                 'initial_balance' => 1000000,
-                'is_group'        => false,
                 'description'     => 'Saldo utama perusahaan',
-                'is_active'       => true,
-                'sort_order'      => 1,
-                'level'           => 0,
-                'created_at'      => $now,
-                'updated_at'      => $now,
+                'is_group'        => false,
             ]);
 
-            $accIdBiaya = DB::table('financial_accounts')->insertGetId([
-                'name'            => 'Biaya Operasional',
-                'type'            => 'LI',     
-                'balance'         => 500000,
+            // Liability (LI) - Hutang Operasional  
+            $accountHutang = FinancialAccount::createForUser([
+                'user_id'         => $userIdAndi,
+                'name'            => 'Hutang Operasional',
+                'type'            => 'LI',
                 'initial_balance' => 500000,
+                'description'     => 'Hutang operasional perusahaan',
                 'is_group'        => false,
-                'description'     => 'Pengeluaran bulanan kantor',
-                'is_active'       => true,
-                'sort_order'      => 2,
-                'level'           => 0,
-                'created_at'      => $now,
-                'updated_at'      => $now,
             ]);
 
-            // Income (IN)
-            $accIdPendapatan = DB::table('financial_accounts')->insertGetId([
-                'name'            => 'Pendapatan Penjualan',
-                'type'            => 'AS',    
-                'balance'         => 200000,
+            // Asset (AS) - Pendapatan Penjualan (Asset karena mencatat kas masuk)
+            $accountPendapatan = FinancialAccount::createForUser([
+                'user_id'         => $userIdRafi,
+                'name'            => 'Kas dari Penjualan',
+                'type'            => 'AS',
                 'initial_balance' => 200000,
+                'description'     => 'Kas hasil penjualan produk',
                 'is_group'        => false,
-                'description'     => 'Pemasukan hasil penjualan produk',
-                'is_active'       => true,
-                'sort_order'      => 3,
-                'level'           => 0,
-                'created_at'      => $now,
-                'updated_at'      => $now,
-            ]);
-
-            DB::table('user_financial_accounts')->insert([
-                [
-                    'user_id'              => $userIdRafi,
-                    'financial_account_id' => $accIdPendapatan,
-                    'initial_balance'      => 200000,
-                    'balance'              => 200000,
-                    'is_active'            => true,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
-                ],
-                [
-                    'user_id'              => $userIdRafi,
-                    'financial_account_id' => $accIdKas,
-                    'initial_balance'      => 1000000,
-                    'balance'              => 1000000,
-                    'is_active'            => true,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
-                ],
-                [
-                    'user_id'              => $userIdAndi,
-                    'financial_account_id' => $accIdBiaya,
-                    'initial_balance'      => 500000,
-                    'balance'              => 500000,
-                    'is_active'            => true,
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
-                ],
             ]);
         });
 
