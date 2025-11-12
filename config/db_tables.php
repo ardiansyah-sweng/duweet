@@ -6,8 +6,7 @@ return [
     'transaction' => 'transactions',
 
 ];
-
-<<<<<<<<< Temporary merge branch 1
+//<<<<<<< HEAD
     return [
         'account'   => 'accounts',
         'user'      => 'users',
@@ -15,5 +14,5 @@ return [
         'financial_accounts'    => 'financial_accounts',
         'user_financial_accounts' => 'user_financial_accounts',
     ];
-=========
->>>>>>>>> Temporary merge branch 2
+//=========
+//>>>>>>>>> Temporary merge branch 2
