@@ -5,16 +5,16 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Enums\TransactionEntryType;   // <-- Import Enum
-use App\Enums\TransactionBalanceEffect; // <-- Import Enum
+use App\Enums\TransactionEntryType;
+use App\Enums\TransactionBalanceEffect;
+// Asumsi Anda punya model UserAccount
+use App\Models\UserAccount; 
 
 class Transaction extends Model
 {
     use HasFactory;
 
- 
     protected $table = 'transactions';
-
 
     protected $casts = [
         'entry_type'     => TransactionEntryType::class,
@@ -23,17 +23,14 @@ class Transaction extends Model
         'is_balance'     => 'boolean',
     ];
 
-
-    public function user()
+    public function userAccount()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(UserAccount::class, 'user_account_id', 'id');
     }
-
 
     public function financialAccount()
     {
-  
-        return $this->belongsTo(FinancialAccount::class, 'account_id');
+        return $this->belongsTo(FinancialAccount::class, 'financial_account_id', 'id');
     }
 
     public static function getLatestActivitiesRaw()
@@ -45,7 +42,6 @@ class Transaction extends Model
                 t.created_at,
                 t.entry_type, 
                 
-                -- PERUBAHAN 1:
                 -- Mengambil 'username' dari tabel 'user_accounts'
                 ua.username as user_name,
                 
@@ -55,13 +51,17 @@ class Transaction extends Model
             FROM
                 transactions as t
             JOIN
-                -- PERUBAHAN 2:
-                -- Mengganti JOIN 'users' menjadi 'user_accounts'
-                -- Kita beri alias 'ua' (untuk User Account)
-                user_accounts as ua ON t.user_id = ua.user_id
+                -- PERBAIKAN 1:
+                -- Sambungkan ke 'user_accounts' (ua)
+                -- menggunakan 't.user_account_id' (dari transactions)
+                -- dan 'ua.id' (primary key dari user_accounts)
+                user_accounts as ua ON t.user_account_id = ua.id
             JOIN
-                -- Ini tetap sama
-                financial_accounts as a ON t.account_id = a.id
+                -- PERBAIKAN 2:
+                -- Sambungkan ke 'financial_accounts' (a)
+                -- menggunakan 't.financial_account_id' (dari transactions)
+                -- dan 'a.id' (primary key dari financial_accounts)
+                financial_accounts as a ON t.financial_account_id = a.id
             WHERE
                 t.created_at >= NOW() - INTERVAL 7 DAY
                 
@@ -70,11 +70,9 @@ class Transaction extends Model
                 
             ORDER BY
                 t.created_at DESC
-            LIMIT 20 
+            LIMIT 20
         ";
 
         return DB::select($query);
     }
-
-
 }

@@ -2,33 +2,48 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
+
 use App\Models\Transaction;
 use App\Models\UserAccount;
 use App\Models\UserTelephone;
 use App\Models\FinancialAccount;
 use App\Models\UserFinancialAccount;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $table = 'users';
-    
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Mass assignable attributes
      *
-     * @var list<string>
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
+    ];
+
+    /**
+     * Hidden attributes
+     *
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -36,26 +51,16 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * Casts
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-
-
-    public function telephones()
-    {
-        return $this->hasMany(UserTelephone::class, 'user_id');
-    }
+    protected $casts = [
+        'password' => 'hashed',
+    ];
 
     /**
-     * Get the login accounts for the user.
+     * One user can have many user accounts
      */
     public function userAccounts()
     {
@@ -63,7 +68,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the transactions recorded by this user.
+     * One user can have many phone numbers
+     */
+    public function telephones()
+    {
+        return $this->hasMany(UserTelephone::class, 'user_id');
+    }
+
+    /**
+     * A user can have many transactions
      */
     public function transactions()
     {
@@ -71,17 +84,18 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the financial accounts associated with this user.
-     * Ini adalah relasi Many-to-Many melalui tabel pivot.
+     * Many-to-Many relationship with pivot financial accounts
      */
     public function financialAccounts()
     {
-        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts', 'user_id', 'financial_account_id')
-            ->using(UserFinancialAccount::class) // Memberi tahu Laravel untuk menggunakan Pivot Model kustom
-            ->withPivot('balance', 'initial_balance', 'is_active') // Ambil data tambahan dari tabel pivot
-            ->withTimestamps();
+        return $this->belongsToMany(
+            FinancialAccount::class,
+            'user_financial_accounts',
+            'user_id',
+            'financial_account_id'
+        )
+        ->using(UserFinancialAccount::class)
+        ->withPivot('balance', 'initial_balance', 'is_active')
+        ->withTimestamps();
     }
-
-   
-    
 }

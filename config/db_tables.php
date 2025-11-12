@@ -9,4 +9,3 @@ return [
     'transaction'            => 'transactions',
     'user_financial_account' => 'user_financial_accounts',
 ];
-

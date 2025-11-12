@@ -2,38 +2,49 @@
 
 namespace App\Models;
 
-use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class UserAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'user_accounts';
 
+    /**
+     * Fillable columns
+     */
+    protected $fillable = [
+        'user_id',
+        'username',
+        'email',
+        'password',
+        'verified_at',
+        'is_active',
+    ];
 
-
+    /**
+     * Hidden attributes
+     */
     protected $hidden = [
         'password',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Attribute casting
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'verified_at' => 'datetime',
         'is_active' => 'boolean',
         'password' => 'hashed',
     ];
 
     /**
-     * Get the user profile that owns this login account.
+     * Relasi ke user
+     * Satu akun login dimiliki satu user profile
      */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-
-
-
 }
