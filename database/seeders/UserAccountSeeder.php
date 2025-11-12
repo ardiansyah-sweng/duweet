@@ -17,17 +17,56 @@ class UserAccountSeeder extends Seeder
         // Create sample users first (idempotent)
         $user1 = User::firstOrCreate(
             ['email' => 'john@example.com'],
-            ['name' => 'John Doe', 'password' => bcrypt('jawa')]
+            [
+                'name' => 'John Doe',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'provinsi' => 'DKI Jakarta',
+                'kabupaten' => 'Jakarta Selatan',
+                'kecamatan' => 'Kebayoran Baru',
+                'jalan' => 'Jl. Sudirman No. 123',
+                'kode_pos' => '12190',
+                'tanggal_lahir' => 15,
+                'bulan_lahir' => 6,
+                'tahun_lahir' => 1990,
+                'usia' => 35,
+            ]
         );
 
         $user2 = User::firstOrCreate(
             ['email' => 'jane@example.com'],
-            ['name' => 'Jane Smith', 'password' => bcrypt('sumatra')]
+            [
+                'name' => 'Jane Smith',
+                'first_name' => 'Jane',
+                'last_name' => 'Smith',
+                'provinsi' => 'Jawa Barat',
+                'kabupaten' => 'Bandung',
+                'kecamatan' => 'Coblong',
+                'jalan' => 'Jl. Dago No. 45',
+                'kode_pos' => '40135',
+                'tanggal_lahir' => 22,
+                'bulan_lahir' => 3,
+                'tahun_lahir' => 1992,
+                'usia' => 33,
+            ]
         );
 
         $user3 = User::firstOrCreate(
             ['email' => 'bob@example.com'],
-            ['name' => 'Bob Johnson', 'password' => bcrypt('kalimantan')]
+            [
+                'name' => 'Bob Johnson',
+                'first_name' => 'Bob',
+                'last_name' => 'Johnson',
+                'provinsi' => 'Jawa Timur',
+                'kabupaten' => 'Surabaya',
+                'kecamatan' => 'Gubeng',
+                'jalan' => 'Jl. Pemuda No. 67',
+                'kode_pos' => '60271',
+                'tanggal_lahir' => 8,
+                'bulan_lahir' => 11,
+                'tahun_lahir' => 1988,
+                'usia' => 37,
+            ]
         );
 
         // Create user accounts
