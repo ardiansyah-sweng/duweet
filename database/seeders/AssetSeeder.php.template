@@ -1,0 +1,42 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+/**
+ * Template AssetSeeder - Replace with your actual data
+ * 
+ * IMPORTANT: This is a template file. Create your own AssetSeeder.php
+ * with your actual financial data. The real file is ignored by git.
+ */
+class AssetSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // TODO: Implement your asset seeding logic here
+        // Example structure:
+        
+        /*
+        $assets = [
+            [
+                'account_id' => 1,
+                'acquisition_date' => '2025-01-01',
+                'bought_price' => 1000000,
+                'buy_quantity' => 100,
+                'is_liquid' => true,
+                'is_productive' => true,
+                'measurement_unit' => 'unit',
+            ],
+            // Add more assets...
+        ];
+        
+        foreach ($assets as $asset) {
+            // Insert logic here
+        }
+        */
+        
+        $this->command->info('⚠️  Please implement your AssetSeeder with actual data');
+        $this->command->info('💡 Copy from AssetSeeder.php.example if available');
+    }
+}
