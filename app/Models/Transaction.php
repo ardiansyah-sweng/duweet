@@ -55,7 +55,7 @@ class Transaction extends Model
     }
 
     /**
-     * Get total transactions per user - simplified version.
+     * Get total transactions per user using raw SQL query.
      *
      * Returns essential transaction summary per user:
      * - User information (id, name, email)
@@ -77,39 +77,56 @@ class Transaction extends Model
         $userAccountTable = config('db_tables.user_account');
         $userTable = config('db_tables.user');
 
-        // Build a subquery that aggregates transactions grouped by the owning user (via user_accounts)
-        $txSub = DB::table($transactionTable . ' as t')
-            ->join($userAccountTable . ' as ua', 't.' . TransactionColumns::USER_ACCOUNT_ID, '=', 'ua.' . UserAccountColumns::ID)
-            ->selectRaw('ua.' . UserAccountColumns::ID_USER . ' as user_id')
-            ->selectRaw('COUNT(t.id) as transaction_count')
-            ->selectRaw('SUM(CASE WHEN t.' . TransactionColumns::ENTRY_TYPE . ' = ? THEN 1 ELSE 0 END) as debit_count', ['debit'])
-            ->selectRaw('SUM(CASE WHEN t.' . TransactionColumns::ENTRY_TYPE . ' = ? THEN 1 ELSE 0 END) as credit_count', ['credit'])
-            ->selectRaw('COALESCE(SUM(CASE WHEN t.' . TransactionColumns::ENTRY_TYPE . ' = ? THEN t.' . TransactionColumns::AMOUNT . ' ELSE 0 END), 0) as total_debit', ['debit'])
-            ->selectRaw('COALESCE(SUM(CASE WHEN t.' . TransactionColumns::ENTRY_TYPE . ' = ? THEN t.' . TransactionColumns::AMOUNT . ' ELSE 0 END), 0) as total_credit', ['credit'])
-            ->selectRaw('COALESCE(SUM(t.' . TransactionColumns::AMOUNT . '), 0) as total_transactions')
-            ->groupBy('ua.' . UserAccountColumns::ID_USER);
+        // Get column names from constants
+        $userAccountIdCol = TransactionColumns::USER_ACCOUNT_ID;
+        $idUserCol = UserAccountColumns::ID_USER;
+        $entryTypeCol = TransactionColumns::ENTRY_TYPE;
+        $amountCol = TransactionColumns::AMOUNT;
 
-        // Wrap subquery as a derived table and join with users
-        $query = DB::table($userTable . ' as u')
-            ->leftJoinSub($txSub, 'tx', 'tx.user_id', '=', 'u.id')
-            ->select([
-                'u.id as user_id',
-                'u.name as user_name',
-                'u.email as user_email',
-                DB::raw('COALESCE(tx.transaction_count, 0) as transaction_count'),
-                DB::raw('COALESCE(tx.debit_count, 0) as debit_count'),
-                DB::raw('COALESCE(tx.credit_count, 0) as credit_count'),
-                DB::raw('COALESCE(tx.total_debit, 0) as total_debit'),
-                DB::raw('COALESCE(tx.total_credit, 0) as total_credit'),
-                DB::raw('COALESCE(tx.total_transactions, 0) as total_transactions'),
-                DB::raw('COALESCE(tx.total_debit, 0) - COALESCE(tx.total_credit, 0) as net_balance'),
-            ])
-            ->orderByDesc('total_transactions');
-
+        // Build WHERE clause for filtering by user ID
+        $whereClause = '';
+        $bindings = [];
+        
         if ($userId !== null) {
-            $query->where('u.id', $userId);
+            $whereClause = "WHERE u.id = ?";
+            $bindings[] = $userId;
         }
 
-        return $query->get();
+        // Raw SQL query using DML (Data Manipulation Language)
+        $sql = "
+            SELECT 
+                u.id AS user_id,
+                u.name AS user_name,
+                u.email AS user_email,
+                COALESCE(tx.transaction_count, 0) AS transaction_count,
+                COALESCE(tx.debit_count, 0) AS debit_count,
+                COALESCE(tx.credit_count, 0) AS credit_count,
+                COALESCE(tx.total_debit, 0) AS total_debit,
+                COALESCE(tx.total_credit, 0) AS total_credit,
+                COALESCE(tx.total_transactions, 0) AS total_transactions,
+                COALESCE(tx.total_debit, 0) - COALESCE(tx.total_credit, 0) AS net_balance
+            FROM {$userTable} AS u
+            LEFT JOIN (
+                SELECT 
+                    ua.{$idUserCol} AS user_id,
+                    COUNT(t.id) AS transaction_count,
+                    SUM(CASE WHEN t.{$entryTypeCol} = 'debit' THEN 1 ELSE 0 END) AS debit_count,
+                    SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN 1 ELSE 0 END) AS credit_count,
+                    COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'debit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_debit,
+                    COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_credit,
+                    COALESCE(SUM(t.{$amountCol}), 0) AS total_transactions
+                FROM {$transactionTable} AS t
+                JOIN {$userAccountTable} AS ua ON t.{$userAccountIdCol} = ua.id
+                GROUP BY ua.{$idUserCol}
+            ) AS tx ON tx.user_id = u.id
+            {$whereClause}
+            ORDER BY total_transactions DESC
+        ";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        // Convert to collection
+        return collect($results);
     }
 }
