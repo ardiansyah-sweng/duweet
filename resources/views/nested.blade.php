@@ -1,60 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Struktur Nested User & Account</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data User & Financial Account</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: #fdfcff;
+            padding: 40px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 90%;
+            margin: auto;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e8e5ff;
+            color: #333;
+        }
+        tr:hover {
+            background-color: #f8f6ff;
+        }
+        h1 {
+            text-align: center;
+            color: #4b4b6b;
+            margin-bottom: 24px;
+        }
+    </style>
 </head>
-<body class="bg-light">
-
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1">Laravel Nested Structure</span>
-    </div>
-</nav>
-
-<div class="container">
-    <h2 class="text-center mb-4">Struktur Nested User & Account</h2>
-
-    <table class="table table-bordered table-striped text-center">
-        <thead class="table-dark">
+<body>
+    <h1>Daftar User dan Akun Finansial</h1>
+    <table>
+        <thead>
             <tr>
-                <th>Nama User</th>
-                <th>Username</th>
+                <th>ID User</th>
+                <th>Nama</th>
                 <th>Email</th>
-                <th>Parent Account</th>
-                <th>Child Accounts</th>
+                <th>Nomor Akun</th>
+                <th>Saldo</th>
+                <th>Tanggal Dibuat</th>
+                <th>Terakhir Diperbarui</th>
             </tr>
         </thead>
         <tbody>
-            @forelse ($data as $user)
+            @foreach($users as $user)
                 <tr>
+                    <td>{{ $user->id }}</td>
                     <td>{{ $user->name }}</td>
-                    <td>{{ $user->userAccount->username ?? '-' }}</td>
-                    <td>{{ $user->userAccount->email ?? '-' }}</td>
-                    <td>{{ $user->userAccount->parent->username ?? '-' }}</td>
+                    <td>{{ $user->email }}</td>
                     <td>
-                        @if(isset($user->userAccount->children) && $user->userAccount->children->count() > 0)
-                            @foreach($user->userAccount->children as $child)
-                                <span class="badge bg-info text-dark">{{ $child->username }}</span>
-                            @endforeach
-                        @else
-                            <span class="text-muted">Tidak ada</span>
-                        @endif
+                        @forelse($user->userFinancialAccounts as $acc)
+                            {{ $acc->account_number }}<br>
+                        @empty
+                            -
+                        @endforelse
                     </td>
+                    <td>
+                        @forelse($user->userFinancialAccounts as $acc)
+                            Rp{{ number_format($acc->balance, 0, ',', '.') }}<br>
+                        @empty
+                            -
+                        @endforelse
+                    </td>
+                    <td>{{ $user->created_at }}</td>
+                    <td>{{ $user->updated_at }}</td>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="5">Tidak ada data user</td>
-                </tr>
-            @endforelse
+            @endforeach
         </tbody>
     </table>
-
-    <footer class="text-center mt-4">
-        <small>© 2025 Laravel Nested Structure – Created by Nadiya Shabriyyah</small>
-    </footer>
-</div>
-
 </body>
 </html>

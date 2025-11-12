@@ -45,4 +45,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+public function userFinancialAccounts()
+{
+    return $this->hasMany(\App\Models\UserFinancialAccount::class, 'user_id');
+}
+
+
+
 }
