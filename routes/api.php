@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
-Route::post('/users/create-raw', [UserController::class, 'createUserRaw']);
+Route::post('/users', [UserController::class, 'createUserRaw']);

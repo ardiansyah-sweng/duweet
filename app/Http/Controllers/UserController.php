@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\User;
 
 class UserController extends Controller
 {
     /**
-     * Create user using raw query
+     * Terima request, validasi, dan delegasikan insert ke model (createUserRaw).
      */
     public function createUserRaw(Request $request): JsonResponse
     {
-        // Validasi request
-        $request->validate([
+        // Validasi input dasar di controller — biar model tetap bertanggung jawab atas query
+        $validated = $request->validate([
             'email' => 'required|email',
             'name' => 'sometimes|string|max:255',
             'first_name' => 'sometimes|string|max:255',
@@ -24,39 +24,42 @@ class UserController extends Controller
             'kabupaten' => 'sometimes|string|max:255',
             'kecamatan' => 'sometimes|string|max:255',
             'jalan' => 'sometimes|string',
-            'kode_pos' => 'sometimes|string|max:10',
+            'kode_pos' => 'sometimes|string|max:20',
             'tanggal_lahir' => 'sometimes|date',
             'bulan_lahir' => 'sometimes|integer|min:1|max:12',
             'tahun_lahir' => 'sometimes|integer|min:1900|max:' . date('Y'),
+            'usia' => 'sometimes|integer|min:0',
             'telephones' => 'sometimes|array',
             'telephones.*' => 'string',
         ]);
 
-        try {
-            $result = User::createUserRaw($request->all());
+        $result = User::createUserRaw($validated);
 
-            if (is_string($result)) {
-                // Jika return string, berarti error
-                return response()->json([
-                    'success' => false,
-                    'message' => $result
-                ], 400);
+        if (is_string($result)) {
+            $status = 400;
+            if (str_contains(strtolower($result), 'email sudah digunakan') ||
+                str_contains($result, '1062') ||
+                str_contains(strtolower($result), 'duplicate')) {
+                $status = 200; 
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'User berhasil dibuat',
-                'data' => [
-                    'user_id' => $result,
-                    'user' => User::with('telephones')->find($result)
-                ]
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
-            ], 500);
+                'message' => $result
+            ], $status);
         }
+
+        // Jika model mengembalikan id (sukses)
+        $userId = (int) $result;
+        $user = User::with('telephones')->find($userId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User berhasil dibuat.',
+            'data' => [
+                'user_id' => $userId,
+                'user' => $user
+            ]
+        ], 201);
     }
 }
