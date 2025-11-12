@@ -317,4 +317,59 @@ class FinancialAccount extends Model
 
         return $result;
     }
+
+    /**
+     * Get pivot row for a specific user and account
+     * @param int $accountId
+     * @param int $userId
+     * @return object|null
+     */
+    public static function getUserPivot(int $accountId, int $userId)
+    {
+        return DB::table('user_financial_accounts')
+            ->where('financial_account_id', $accountId)
+            ->where('user_id', $userId)
+            ->first();
+    }
+
+    /**
+     * List financial accounts with optional user balances joined
+     * @param int|null $userId
+     * @return \Illuminate\Support\Collection
+     */
+    public static function listWithUserBalances(?int $userId = null)
+    {
+        $q = DB::table('financial_accounts as fa')
+            ->leftJoin('user_financial_accounts as ufa', 'ufa.financial_account_id', '=', 'fa.id')
+            ->select(
+                'fa.id','fa.name','fa.type','fa.balance','fa.initial_balance',
+                'fa.description','fa.is_active','fa.created_at',
+                'ufa.user_id','ufa.balance as user_balance','ufa.initial_balance as user_initial_balance'
+            )
+            ->orderByDesc('fa.id');
+
+        if (!is_null($userId)) {
+            $q->where('ufa.user_id', $userId);
+        }
+
+        return $q->get();
+    }
+
+    /**
+     * Find account with joined user pivot (if exists)
+     * @param int $id
+     * @return object|null
+     */
+    public static function findWithUserBalance(int $id)
+    {
+        return DB::table('financial_accounts as fa')
+            ->leftJoin('user_financial_accounts as ufa', 'ufa.financial_account_id', '=', 'fa.id')
+            ->select(
+                'fa.id','fa.name','fa.type','fa.balance','fa.initial_balance',
+                'fa.description','fa.is_active','fa.created_at',
+                'ufa.user_id','ufa.balance as user_balance','ufa.initial_balance as user_initial_balance'
+            )
+            ->where('fa.id', $id)
+            ->first();
+    }
 }
