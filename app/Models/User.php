@@ -5,16 +5,45 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\DB; 
+=======
+use App\Models\UserAccount;
+>>>>>>> main
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+<<<<<<< HEAD
+=======
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    /**
+     * Disable automatic timestamps because users table does not have created_at/updated_at
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+>>>>>>> main
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',
-        'password',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
     ];
 
     protected $hidden = [
@@ -22,12 +51,25 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+<<<<<<< HEAD
     protected function casts(): array
+=======
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string,string>
+     */
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
+    /**
+     * One user can have many user accounts (credentials)
+     */
+    public function userAccounts()
+>>>>>>> main
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
 
     public static function getAllUsersRaw()
