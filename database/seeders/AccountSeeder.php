@@ -54,8 +54,6 @@ class AccountSeeder extends Seeder
      */
     private function insertAccount(array $accountData, ?int $parentId = null): int
     {
-        $tableName = config('db_tables.financial_account', 'financial_accounts');
-        
         // Prepare account data for insertion
         $account = [
             'parent_id' => $parentId,
