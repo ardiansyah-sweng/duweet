@@ -19,8 +19,11 @@ class TransactionController extends Controller
             ->join('financial_accounts as fa', 'fa.id', '=', 't.financial_account_id')
             ->select(
                 't.id as transaction_id',
+                't.transaction_group_id',
                 't.amount',
                 't.entry_type',
+                't.balance_effect',
+                't.is_balance',
                 't.description',
                 't.created_at as transaction_date',
                 'ua.id as user_account_id',
