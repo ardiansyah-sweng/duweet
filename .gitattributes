@@ -1,9 +1,4 @@
 * text=auto eol=lf
-* text=auto
-*.php text eol=lf
-*.md text eol=lf
-/.gitlab-ci.yml text eol=lf
-.gitattributes text eol=lf
 
 *.blade.php diff=html
 *.css diff=css
