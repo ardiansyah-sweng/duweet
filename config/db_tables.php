@@ -4,6 +4,6 @@ return [
     'user_account' => 'user_accounts',
     'financial_account' => 'financial_accounts',
     'transaction' => 'transactions',
-
+    'user_financial_account' => 'user_financial_accounts',
 ];
 
