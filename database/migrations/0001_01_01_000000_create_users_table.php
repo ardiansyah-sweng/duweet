@@ -2,12 +2,8 @@
 
 use App\Constants\UserColumns;
 use Illuminate\Support\Facades\Schema;
-<<<<<<< HEAD
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-=======
-use App\Constants\UserColumns;
->>>>>>> efc72c84f81e7c2b35b1c4b61e0e57b691daa99f
 
 return new class extends Migration
 {
@@ -23,34 +19,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-<<<<<<< HEAD
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string(UserColumns::NAME);
-            $table->string(UserColumns::FIRST_NAME);
-            $table->string(UserColumns::MIDDLE_NAME)->nullable();
-            $table->string(UserColumns::LAST_NAME);
-            $table->string(UserColumns::EMAIL)->unique();
-            $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
-            $table->string(UserColumns::PROVINSI)->nullable();
-            $table->string(UserColumns::KABUPATEN)->nullable();
-            $table->string(UserColumns::KECAMATAN)->nullable();
-            $table->string(UserColumns::JALAN)->nullable();
-            $table->string(UserColumns::KODE_POS)->nullable();
-            $table->timestamps();
-        });
-
-        
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
-        });
-=======
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserColumns::ID);
             $table->string(UserColumns::NAME);
@@ -72,8 +40,6 @@ return new class extends Migration
             $table->integer(UserColumns::TAHUN_LAHIR);
             $table->integer(UserColumns::USIA);
         });
-
->>>>>>> efc72c84f81e7c2b35b1c4b61e0e57b691daa99f
     }
 
     /**
@@ -81,6 +47,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists($this->table);
     }
 };
