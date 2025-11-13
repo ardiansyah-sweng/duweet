@@ -8,12 +8,17 @@ use Illuminate\Support\Facades\DB;
 class AccountSeeder extends Seeder
 {
     /**
+     * Table name to insert accounts into (from config)
+     *
+     * @var string
+     */
+    private $table;
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $tableName = config('db_tables.financial_account', 'financial_accounts');
-        
         // For SQLite - disable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = OFF;');
@@ -22,8 +27,11 @@ class AccountSeeder extends Seeder
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         }
         
-        // Truncate the table
-        DB::table($tableName)->truncate();
+    // Determine table name from config (defaults to financial_accounts)
+    $this->table = config('db_tables.financial_account', 'financial_accounts');
+
+    // Truncate the table
+    DB::table($this->table)->truncate();
         
         // Re-enable foreign key checks
         if (DB::connection()->getDriverName() === 'sqlite') {
@@ -33,7 +41,7 @@ class AccountSeeder extends Seeder
         }
 
         // Load account data from file
-        $accountsData = include database_path('data/accounts_data.php');
+    $accountsData = include database_path('data/accounts_data.php');
         
         // Process the hierarchical data
         foreach ($accountsData as $rootAccount) {
@@ -64,8 +72,8 @@ class AccountSeeder extends Seeder
             'updated_at' => now(),
         ];
 
-        // Insert the account and get the ID
-        $accountId = DB::table($tableName)->insertGetId($account);
+    // Insert the account and get the ID
+    $accountId = DB::table($this->table)->insertGetId($account);
 
         // Process children if they exist
         if (isset($accountData['children']) && is_array($accountData['children'])) {
