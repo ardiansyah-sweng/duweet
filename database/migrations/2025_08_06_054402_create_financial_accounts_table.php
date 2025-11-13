@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\FinancialAccount;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -42,6 +43,7 @@ return new class extends Migration
 
             // Indexes for performance
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
+
             $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
         });
