@@ -11,9 +11,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // User::factory(10)->create();
+
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+
+        // Seed accounts with real world data
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
+            AccountSeeder::class,
+            UserTelephoneSeeder::class,
+            UserFinancialAccountSeeder::class,
+            TransactionSeeder::class,
             //AccountSeeder::class,
         ]);
     }

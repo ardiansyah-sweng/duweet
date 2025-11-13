@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,13 +9,10 @@ use App\Models\UserAccount;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Kolom yang bisa diisi (mass assignable)
      */
     /**
      * Disable automatic timestamps because users table does not have created_at/updated_at
@@ -42,9 +38,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Kolom yang disembunyikan dari serialisasi (misal saat diubah ke JSON)
      */
     protected $hidden = [
         'password',
@@ -52,19 +46,36 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
+     * Casting atribut ke tipe data tertentu
      */
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-    /**
-     * One user can have many user accounts (credentials)
-     */
-    public function userAccounts()
+    // Relasi ke UserAccount
+    public function useAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    // Relasi ke Transaction
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    // Relasi ke UserFinancialAccount
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class);
+    }
+
+    /**
+     * Opsional: method bantu untuk mendapatkan nama lengkap secara dinamis
+     */
+    public function getFullNameAttribute()
+    {
+        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
     }
 }

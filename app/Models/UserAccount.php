@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Models;
-
 use App\Constants\UserAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +20,21 @@ class UserAccount extends Model
      */
     public $timestamps = false;
 
+    protected $fillable = [
+        'id_user',
+        'username',
+        'email',
+        'password',
+        'verified_at',
+        'is_active',
+    ];
+
+    // // Hidden field saat diubah jadi JSON
+    // protected $hidden = [
+    //     'password',
+    // ];
+
+    // Casting tipe data
     protected $casts = [
         UserAccountColumns::IS_ACTIVE => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
@@ -71,4 +85,10 @@ class UserAccount extends Model
             ];
         }
     }
+
+    // Contoh tambahan relasi jika nanti ada transaksi
+    // public function transactions()
+    // {
+    //     return $this->hasMany(Transaction::class, 'account_id');
+    // }
 }
