@@ -4,64 +4,82 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Constants\FinancialAccountColumns as Col;
 
 class AccountSeeder extends Seeder
 {
+    /**
+     * Table name to insert accounts into (from config)
+     *
+     * @var string
+     */
+    private $table;
+
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        $table = 'financial_accounts';
+        // For SQLite - disable foreign key checks
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+        } else {
+            // For MySQL
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
+        
+    // Determine table name from config (defaults to financial_accounts)
+    $this->table = config('db_tables.financial_account', 'financial_accounts');
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table($table)->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+    // Truncate the table
+    DB::table($this->table)->truncate();
+        
+        // Re-enable foreign key checks
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
-        $accounts = [
-            [
-                Col::NAME => 'Aset',
-                Col::TYPE => 'AS',
-                Col::IS_GROUP => true,
-                'children' => [
-                    [Col::NAME => 'Kas', Col::TYPE => 'AS', Col::IS_GROUP => false],
-                    [Col::NAME => 'Bank', Col::TYPE => 'AS', Col::IS_GROUP => false],
-                ],
-            ],
-            [
-                Col::NAME => 'Kewajiban',
-                Col::TYPE => 'LI',
-                Col::IS_GROUP => true,
-                'children' => [
-                    [Col::NAME => 'Hutang Usaha', Col::TYPE => 'LI', Col::IS_GROUP => false],
-                ],
-            ],
-        ];
-
-        foreach ($accounts as $account) {
-            $this->insertAccount($account);
+        // Load account data from file
+    $accountsData = include database_path('data/accounts_data.php');
+        
+        // Process the hierarchical data
+        foreach ($accountsData as $rootAccount) {
+            $this->insertAccount($rootAccount);
         }
     }
 
-    private function insertAccount(array $accountData, ?int $parentId = null): void
+    /**
+     * Insert account and its children recursively
+     */
+    private function insertAccount(array $accountData, ?int $parentId = null): int
     {
-        $id = DB::table('financial_accounts')->insertGetId([
-            Col::PARENT_ID        => $parentId,
-            Col::NAME             => $accountData[Col::NAME],
-            Col::TYPE             => $accountData[Col::TYPE],
-            Col::BALANCE          => $accountData[Col::INITIAL_BALANCE] ?? 0,
-            Col::INITIAL_BALANCE  => $accountData[Col::INITIAL_BALANCE] ?? 0,
-            Col::IS_GROUP         => $accountData[Col::IS_GROUP] ?? false,
-            Col::DESCRIPTION      => $accountData[Col::DESCRIPTION] ?? null,
-            Col::IS_ACTIVE        => $accountData[Col::IS_ACTIVE] ?? true,
-            Col::SORT_ORDER       => $accountData[Col::SORT_ORDER] ?? 0,
-            Col::LEVEL            => $accountData[Col::LEVEL] ?? ($parentId ? 2 : 1),
-            'created_at'          => now(),
-            'updated_at'          => now(),
-        ]);
+        // Prepare account data for insertion
+        $account = [
+            'parent_id' => $parentId,
+            'name' => $accountData['name'],
+            'type' => $accountData['type'],
+            'balance' => $accountData['initial_balance'] ?? 0,
+            'initial_balance' => $accountData['initial_balance'] ?? 0,
+            'is_group' => $accountData['is_group'] ?? false,
+            'description' => $accountData['description'] ?? null,
+            'is_active' => $accountData['is_active'] ?? true,
+            'sort_order' => $accountData['sort_order'] ?? 0,
+            'level' => $accountData['level'] ?? 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
 
-        if (isset($accountData['children'])) {
-            foreach ($accountData['children'] as $child) {
-                $this->insertAccount($child, $id);
+    // Insert the account and get the ID
+    $accountId = DB::table($this->table)->insertGetId($account);
+
+        // Process children if they exist
+        if (isset($accountData['children']) && is_array($accountData['children'])) {
+            foreach ($accountData['children'] as $childData) {
+                $this->insertAccount($childData, $accountId);
             }
         }
+
+        return $accountId;
     }
 }
