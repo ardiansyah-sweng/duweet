@@ -24,9 +24,9 @@ class UserAccount extends Model
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
-    protected $hidden = [
-        UserAccountColumns::PASSWORD,
-    ];
+    // protected $hidden = [
+    //     UserAccountColumns::PASSWORD,
+    // ];
 
     /**
      * Mengambil fillable dari UserAccountColumns
