@@ -2,70 +2,99 @@
 
 namespace App\Models;
 
+use App\Constants\UserAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
 class UserAccount extends Model
 {
     use HasFactory;
 
+    protected $table = 'user_accounts';
+
     /**
      * Model ini tidak menggunakan created_at dan updated_at.
-     *
-     * @var bool
      */
     public $timestamps = false;
 
     /**
-     * Nama tabel di database.
-     *
-     * @var string
-     */
-    protected $table = 'user_accounts';
-
-    /**
-     * Kolom yang boleh diisi mass assignment.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'id_user',
-        'username',
-        'email',
-        'password',
-        'verified_at',
-        'is_active',
-    ];
-
-    /**
-     * Casting tipe data otomatis oleh Eloquent.
-     *
-     * @var array
+     * Casting otomatis.
      */
     protected $casts = [
-        'verified_at' => 'datetime',
-        'is_active' => 'boolean',
+        UserAccountColumns::IS_ACTIVE => 'boolean',
+        UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
     /**
-     * Relasi ke model User (many to one).
+     * Hidden fields (password tidak ditampilkan).
      */
-    public function user()
+    protected $hidden = [
+        UserAccountColumns::PASSWORD,
+    ];
+
+    /**
+     * Fillable (menggunakan constant class).
+     */
+    public function getFillable()
     {
-        return $this->belongsTo(User::class, 'id_user');
+        return UserAccountColumns::getFillable();
     }
 
     /**
-     * Cari user berdasarkan email.
-     *
-     * @param  string  $email
-     * @return \App\Models\UserAccount|null
+     * Relasi ke tabel users.
      */
-
-    public static function cariUserByEmail($email)
+    public function user(): BelongsTo
     {
-        return DB::select('SELECT * FROM user_accounts WHERE email = ? LIMIT 1', [$email]);
+        return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
+    /**
+     * RAW DELETE USER ACCOUNT (DML)
+     */
+    public static function deleteUserAccountRaw($id)
+    {
+        try {
+            $query = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            DB::delete($query, [$id]);
+
+            return [
+                'success' => true,
+                'message' => 'UserAccount berhasil dihapus'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * DML: Cari user by email menggunakan RAW QUERY
+     */
+    public static function cariUserByEmail($email)
+    {
+        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
+        $result = DB::select($query, [$email]);
+
+        return $result[0] ?? null;
+    }
+
+    /**
+     * DML: Reset password by email (RAW UPDATE)
+     */
+    public static function resetPasswordByEmail($email, $newPassword)
+    {
+        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+
+        $query = "
+            UPDATE user_accounts 
+            SET password = ?
+            WHERE email = ?
+        ";
+
+        return DB::update($query, [$hashed, $email]);
+    }
 }
