@@ -2,52 +2,87 @@
 
 namespace App\Models;
 
-use App\Models\User;
+use App\Constants\UserAccountColumns;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class UserAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'user_accounts';
 
+    /**
+     * This table does not use created_at/updated_at timestamps.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
 
+    protected $casts = [
+        UserAccountColumns::IS_ACTIVE    => 'boolean',
+        UserAccountColumns::VERIFIED_AT  => 'datetime',
+    ];
 
     protected $hidden = [
-        'password',
+        UserAccountColumns::PASSWORD,
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Fillable attributes defined in constant class
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'is_active' => 'boolean',
-        'password' => 'hashed',
-    ];
-
-    /**
-     * Get the user profile that owns this login account.
-     */
-    public function user()
+    public function getFillable()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return UserAccountColumns::getFillable();
     }
 
+    /**
+     * Relasi ke User
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
+    }
+
+    /**
+     * Update password user yang sedang login (diambil dari HEAD)
+     */
     public static function updatePassword($newPassword)
     {
-        $userId = Auth::id(); // ambil ID user yang sedang login
+        $userId = Auth::id();
+        if (!$userId) {
+            return false;
+        }
 
-        $hashed = bcrypt($newPassword); // ini untuk enkripsi password
+        $hashed = bcrypt($newPassword);
 
-        return DB::update('
+        return DB::update("
             UPDATE user_accounts
             SET password = ?, updated_at = NOW()
             WHERE user_id = ?
-        ', [$hashed, $userId]);
+        ", [$hashed, $userId]);
     }
 
-
+    /**
+     * Raw delete user account
+     */
+    public static function deleteUserAccountRaw($id)
+    {
+        try {
+            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            DB::delete($deleteQuery, [$id]);
+            return [
+                'success' => true,
+                'message' => 'UserAccount berhasil dihapus'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
+            ];
+        }
+    }
 }

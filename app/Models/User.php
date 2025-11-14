@@ -2,29 +2,48 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\UserAccount;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Models\UserAccount;
+use App\Models\UserTelephone;
+use App\Models\Transaction;
+use App\Models\FinancialAccount;
+use App\Models\UserFinancialAccount;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $table = 'users';
-    
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Karena tabel users tidak memiliki created_at/updated_at
+     */
+    public $timestamps = false;
+
+    /**
+     * Mass assignable attributes
+     */
+    protected $fillable = [
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
+    ];
+
+    /**
+     * Attributes to hide in serialization
      */
     protected $hidden = [
         'password',
@@ -32,52 +51,42 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Casts
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-
-
-    public function telephones()
-    {
-        return $this->hasMany(UserTelephone::class, 'user_id');
-    }
+    protected $casts = [
+        'password' => 'hashed',
+    ];
 
     /**
-     * Get the login accounts for the user.
+     * RELATIONS
      */
+
+    // User memiliki banyak UserAccount
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'user_id');
     }
 
-    /**
-     * Get the transactions recorded by this user.
-     */
+    // User memiliki banyak nomor telepon
+    public function telephones()
+    {
+        return $this->hasMany(UserTelephone::class, 'user_id');
+    }
+
+    // User memiliki banyak transaksi
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'user_id');
     }
 
     /**
-     * Get the financial accounts associated with this user.
-     * Ini adalah relasi Many-to-Many melalui tabel pivot.
+     * Relasi Many-to-Many dengan FinancialAccount melalui pivot
      */
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts', 'user_id', 'financial_account_id')
-            ->using(UserFinancialAccount::class) // Memberi tahu Laravel untuk menggunakan Pivot Model kustom
-            ->withPivot('balance', 'initial_balance', 'is_active') // Ambil data tambahan dari tabel pivot
+            ->using(UserFinancialAccount::class)
+            ->withPivot('balance', 'initial_balance', 'is_active')
             ->withTimestamps();
     }
-
-   
-    
 }
