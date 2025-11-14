@@ -6,4 +6,3 @@ return [
     'transaction' => 'transactions',
 
 ];
-

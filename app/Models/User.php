@@ -2,28 +2,18 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB; // <— WAJIB agar bisa pakai query SQL
 use App\Models\UserAccount;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    /**
-     * Disable automatic timestamps because users table does not have created_at/updated_at
-     *
-     * @var bool
-     */
     public $timestamps = false;
+
     protected $fillable = [
         'name',
         'first_name',
@@ -41,30 +31,58 @@ class User extends Authenticatable
         'usia',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    // protected $hidden = [
+    //     'password',
+    //     'remember_token',
+    // ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
-     */
-    protected $casts = [
-        'password' => 'hashed',
-    ];
+    // protected $casts = [
+    //     'password' => 'hashed',
+    // ];
 
-    /**
-     * One user can have many user accounts (credentials)
-     */
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    /* ============================================================
+     |  DML QUERY:  (SELECT, INSERT, UPDATE, DELETE)
+     | ============================================================
+     */
+
+    // SELECT: Ambil semua user
+    public static function getAllUsers()
+    {
+        return DB::select('SELECT * FROM users');
+    }
+
+    // SELECT: Ambil user berdasarkan ID
+    public static function getUserById($id)
+    {
+        return DB::select('SELECT * FROM users WHERE id = ?', [$id]);
+    }
+
+    // INSERT: Tambah user baru
+    public static function insertUser($data)
+    {
+        return DB::insert(
+            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+            [$data['name'], $data['email'], $data['password']]
+        );
+    }
+
+    // UPDATE: Update email user
+    public static function updateEmail($id, $email)
+    {
+        return DB::update(
+            'UPDATE users SET email = ? WHERE id = ?',
+            [$email, $id]
+        );
+    }
+
+    // DELETE: Hapus user
+    public static function deleteUser($id)
+    {
+        return DB::delete('DELETE FROM users WHERE id = ?', [$id]);
     }
 }
