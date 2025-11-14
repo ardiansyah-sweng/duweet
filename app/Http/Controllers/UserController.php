@@ -14,10 +14,10 @@ class UserController extends Controller
      */
     public function getAllAccounts($id)
     {
-        // Ambil user langsung dari tabel menggunakan db_tables.php
         $userTable = config('db_tables.user');
         $accountTable = config('db_tables.user_account');
 
+        // Cek user
         $user = DB::table($userTable)
             ->where(UserColumns::ID, $id)
             ->first();
@@ -28,27 +28,33 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Ambil semua akun user dari tabel user_accounts
+        // Ambil semua akun milik user tersebut
         $accounts = DB::table($accountTable)
+            ->select(
+                UserAccountColumns::ID_USER,
+                UserAccountColumns::USERNAME,
+                UserAccountColumns::EMAIL,
+                UserAccountColumns::VERIFIED_AT,
+                UserAccountColumns::IS_ACTIVE
+            )
             ->where(UserAccountColumns::ID_USER, $id)
             ->get();
 
-        // Map data ke format JSON yang rapi
-        $data = $accounts->map(function($account) {
+        // Format JSON
+        $formattedAccounts = $accounts->map(function ($acc) {
             return [
-                'ID User'   => $account->{UserAccountColumns::ID_USER},
-                'Username'  => $account->{UserAccountColumns::USERNAME},
-                'Email'     => $account->{UserAccountColumns::EMAIL},
-                'Verified'  => $account->{UserAccountColumns::VERIFIED_AT},
-                'Is Active' => $account->{UserAccountColumns::IS_ACTIVE} ? 'Yes' : 'No',
+                'ID User'   => $acc->{UserAccountColumns::ID_USER},
+                'Username'  => $acc->{UserAccountColumns::USERNAME},
+                'Email'     => $acc->{UserAccountColumns::EMAIL},
+                'Verified'  => $acc->{UserAccountColumns::VERIFIED_AT},
+                'Is Active' => $acc->{UserAccountColumns::IS_ACTIVE} ? 'Yes' : 'No',
             ];
         });
 
-        // Kembalikan JSON
         return response()->json([
-            'User ID' => $user->{UserColumns::ID},
-            'Name'    => $user->{UserColumns::NAME},
-            'Accounts'=> $data
+            'User ID'  => $user->{UserColumns::ID},
+            'Name'     => $user->{UserColumns::NAME},
+            'Accounts' => $formattedAccounts
         ], 200);
     }
 }

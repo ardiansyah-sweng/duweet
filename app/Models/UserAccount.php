@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use App\Constants\UserAccountColumns;
 
 class UserAccount extends Model
 {
@@ -14,9 +15,7 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     /**
-     * This table does not use created_at/updated_at timestamps.
-     *
-     * @var bool
+     * Table ini tidak memakai timestamps.
      */
     public $timestamps = false;
 
@@ -30,10 +29,7 @@ class UserAccount extends Model
     ];
 
     /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
+     * Mengambil fillable dari UserAccountColumns
      */
     public function getFillable()
     {
@@ -48,8 +44,29 @@ class UserAccount extends Model
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
+    /* ============================================================
+     |  DML QUERY (RAW SQL)
+     | ============================================================
+     */
+
     /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query
+     * SELECT: Ambil semua UserAccount milik satu user tertentu (RAW SQL)
+     * 
+     * @param int $id_user
+     * @return array
+     */
+    public static function getAccountsByUser($id_user)
+    {
+        return DB::select(
+            "SELECT id, username, email, verified_at, is_active 
+             FROM user_accounts 
+             WHERE id_user = ?",
+            [$id_user]
+        );
+    }
+
+    /**
+     * DELETE: Hapus satu UserAccount berdasarkan ID (RAW SQL)
      * 
      * @param int $id
      * @return array
@@ -59,6 +76,7 @@ class UserAccount extends Model
         try {
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
+
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'

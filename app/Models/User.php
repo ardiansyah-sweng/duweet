@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB; // <— WAJIB agar bisa pakai query SQL
 use App\Models\UserAccount;
 
 class User extends Authenticatable
@@ -39,19 +40,49 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    /**
-     * Relasi: satu user bisa punya banyak UserAccount
-     */
     public function userAccounts()
     {
-        return $this->hasMany(UserAccount::class, 'id_user'); // sesuai migration: id_user
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
 
-    /**
-     * Ambil semua akun user sebagai JSON
+    /* ============================================================
+     |  DML QUERY:  (SELECT, INSERT, UPDATE, DELETE)
+     | ============================================================
      */
-    public function getAllAccounts()
+
+    // SELECT: Ambil semua user
+    public static function getAllUsers()
     {
-        return $this->userAccounts()->get()->toJson();
+        return DB::select('SELECT * FROM users');
+    }
+
+    // SELECT: Ambil user berdasarkan ID
+    public static function getUserById($id)
+    {
+        return DB::select('SELECT * FROM users WHERE id = ?', [$id]);
+    }
+
+    // INSERT: Tambah user baru
+    public static function insertUser($data)
+    {
+        return DB::insert(
+            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+            [$data['name'], $data['email'], $data['password']]
+        );
+    }
+
+    // UPDATE: Update email user
+    public static function updateEmail($id, $email)
+    {
+        return DB::update(
+            'UPDATE users SET email = ? WHERE id = ?',
+            [$email, $id]
+        );
+    }
+
+    // DELETE: Hapus user
+    public static function deleteUser($id)
+    {
+        return DB::delete('DELETE FROM users WHERE id = ?', [$id]);
     }
 }
