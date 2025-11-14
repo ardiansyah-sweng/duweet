@@ -18,6 +18,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // If the table already exists (created by another migration), skip to
+        // avoid "table already exists" errors when running all migrations.
+        if (Schema::hasTable($this->table)) {
+            return;
+        }
+
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
             $table->foreignId(UserAccountColumns::ID_USER)
@@ -28,7 +34,7 @@ return new class extends Migration
             $table->string(UserAccountColumns::EMAIL)->unique();
             $table->string(UserAccountColumns::PASSWORD);
             $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
-            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);           
+            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
         });
     }
 
