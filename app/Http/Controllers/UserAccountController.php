@@ -181,54 +181,6 @@ class UserAccountController extends Controller
             'new_password' => ['required', 'string', 'min:6'],
         ]);
 
-        $updated = UserAccount::resetPasswordByEmail($data['email'], $data['new_password']);
-
-        $user = UserAccount::cariUserByEmail($data['email']);
-
-        return response()->json([
-            'updated' => $updated,
-            'new_password' => $data['new_password'], // hanya untuk testing
-            'user' => $user,
-        ]);
-    }
-
-    /**
-     * Cari user by email
-     */
-    public function findByEmail(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
-        $user = UserAccount::cariUserByEmail($data['email']);
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        $safe = [
-            'id' => $user->id ?? null,
-            'id_user' => $user->id_user ?? null,
-            'username' => $user->username ?? null,
-            'email' => $user->email ?? null,
-            'verified_at' => $user->verified_at ?? null,
-            'is_active' => $user->is_active ?? null,
-        ];
-
-        return response()->json(['user' => $safe]);
-    }
-
-    /**
-     * Reset password lewat GET (testing only)
-     */
-    public function resetPasswordViaGet(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'email' => ['required', 'email'],
-            'new_password' => ['required', 'string', 'min:6'],
-        ]);
-
         $user = UserAccount::cariUserByEmail($data['email']);
 
         if (!$user) {
@@ -237,21 +189,30 @@ class UserAccountController extends Controller
 
         $updated = UserAccount::resetPasswordByEmail($data['email'], $data['new_password']);
 
-        $userAfter = UserAccount::cariUserByEmail($data['email']);
-
-        $safe = [
-            'id' => $userAfter->id ?? null,
-            'id_user' => $userAfter->id_user ?? null,
-            'username' => $userAfter->username ?? null,
-            'email' => $userAfter->email ?? null,
-            'verified_at' => $userAfter->verified_at ?? null,
-            'is_active' => $userAfter->is_active ?? null,
-        ];
-
         return response()->json([
             'updated' => $updated,
-            'new_password' => $data['new_password'], // testing only
-            'user' => $safe,
+            'email' => $user->email,
+            'new_password' => $data['new_password'],
+            'message' => 'Password reset successful'
         ]);
     }
+
+    // public function findByEmail(Request $request): JsonResponse
+    // {
+    //     $request->validate([
+    //         'email' => ['required', 'email'],
+    //     ]);
+
+    //     $user = UserAccount::cariUserByEmail($request->email);
+
+    //     if (!$user) {
+    //         return response()->json(['message' => 'User not found'], 404);
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $user
+    //     ]);
+    // }
+
 }

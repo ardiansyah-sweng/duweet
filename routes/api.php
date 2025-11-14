@@ -12,8 +12,9 @@ Route::get('/health', function () {
         'timestamp' => now()->toDateTimeString()
     ]);
 });
-
-Route::post('/user/reset-password', [\App\Http\Controllers\UserAccountController::class, 'resetPassword']);
+// jika ingin validasi cari user by email menggunakan POST
+// Route::post('/find-by-email', [UserAccountController::class, 'findByEmail']);
+Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 
 // GET endpoint to find user by email (safe response, no password)
 Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
