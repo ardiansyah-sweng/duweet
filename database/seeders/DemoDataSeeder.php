@@ -15,10 +15,10 @@ class DemoDataSeeder extends Seeder
         DB::transaction(function () {
             $now = Carbon::now();
 
-            // === Insert Users ===
+            
             $userIdRafi = DB::table('users')->insertGetId([
-                'name'              => 'Rafi Satya',
-                'email'             => 'rafi@example.com',
+                'name'              => 'malan',
+                'email'             => 'malan@example.com',
                 'password'          => Hash::make('rahasia123'),
                 'usia'              => 21,
                 'bulan_lahir'       => 8,
@@ -42,7 +42,7 @@ class DemoDataSeeder extends Seeder
                 'updated_at'        => $now,
             ]);
 
-            // === Insert Financial Accounts ===
+          
             $accIdKas = DB::table('financial_accounts')->insertGetId([
                 'name'            => 'Kas Utama',
                 'type'            => 'LI',        // Liquid
@@ -85,7 +85,7 @@ class DemoDataSeeder extends Seeder
                 'updated_at'      => $now,
             ]);
 
-            // === Relasi User dengan Akun Keuangan ===
+           
             DB::table('user_financial_accounts')->insert([
                 [
                     'user_id'              => $userIdRafi,
@@ -107,7 +107,7 @@ class DemoDataSeeder extends Seeder
                 ],
             ]);
 
-            // === Tambahkan 1 user tanpa akun (supaya endpoint "users-without-active-accounts" bisa ngetes Postman) ===
+            
             DB::table('users')->insert([
                 'name'       => 'User Tanpa Akun',
                 'email'      => 'noaccount@example.com',

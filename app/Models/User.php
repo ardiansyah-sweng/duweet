@@ -11,9 +11,6 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * Kolom yang boleh diisi (mass assignable)
-     */
     protected $fillable = [
         'name',
         'email',
@@ -23,17 +20,9 @@ class User extends Authenticatable
         'tanggal_lahir',
     ];
 
-    /**
-     * Kolom yang disembunyikan dari serialisasi
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+   
+    protected $hidden = [];
 
-    /**
-     * Tipe data untuk casting otomatis
-     */
     protected function casts(): array
     {
         return [
@@ -42,17 +31,11 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Relasi ke tabel user_financial_accounts
-     */
     public function userFinancialAccounts()
     {
         return $this->hasMany(\App\Models\UserFinancialAccount::class, 'user_id');
     }
 
-    /**
-     * Query murni: ambil user yang tidak punya akun finansial sama sekali
-     */
     public function scopeWithoutAccounts($query)
     {
         return $query->whereRaw("
@@ -63,9 +46,6 @@ class User extends Authenticatable
         ");
     }
 
-    /**
-     * Query murni: ambil user yang tidak punya akun finansial aktif
-     */
     public function scopeWithoutActiveAccounts($query)
     {
         return $query->whereRaw("

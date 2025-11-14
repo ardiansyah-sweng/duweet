@@ -20,9 +20,7 @@ return new class extends Migration
         $this->financialAccountTable = config('db_tables.financial_account');
     }
 
-    /**
-     * Run the migrations.
-     */
+   
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
@@ -51,9 +49,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists($this->table);

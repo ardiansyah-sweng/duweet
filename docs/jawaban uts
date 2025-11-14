@@ -1,0 +1,17 @@
+Seiring bertambahnya volume data dalam basis data hingga mendekati kapasitas maksimumnya, bagaimana dampaknya terhadap kinerja sistem, seperti kecepatan akses dan efisiensi pengelolaan data?
+
+jawaban:
+Seiring bertambahnya volume data hingga mendekati kapasitas maksimum, kinerja sistem basis data akan menurun secara signifikan karena meningkatnya beban pemrosesan dan penggunaan sumber daya (CPU, memori, dan I/O disk) untuk menangani data dalam jumlah besar.
+
+Dampaknya terhadap sistem antara lain:
+
+-Kecepatan akses menurun Proses query menjadi lebih lambat karena sistem harus memindai lebih banyak baris data, terutama jika indeks membengkak atau tidak optimal.
+-Efisiensi pengelolaan data berkurang Proses backup, restore, indexing, dan maintenance memakan waktu lebih lama, bahkan bisa mengganggu aktivitas sistem aktif.
+-Peningkatan penggunaan sumber daya Penggunaan memori dan disk meningkat tajam, menyebabkan bottleneck pada I/O dan menurunkan throughput sistem.
+-Risiko gangguan sistem Saat kapasitas penyimpanan mendekati batas, proses penulisan data baru bisa gagal, menyebabkan error, data loss, atau downtime.
+
+Langkah pencegahan yang dapat dilakukan:
+Melakukan optimasi query dan indeks secara berkala.
+Menerapkan partisi tabel atau arsip data lama.
+Menambah kapasitas penyimpanan atau menerapkan scaling database (vertikal/horizontal).
+Memanfaatkan caching untuk mempercepat akses data yang sering digunakan.

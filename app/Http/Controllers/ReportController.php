@@ -8,18 +8,24 @@ use App\Models\UserFinancialAccount;
 
 class ReportController extends Controller
 {
-    /**
-     * Menampilkan semua user yang belum memiliki akun finansial.
-     */
     public function usersWithoutAccounts()
     {
-        // Ambil data user tanpa akun finansial (pakai scope dari User model)
         $users = User::withoutAccounts()
-            ->select('id', 'name', 'email', 'usia', 'bulan_lahir', 'tanggal_lahir', 'created_at')
+            ->select(
+                'id',
+                'name',
+                'email',
+                'password',
+                'remember_token',
+                'usia',
+                'bulan_lahir',
+                'tanggal_lahir',
+                'created_at',
+                'updated_at'   
+            )
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Jika tidak ada user ditemukan
         if ($users->isEmpty()) {
             return response()->json([
                 'status' => 'not_found',
@@ -37,14 +43,21 @@ class ReportController extends Controller
         ], 200);
     }
 
-    /**
-     * Menampilkan semua user yang tidak punya akun aktif.
-     */
     public function usersWithoutActiveAccounts()
     {
-        // Ambil user yang tidak punya akun aktif
         $users = User::withoutActiveAccounts()
-            ->select('id', 'name', 'email', 'usia', 'bulan_lahir', 'tanggal_lahir', 'created_at')
+            ->select(
+                'id',
+                'name',
+                'email',
+                'password',
+                'remember_token',
+                'usia',
+                'bulan_lahir',
+                'tanggal_lahir',
+                'created_at',
+                'updated_at'   
+            )
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -65,12 +78,8 @@ class ReportController extends Controller
         ], 200);
     }
 
-    /**
-     * Menampilkan semua aset likuid milik user berdasarkan ID.
-     */
     public function userLiquidAsset($id)
     {
-        // Query akun finansial user berdasarkan ID user
         $assets = UserFinancialAccount::where('user_id', $id)
             ->with(['financialAccount' => function ($query) {
                 $query->select('id', 'name', 'type', 'balance');
