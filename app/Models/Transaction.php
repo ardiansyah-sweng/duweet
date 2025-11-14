@@ -15,12 +15,21 @@ class Transaction extends Model
 
     protected $table = 'transactions';
 
+    protected $fillable = [];
+
     protected $casts = [
         TransactionColumns::AMOUNT => 'integer',
         TransactionColumns::IS_BALANCE => 'boolean',
         TransactionColumns::CREATED_AT => 'datetime',
         TransactionColumns::UPDATED_AT => 'datetime',
     ];
+
+    protected $hidden = [
+        TransactionColumns::CREATED_AT,
+        TransactionColumns::UPDATED_AT,
+    ];
+
+    protected $appends = ['transaction_date'];
 
     public function __construct(array $attributes = [])
     {
@@ -129,5 +138,15 @@ class Transaction extends Model
     public function scopeByTransactionGroup($query, $transactionGroupId)
     {
         return $query->where(TransactionColumns::TRANSACTION_GROUP_ID, $transactionGroupId);
+    }
+
+    /**
+     * Accessor: Alias created_at as transaction_date
+     * 
+     * @return string|null
+     */
+    public function getTransactionDateAttribute()
+    {
+        return $this->created_at ? $this->created_at->format('Y-m-d') : null;
     }
 }
