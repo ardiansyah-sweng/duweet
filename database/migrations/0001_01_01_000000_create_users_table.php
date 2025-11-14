@@ -2,12 +2,12 @@
 
 use App\Constants\UserColumns;
 use Illuminate\Support\Facades\Schema;
-<<<<<<< HEAD
+
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-=======
+
 use App\Constants\UserColumns;
->>>>>>> main
+
 
 return new class extends Migration
 {
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-<<<<<<< HEAD
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string(UserColumns::NAME);
@@ -51,7 +51,7 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
-=======
+
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserColumns::ID);
             $table->string(UserColumns::NAME);
@@ -74,7 +74,7 @@ return new class extends Migration
             $table->integer(UserColumns::USIA);
         });
 
->>>>>>> main
+
     }
 
     /**

@@ -5,18 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-<<<<<<< HEAD
+
 use Illuminate\Support\Facades\DB; 
-=======
+
 use App\Models\UserAccount;
->>>>>>> main
+
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-<<<<<<< HEAD
-=======
+
     /**
      * The attributes that are mass assignable.
      *
@@ -28,7 +27,7 @@ class User extends Authenticatable
      * @var bool
      */
     public $timestamps = false;
->>>>>>> main
+
     protected $fillable = [
         'name',
         'first_name',
@@ -51,9 +50,9 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-<<<<<<< HEAD
+    
     protected function casts(): array
-=======
+
     /**
      * The attributes that should be cast.
      *
@@ -67,7 +66,7 @@ class User extends Authenticatable
      * One user can have many user accounts (credentials)
      */
     public function userAccounts()
->>>>>>> main
+
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
