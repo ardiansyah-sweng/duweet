@@ -47,6 +47,9 @@ class UserColumns
 
         public static function getAllColumns(): array
     {
-        return array_merge([self::ID], self::getFillable());
+            return array_merge([self::ID], self::getFillable());
     }
+
+        // Denormalized count of related user accounts
+        public const ACCOUNTS_COUNT = 'accounts_count';
 }

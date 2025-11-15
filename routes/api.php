@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\UserController;
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
@@ -11,4 +12,12 @@ Route::prefix('user-account')->group(function () {
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+});
+
+// Users API Routes
+Route::prefix('users')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('api.users.index');
+    Route::get('/{id}', [UserController::class, 'show'])->name('api.users.show');
+    // Trigger recount (requires appropriate auth in production)
+    Route::post('/recount', [UserController::class, 'recount'])->name('api.users.recount');
 });

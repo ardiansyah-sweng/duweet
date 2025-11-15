@@ -1,0 +1,19 @@
+1.Penurunan Kecepatan Akses Data
+Waktu pencarian meningkat karena sistem harus memindai lebih banyak data sebelum menemukan hasil
+Indeks menjadi kurang efisien jika tidak dioptimalkan atau terlalu besar untuk dimuat ke memori
+Caching berkurang efektivitasnya karena ukuran data melebihi kapasitas cache memori server
+ Contoh:
+Query SELECT * FROM transaksi WHERE tanggal = '2025-11-10';
+yang awalnya cepat di tabel 100 ribu baris, bisa menjadi lambat ketika tabel mencapai jutaan baris tanpa indeks yang tepattepat
+2.Menurunnya Efisiensi Pengelolaan Data
+Proses insert/update/delete memerlukan waktu lebih lama karena sistem harus menjaga konsistensi dan memperbarui indeks atau relasi
+Fragmentasi data meningkat, membuat penyimpanan fisik di disk menjadi tidak efisien
+Maintenance rutin (VACUUM, REINDEX, OPTIMIZE) menjadi lebih berat dan memakan waktu lama
+3.Konsumsi Sumber Daya yang Lebih Tinggi
+RAM, CPU, dan storage I/O meningkat tajam karena beban pengolahan dan penyimpanan lebih besar
+Backup dan restore data memakan waktu lebih lama
+Potensi overhead transaksi (locking, concurrency conflict) juga meningkat, terutama di sistem dengan banyak pengguna
+4.Menurunnya Skalabilitas dan Ketersediaan
+Jika kapasitas mendekati maksimum, server bisa kehabisan ruang atau mengalami crash
+Replikasi dan load balancing menjadi sulit jika tidak dirancang sejak awal
+kesimpulan nya Semakin besar volume data dalam basis data, semakin berat beban kerja sistem — yang berakibat pada penurunan kecepatan akses, efisiensi pengelolaan data, dan peningkatan konsumsi sumber daya.Oleh karena itu, optimasi desain database dan pemeliharaan rutin menjadi sangat penting sebelum kapasitas mencapai batas maksimum
