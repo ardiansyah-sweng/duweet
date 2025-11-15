@@ -2,26 +2,6 @@
 
 namespace Database\Seeders;
 
-<<<<<<< HEAD
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use App\Constants\UserAccountColumns;
-
-class UserAccountSeeder extends Seeder
-{
-
-    public function run(): void
-    {
-        DB::table('user_accounts')->insert([
-            UserAccountColumns::ID_USER      => 1, // Sesuai user pertama di UserSeeder
-            UserAccountColumns::USERNAME     => 'abyan',
-            UserAccountColumns::EMAIL        => 'abyan06@gmail.com',
-            UserAccountColumns::PASSWORD     => Hash::make('informatika123'),
-            UserAccountColumns::VERIFIED_AT  => now(),
-            UserAccountColumns::IS_ACTIVE    => true,
-        ]);
-=======
 use App\Constants\UserAccountColumns;
 use App\Models\User;
 use App\Models\UserAccount;
@@ -40,6 +20,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'John Doe',
                 'first_name' => 'John',
+                'middle_name' => null,
                 'last_name' => 'Doe',
                 'provinsi' => 'DKI Jakarta',
                 'kabupaten' => 'Jakarta Selatan',
@@ -58,6 +39,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'Jane Smith',
                 'first_name' => 'Jane',
+                'middle_name' => null,
                 'last_name' => 'Smith',
                 'provinsi' => 'Jawa Barat',
                 'kabupaten' => 'Bandung',
@@ -76,6 +58,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'Bob Johnson',
                 'first_name' => 'Bob',
+                'middle_name' => null,
                 'last_name' => 'Johnson',
                 'provinsi' => 'Jawa Timur',
                 'kabupaten' => 'Surabaya',
@@ -118,8 +101,8 @@ class UserAccountSeeder extends Seeder
                 UserAccountColumns::ID_USER => $user3->id,
                 UserAccountColumns::EMAIL => 'bobjohnson@duweet.com',
                 UserAccountColumns::PASSWORD => bcrypt('mewing'),
-                UserAccountColumns::VERIFIED_AT => null, // Not verified yet
-                UserAccountColumns::IS_ACTIVE => false, // Inactive account
+                UserAccountColumns::VERIFIED_AT => null,
+                UserAccountColumns::IS_ACTIVE => false,
             ]
         );
 
@@ -134,7 +117,6 @@ class UserAccountSeeder extends Seeder
             ]
         );
 
-        $this->command->info('UserAccount seeder completed! Created 3 users and 4 user accounts.');
->>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
+        $this->command->info('UserAccount seeder completed!');
     }
 }
