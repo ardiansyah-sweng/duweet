@@ -11,10 +11,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // User::factory(10)->create();
+
+        // Seed accounts with real world data
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
-            //AccountSeeder::class,
+            // AccountSeeder::class,
         ]);
     }
 }

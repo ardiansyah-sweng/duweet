@@ -22,7 +22,7 @@ class UserAccount extends Model
     public $timestamps = false;
 
     protected $casts = [
-        UserAccountColumns::IS_ACTIVE => 'boolean',
+        UserAccountColumns::IS_ACTIVE   => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
@@ -39,6 +39,14 @@ class UserAccount extends Model
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
+    }
+
+    /**
+     * Override primary key name using centralized constant.
+     */
+    public function getKeyName()
+    {
+        return UserAccountColumns::getPrimaryKey();
     }
 
     /**
@@ -60,6 +68,7 @@ class UserAccount extends Model
         try {
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
+
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'

@@ -20,6 +20,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'John Doe',
                 'first_name' => 'John',
+                'middle_name' => null,
                 'last_name' => 'Doe',
                 'provinsi' => 'DKI Jakarta',
                 'kabupaten' => 'Jakarta Selatan',
@@ -38,6 +39,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'Jane Smith',
                 'first_name' => 'Jane',
+                'middle_name' => null,
                 'last_name' => 'Smith',
                 'provinsi' => 'Jawa Barat',
                 'kabupaten' => 'Bandung',
@@ -56,6 +58,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'Bob Johnson',
                 'first_name' => 'Bob',
+                'middle_name' => null,
                 'last_name' => 'Johnson',
                 'provinsi' => 'Jawa Timur',
                 'kabupaten' => 'Surabaya',
@@ -98,8 +101,8 @@ class UserAccountSeeder extends Seeder
                 UserAccountColumns::ID_USER => $user3->id,
                 UserAccountColumns::EMAIL => 'bobjohnson@duweet.com',
                 UserAccountColumns::PASSWORD => bcrypt('mewing'),
-                UserAccountColumns::VERIFIED_AT => null, // Not verified yet
-                UserAccountColumns::IS_ACTIVE => false, // Inactive account
+                UserAccountColumns::VERIFIED_AT => null,
+                UserAccountColumns::IS_ACTIVE => false,
             ]
         );
 
@@ -114,6 +117,6 @@ class UserAccountSeeder extends Seeder
             ]
         );
 
-        $this->command->info('UserAccount seeder completed! Created 3 users and 4 user accounts.');
+        $this->command->info('UserAccount seeder completed!');
     }
 }
