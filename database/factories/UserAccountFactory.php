@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use App\Constants\UserAccountColumns;
+use App\Models\User; // <-- Pastikan ini ada
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\UserAccount>
@@ -14,7 +15,9 @@ class UserAccountFactory extends Factory
     public function definition(): array
     {
         return [
-            UserAccountColumns::ID_USER => null, 
+            // INI ADALAH PERBAIKANNYA:
+            UserAccountColumns::ID_USER => User::factory(),
+
             UserAccountColumns::USERNAME => $this->faker->unique()->userName(),
             UserAccountColumns::EMAIL => $this->faker->unique()->safeEmail(),
             UserAccountColumns::PASSWORD => bcrypt('password'),
