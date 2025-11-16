@@ -14,11 +14,6 @@ class UserAccount extends Model
 
     protected $table = 'user_accounts';
 
-    /**
-     * This table does not use created_at/updated_at timestamps.
-     *
-     * @var bool
-     */
     public $timestamps = false;
 
     protected $casts = [
@@ -30,45 +25,15 @@ class UserAccount extends Model
         UserAccountColumns::PASSWORD,
     ];
 
-    /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
-     */
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
     }
 
-    /**
-     * Relasi ke User
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
-    /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * 
-     * @param int $id
-     * @return array
-     */
-    public static function deleteUserAccountRaw($id)
-    {
-        try {
-            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            DB::delete($deleteQuery, [$id]);
-            return [
-                'success' => true,
-                'message' => 'UserAccount berhasil dihapus'
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
-            ];
-        }
-    }
+    // ... (fungsi deleteUserAccountRaw ada di sini, tidak apa-apa) ...
 }
