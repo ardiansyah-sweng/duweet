@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // ensure a known test user exists
         User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
@@ -27,7 +28,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            DemoDataSeedeer::class,
+            UserSeeder::class,
+            UserAccountSeeder::class,
+            // AccountSeeder::class,
         ]);
     }
 }
