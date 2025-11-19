@@ -2,34 +2,48 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB; // tambahkan untuk query builder
+use Illuminate\Support\Facades\DB; 
+use App\Models\UserAccount; 
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
+     * Disable automatic timestamps because users table does not have created_at/updated_at
+     */
+    public $timestamps = false;
+
+    /**
      * The attributes that are mass assignable.
-     *
-     * @var list<string>
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',
+
         'password',
-        'photo', //tambahan photo
-        'preference', //tambahan preference
+        'photo',
+        'preference',
+
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Attributes to hide.
      */
     protected $hidden = [
         'password',
@@ -37,21 +51,24 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Casting.
      */
-    protected function casts(): array
+    protected $casts = [
+        'password' => 'hashed',
+        'email_verified_at' => 'datetime',
+        'preference' => 'array',
+    ];
+
+    /**
+     * Relation to UserAccount
+     */
+    public function userAccounts()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'preference' => 'array',
-        ];
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
 
     /**
-     * Query perintah edit user
+     * Query update user
      */
     public static function editUser($id, $data)
     {
