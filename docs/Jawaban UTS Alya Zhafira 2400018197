@@ -1,0 +1,17 @@
+1.	Penurunan Kecepatan Akses Data
+Semakin banyak data yang tersimpan di dalam basis data, maka semakin besar pula waktu yang dibutuhkan sistem untuk melakukan pencarian (query), penyaringan (filtering), dan pengurutan (sorting) data.
+Misalnya, ketika pengguna melakukan pencarian terhadap data pelanggan, sistem harus menelusuri lebih banyak baris (records) di tabel. Jika indeks (indexing) tidak dioptimalkan, maka proses pencarian bisa menjadi lambat dan membebani CPU. Selain itu, waktu eksekusi query kompleks yang melibatkan banyak join antar tabel juga meningkat secara signifikan.
+2.	Efisiensi Pengelolaan Data Menurun
+Basis data yang semakin besar memerlukan sumber daya penyimpanan (storage) dan memori (RAM) yang lebih besar pula. Saat kapasitas hampir penuh, sistem harus melakukan fragmentasi data, manajemen cache, serta pembacaan ulang halaman data (page reads) yang lebih sering. Hal ini menyebabkan:
+•	Operasi insert dan update menjadi lebih lambat karena sistem harus mencari ruang penyimpanan yang tersedia.
+•	Backup dan restore data memerlukan waktu yang jauh lebih lama.
+•	Proses replikasi antar server menjadi tidak efisien, terutama pada sistem basis data terdistribusi.
+3.	Beban pada Sistem I/O dan CPU
+Ketika data sudah terlalu besar, aktivitas input/output (I/O) meningkat drastis karena sistem harus membaca dan menulis data dari/ke disk secara berulang. Beban kerja ini dapat menyebabkan:
+•	Bottleneck pada disk (terutama pada HDD yang memiliki kecepatan baca-tulis rendah).
+•	Penggunaan CPU dan memori meningkat, karena sistem harus melakukan lebih banyak operasi pengindeksan dan pemrosesan query.
+•	Jika server tidak memiliki spesifikasi yang memadai, hal ini bisa mengakibatkan lag, timeouts, atau bahkan crash pada sistem.
+
+4.	Penurunan Skalabilitas dan Responsivitas Sistem
+Volume data yang besar juga berdampak pada kemampuan sistem untuk menangani pengguna secara bersamaan (concurrency). Akses bersamaan dari banyak pengguna bisa menyebabkan deadlock, locking, atau blocking pada tabel tertentu. Akibatnya, sistem tidak lagi responsif dan performanya menurun drastis.
+Skalabilitas sistem juga menjadi terbatas karena penambahan data baru tidak lagi bisa dilakukan dengan efisien tanpa melakukan optimasi seperti partisi data, sharding, atau migrasi ke server baru.
