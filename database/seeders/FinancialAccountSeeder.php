@@ -4,7 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns as AccountColumns;
+
 
 class FinancialAccountSeeder extends Seeder
 {
