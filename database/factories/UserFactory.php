@@ -23,28 +23,28 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $tahun = fake()->numberBetween(1950, 2010);
+        $bulan = fake()->numberBetween(1, 12);
+        $tgl = fake()->numberBetween(1, 28);
+        $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $tgl);
+        $currentYear = now()->year;
         return [
             'name' => fake()->name(),
             'first_name' => fake()->firstName(),
             'middle_name' => fake()->boolean(50) ? fake()->firstName() : null,
             'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
-            
             // Address data
             'provinsi' => fake()->state(),
             'kabupaten' => fake()->city(),
             'kecamatan' => fake()->cityPrefix() . ' ' . fake()->citySuffix(),
             'jalan' => fake()->streetAddress(),
             'kode_pos' => fake()->postcode(),
-            
             // Birth data
-            'tanggal_lahir' => fake()->numberBetween(1, 31),
-            'bulan_lahir' => fake()->numberBetween(1, 12),
-            'tahun_lahir' => fake()->numberBetween(1950, 2010),
-            'usia' => function (array $attributes) {
-                $currentYear = now()->year;
-                return $currentYear - $attributes['tahun_lahir'];
-            },
+            'tanggal_lahir' => $tanggal,
+            'bulan_lahir' => $bulan,
+            'tahun_lahir' => $tahun,
+            'usia' => $currentYear - $tahun,
         ];
     }
 }

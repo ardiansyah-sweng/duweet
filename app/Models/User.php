@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
-=======
 use App\Models\UserAccount;
->>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
+use App\Models\Transaction;
+use App\Models\FinancialAccount;
+use App\Models\UserFinancialAccount;
 
 class User extends Authenticatable
 {
@@ -25,21 +25,18 @@ class User extends Authenticatable
      * @var list<string>
      */
     /**
-     * Disable automatic timestamps because users table does not have created_at/updated_at
-     *
+           // sesuai PRD + tabel utama untuk pengguna
+           $this->table = config('db_tables.user', 'users');
      * @var bool
      */
     public $timestamps = false;
     protected $fillable = [
-<<<<<<< HEAD
-    'name','email','password',
-    'usia','bulan_lahir','tanggal_lahir',
-=======
         'name',
         'first_name',
         'middle_name',
         'last_name',
         'email',
+        'password',
         'provinsi',
         'kabupaten',
         'kecamatan',
@@ -49,7 +46,6 @@ class User extends Authenticatable
         'bulan_lahir',
         'tahun_lahir',
         'usia',
->>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
     ];
 
     /**
