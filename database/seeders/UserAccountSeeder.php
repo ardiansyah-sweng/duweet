@@ -9,72 +9,83 @@ use Illuminate\Database\Seeder;
 
 class UserAccountSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+        /**
+         * Helper untuk memastikan tanggal valid (misal 31 Februari jadi 28 Februari)
+         */
+        private function safeDate($dateStr)
+        {
+            $dt = date_parse($dateStr);
+            if (!checkdate($dt['month'], $dt['day'], $dt['year'])) {
+                // fallback ke tanggal terakhir bulan tsb
+                $lastDay = cal_days_in_month(CAL_GREGORIAN, $dt['month'], $dt['year']);
+                return sprintf('%04d-%02d-%02d', $dt['year'], $dt['month'], $lastDay);
+            }
+            return $dateStr;
+        }
+
     public function run(): void
     {
         // Create sample users first (idempotent)
         $user1 = User::firstOrCreate(
-            ['email' => 'john@example.com'],
+            ['email' => 'dimas@example.com'],
             [
-                'name' => 'John Doe',
-                'first_name' => 'John',
-                'last_name' => 'Doe',
-                'provinsi' => 'DKI Jakarta',
-                'kabupaten' => 'Jakarta Selatan',
-                'kecamatan' => 'Kebayoran Baru',
+                'name' => 'Dimas Pratama',
+                'first_name' => 'Dimas',
+                'last_name' => 'Pratama',
+                'provinsi' => 'Sumatera Selatan',
+                'kabupaten' => 'Prabumulih Barat',
+                'kecamatan' => 'Mutang Tapus',
                 'jalan' => 'Jl. Sudirman No. 123',
                 'kode_pos' => '12190',
-                'tanggal_lahir' => 15,
-                'bulan_lahir' => 6,
-                'tahun_lahir' => 1990,
-                'usia' => 35,
+                'tanggal_lahir' => $this->safeDate('2006-01-31'),
+                'bulan_lahir' => 1,
+                'tahun_lahir' => 2006,
+                'usia' => 19,
             ]
         );
 
         $user2 = User::firstOrCreate(
-            ['email' => 'jane@example.com'],
+            ['email' => 'azam@example.com'],
             [
-                'name' => 'Jane Smith',
-                'first_name' => 'Jane',
-                'last_name' => 'Smith',
+                'name' => 'Azzam Abdul',
+                'first_name' => 'Azzam',
+                'last_name' => 'Abdul',
                 'provinsi' => 'Jawa Barat',
-                'kabupaten' => 'Bandung',
+                'kabupaten' => 'Bekasi',
                 'kecamatan' => 'Coblong',
                 'jalan' => 'Jl. Dago No. 45',
                 'kode_pos' => '40135',
-                'tanggal_lahir' => 22,
-                'bulan_lahir' => 3,
-                'tahun_lahir' => 1992,
-                'usia' => 33,
+                'tanggal_lahir' => $this->safeDate('2006-4-24'),
+                'bulan_lahir' => 4,
+                'tahun_lahir' => 2006,
+                'usia' => 19,
             ]
         );
 
         $user3 = User::firstOrCreate(
-            ['email' => 'bob@example.com'],
+            ['email' => 'abyan@example.com'],
             [
-                'name' => 'Bob Johnson',
-                'first_name' => 'Bob',
-                'last_name' => 'Johnson',
-                'provinsi' => 'Jawa Timur',
-                'kabupaten' => 'Surabaya',
+                'name' => 'Abyan Furina',
+                'first_name' => 'Abyan',
+                'last_name' => 'Furina',
+                'provinsi' => 'Jawa Barat',
+                'kabupaten' => 'Cirebon',
                 'kecamatan' => 'Gubeng',
                 'jalan' => 'Jl. Pemuda No. 67',
                 'kode_pos' => '60271',
-                'tanggal_lahir' => 8,
-                'bulan_lahir' => 11,
-                'tahun_lahir' => 1988,
-                'usia' => 37,
+                'tanggal_lahir' => $this->safeDate('2006-02-31'),
+                'bulan_lahir' => 02,
+                'tahun_lahir' => 2006,
+                'usia' => 19,
             ]
         );
 
         // Create user accounts
         UserAccount::updateOrCreate(
-            [UserAccountColumns::USERNAME => 'johndoe'],
+            [UserAccountColumns::USERNAME => 'dimas'],
             [
                 UserAccountColumns::ID_USER => $user1->id,
-                UserAccountColumns::EMAIL => 'johndoe@duweet.com',
+                UserAccountColumns::EMAIL => 'dimas@duweet.com',
                 UserAccountColumns::PASSWORD => bcrypt('password123'),
                 UserAccountColumns::VERIFIED_AT => now(),
                 UserAccountColumns::IS_ACTIVE => true,
@@ -82,33 +93,33 @@ class UserAccountSeeder extends Seeder
         );
 
         UserAccount::updateOrCreate(
-            [UserAccountColumns::USERNAME => 'janesmith'],
+            [UserAccountColumns::USERNAME => 'azzam'],
             [
                 UserAccountColumns::ID_USER => $user2->id,
-                UserAccountColumns::EMAIL => 'janesmith@duweet.com',
-                UserAccountColumns::PASSWORD => bcrypt('skibidi'),
+                UserAccountColumns::EMAIL => 'azzam@duweet.com',
+                UserAccountColumns::PASSWORD => bcrypt('akusukaroblox'),
                 UserAccountColumns::VERIFIED_AT => now(),
                 UserAccountColumns::IS_ACTIVE => true,
             ]
         );
 
         UserAccount::updateOrCreate(
-            [UserAccountColumns::USERNAME => 'bobjohnson'],
+            [UserAccountColumns::USERNAME => 'abyan'],
             [
                 UserAccountColumns::ID_USER => $user3->id,
-                UserAccountColumns::EMAIL => 'bobjohnson@duweet.com',
-                UserAccountColumns::PASSWORD => bcrypt('mewing'),
+                UserAccountColumns::EMAIL => 'abyan@duweet.com',
+                UserAccountColumns::PASSWORD => bcrypt('akusukafurina'),
                 UserAccountColumns::VERIFIED_AT => null, // Not verified yet
                 UserAccountColumns::IS_ACTIVE => false, // Inactive account
             ]
         );
 
         UserAccount::updateOrCreate(
-            [UserAccountColumns::USERNAME => 'johndoe_alt'],
+            [UserAccountColumns::USERNAME => 'satya'],
             [
                 UserAccountColumns::ID_USER => $user1->id,
-                UserAccountColumns::EMAIL => 'johndoe_alt@duweet.com',
-                UserAccountColumns::PASSWORD => bcrypt('bombaclat'),
+                UserAccountColumns::EMAIL => 'satya@duweet.com',
+                UserAccountColumns::PASSWORD => bcrypt('castorice'),
                 UserAccountColumns::VERIFIED_AT => now(),
                 UserAccountColumns::IS_ACTIVE => true,
             ]
@@ -116,4 +127,5 @@ class UserAccountSeeder extends Seeder
 
         $this->command->info('UserAccount seeder completed! Created 3 users and 4 user accounts.');
     }
+
 }
