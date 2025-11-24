@@ -7,6 +7,9 @@ use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed the application's database.
+     */
     public function run(): void
     {
         // Ensure a test user exists and then run relevant seeders
@@ -18,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
+            //AccountSeeder::class,
             FinancialAccountSeeder::class,
         ]);
     }

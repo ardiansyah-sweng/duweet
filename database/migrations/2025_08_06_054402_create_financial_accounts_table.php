@@ -11,10 +11,10 @@ return new class extends Migration
 
     public function __construct()
     {
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
+        $this->table = config('db_tables.financial_account');
     }
     
-    /** 
+    /**
      * Run the migrations.
      */
     public function up(): void
