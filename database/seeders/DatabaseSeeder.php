@@ -9,13 +9,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Ensure a test user exists and then run relevant seeders
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
         $this->call([
-            FinancialAccountSeeder::class, 
+            UserSeeder::class,
+            UserAccountSeeder::class,
+            FinancialAccountSeeder::class,
         ]);
     }
 }

@@ -3,6 +3,21 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\FinancialAccount;
+
+class FinancialAccountSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Create some default financial accounts for testing/dev
+        FinancialAccount::factory()->count(10)->create();
+    }
+}
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Constants\FinancialAccountColumns as AccountColumns;
 
