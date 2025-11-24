@@ -3,24 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\FinancialAccount;
-
-class FinancialAccountSeeder extends Seeder
-{
-    public function run(): void
-    {
-        // Create some default financial accounts for testing/dev
-        FinancialAccount::factory()->count(10)->create();
-    }
-}
-<?php
-
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Constants\FinancialAccountColumns as AccountColumns;
-
+use App\Models\FinancialAccount;
 
 class FinancialAccountSeeder extends Seeder
 {
@@ -28,7 +13,10 @@ class FinancialAccountSeeder extends Seeder
     {
         $table = config('db_tables.financial_account', 'financial_accounts');
 
-        DB::table($table)->truncate();
+        // Disable foreign key checks to allow delete
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table($table)->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         DB::table($table)->insert([
             [
@@ -68,5 +56,8 @@ class FinancialAccountSeeder extends Seeder
                 AccountColumns::PARENT_ID        => null,
             ],
         ]);
+
+        // Optionally create additional randomized accounts via factory
+        FinancialAccount::factory()->count(7)->create();
     }
 }
