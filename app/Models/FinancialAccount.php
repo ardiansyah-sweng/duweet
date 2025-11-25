@@ -43,10 +43,14 @@ class FinancialAccount extends Model
 
         $term = trim($term);
 
-        return $query->where(function ($q) use ($term) {
-            $q->where(FinancialAccountColumns::NAME, 'like', "%{$term}%")
-                ->orWhere(FinancialAccountColumns::DESCRIPTION, 'like', "%{$term}%");
-        });
+        // Use raw SQL with bindings for the search to execute as a single DML-style clause.
+        // This keeps the query safe from injection while allowing raw SQL expression.
+        $like = "%{$term}%";
+
+        return $query->whereRaw(
+            '(' . FinancialAccountColumns::NAME . ' LIKE ? OR ' . FinancialAccountColumns::DESCRIPTION . ' LIKE ?)',
+            [$like, $like]
+        );
     }
 
     /**
