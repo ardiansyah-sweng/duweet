@@ -22,25 +22,27 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserColumns::ID);
             $table->string(UserColumns::NAME);
+
+            // Name components
             $table->string(UserColumns::FIRST_NAME)->nullable();
             $table->string(UserColumns::MIDDLE_NAME)->nullable();
             $table->string(UserColumns::LAST_NAME)->nullable();
+
             $table->string(UserColumns::EMAIL)->unique();
-            
-            // Address data
+
+            // Address
             $table->string(UserColumns::PROVINSI);
             $table->string(UserColumns::KABUPATEN);
             $table->string(UserColumns::KECAMATAN);
             $table->string(UserColumns::JALAN);
             $table->string(UserColumns::KODE_POS);
-            
-            // Birth data
+
+            // Birth data (integer based)
             $table->integer(UserColumns::TANGGAL_LAHIR);
             $table->integer(UserColumns::BULAN_LAHIR);
             $table->integer(UserColumns::TAHUN_LAHIR);
             $table->integer(UserColumns::USIA);
         });
-
     }
 
     /**
@@ -48,6 +50,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists($this->table);
     }
 };
