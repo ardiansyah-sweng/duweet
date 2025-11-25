@@ -7,39 +7,42 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
+    protected string $table;
+
+    public function __construct()
+    {
+        $this->table = config('db_tables.user');
+    }
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
+        Schema::create($this->table, function (Blueprint $table) {
+            $table->id(UserColumns::ID);
             $table->string(UserColumns::NAME);
-            $table->string(UserColumns::FIRST_NAME);
+            $table->string(UserColumns::FIRST_NAME)->nullable();
             $table->string(UserColumns::MIDDLE_NAME)->nullable();
-            $table->string(UserColumns::LAST_NAME);
+            $table->string(UserColumns::LAST_NAME)->nullable();
             $table->string(UserColumns::EMAIL)->unique();
-            $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
-            $table->enum(UserColumns::JENIS_KELAMIN, ['L', 'P'])->nullable();
-            $table->string(UserColumns::PROVINSI)->nullable();
-            $table->string(UserColumns::KABUPATEN)->nullable();
-            $table->string(UserColumns::KECAMATAN)->nullable();
-            $table->string(UserColumns::JALAN)->nullable();
-            $table->string(UserColumns::KODE_POS)->nullable();
-            $table->timestamps();
+            
+            // Address data
+            $table->string(UserColumns::PROVINSI);
+            $table->string(UserColumns::KABUPATEN);
+            $table->string(UserColumns::KECAMATAN);
+            $table->string(UserColumns::JALAN);
+            $table->string(UserColumns::KODE_POS);
+            
+            // Birth data
+            $table->integer(UserColumns::TANGGAL_LAHIR);
+            $table->integer(UserColumns::BULAN_LAHIR);
+            $table->integer(UserColumns::TAHUN_LAHIR);
+            $table->integer(UserColumns::USIA);
         });
-
-        
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
-        });
+    
     }
+    
 
     /**
      * Reverse the migrations.
@@ -47,7 +50,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
     }
 };

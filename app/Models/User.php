@@ -22,8 +22,28 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $table = 'users';
-    
+    /**
+     * Disable automatic timestamps because users table does not have created_at/updated_at
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+    protected $fillable = [
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -36,25 +56,24 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'password' => 'hashed',
+    ];
 
     /**
-     * Get the login accounts for the user.
+     * One user can have many user accounts (credentials)
      */
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'user_id');
     }
+    /**
+     * Get the login accounts for the user.
+     */
 
     /**
      * Get the financial accounts associated with this user.
