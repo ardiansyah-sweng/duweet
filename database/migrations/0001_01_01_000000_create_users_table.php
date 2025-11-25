@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use App\Constants\UserColumns;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -40,8 +40,9 @@ return new class extends Migration
             $table->integer(UserColumns::TAHUN_LAHIR);
             $table->integer(UserColumns::USIA);
         });
-
+    
     }
+    
 
     /**
      * Reverse the migrations.
