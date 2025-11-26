@@ -17,22 +17,20 @@ class Transaction extends Model
 
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
-     * Ini adalah implementasi dari query: "sum income user by periode".
-     * 
-     * QUERY DML SQL MURNI:
+     * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
+     *
+     * DML SQL (MySQL/MariaDB):
      * -----------------------------------------------------------
      * SELECT 
      *     DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
      *     COALESCE(SUM(t.amount), 0) AS total_income
      * FROM transactions t
-     * INNER JOIN financial_accounts fa 
-     *     ON t.financial_account_id = fa.id
-     * WHERE 
-     *     t.user_account_id = ?
-     *     AND fa.type = 'IN'
-     *     AND t.balance_effect = 'increase'
-     *     AND fa.is_group = 0
-     *     AND t.created_at BETWEEN ? AND ?
+     * INNER JOIN financial_accounts fa ON t.financial_account_id = fa.id
+     * WHERE t.user_account_id = ?
+     *   AND fa.type = 'IN'
+     *   AND t.balance_effect = 'increase'
+     *   AND fa.is_group = 0
+     *   AND t.created_at BETWEEN ? AND ?
      * GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
      * ORDER BY periode ASC;
      * -----------------------------------------------------------
@@ -40,35 +38,53 @@ class Transaction extends Model
      * @param int $userAccountId
      * @param \Carbon\Carbon $startDate
      * @param \Carbon\Carbon $endDate
-     * @return array
+     * @return \Illuminate\Support\Collection
      */
-    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): array
+    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        // DML SQL Murni - Langsung execute raw SQL query
+        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // Tentukan fungsi format tanggal berdasarkan driver database
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        // Susun DML SQL murni (alias tabel: t, fa)
         $sql = "
             SELECT 
-                DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
+                {$periodeExpr} AS periode,
                 COALESCE(SUM(t.amount), 0) AS total_income
-            FROM transactions t
-            INNER JOIN financial_accounts fa 
-                ON t.financial_account_id = fa.id
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
             WHERE 
                 t.user_account_id = ?
                 AND fa.type = 'IN'
                 AND t.balance_effect = 'increase'
                 AND fa.is_group = 0
                 AND t.created_at BETWEEN ? AND ?
-            GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
+            GROUP BY {$periodeExpr}
             ORDER BY periode ASC
         ";
 
-        // Execute raw SQL dengan parameter binding untuk keamanan
-        $results = DB::select($sql, [
+        // Eksekusi raw SQL dengan parameter binding
+        $rows = DB::select($sql, [
             $userAccountId,
             $startDate->toDateTimeString(),
-            $endDate->toDateTimeString()
+            $endDate->toDateTimeString(),
         ]);
 
-        return $results;
+        return collect($rows);
     }
 }

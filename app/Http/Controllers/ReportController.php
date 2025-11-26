@@ -18,7 +18,7 @@ class ReportController extends Controller
     public function incomeSummary(Request $request)
     {
         // 1. Ambil data dasar pengguna dan akun (Thin Controller)
-        $baseData = $this->getReportBaseData();
+        $baseData = $this->getReportBaseData($request);
 
         if ($baseData instanceof \Illuminate\Http\JsonResponse) {
             return $baseData; // Mengembalikan error jika user/account tidak ditemukan
@@ -71,17 +71,42 @@ class ReportController extends Controller
      *
      * @return array|\Illuminate\Http\JsonResponse
      */
-    private function getReportBaseData()
+    private function getReportBaseData(Request $request)
     {
-        // Ambil demo user (untuk testing)
-        $user = User::where('email', 'demo_full@duweet.com')->first();
+        // Terima filter opsional dari query string
+        $email = $request->query('email');
+        $userId = $request->query('user_id');
+        $userAccountId = $request->query('user_account_id');
 
-        if (!$user) {
-            return response()->json(['error' => 'Demo user not found.'], 404);
+        // Temukan user_account jika diberikan langsung
+        if ($userAccountId) {
+            $userAccount = DB::table('user_accounts')->where('id', (int) $userAccountId)->first();
+            if (!$userAccount) {
+                return response()->json(['error' => 'User account not found by provided user_account_id.'], 404);
+            }
+            $user = User::find($userAccount->id_user);
+            if (!$user) {
+                return response()->json(['error' => 'User not found for the given user_account.'], 404);
+            }
+        } else {
+            // Temukan user berdasarkan email, user_id, atau fallback ke user pertama
+            if ($email) {
+                $user = User::where('email', $email)->first();
+            } elseif ($userId) {
+                $user = User::find((int) $userId);
+            } else {
+                $user = User::first();
+            }
         }
 
-        // Ambil user account terkait
-        $userAccount = DB::table('user_accounts')->where('id_user', $user->id)->first();
+        if (!$user) {
+            return response()->json(['error' => 'User not found. Provide email, user_id, or create users via seeder.'], 404);
+        }
+
+        // Ambil user account terkait (pakai yang diberikan di query param bila ada)
+        if (!isset($userAccount)) {
+            $userAccount = DB::table('user_accounts')->where('id_user', $user->id)->first();
+        }
 
         if (!$userAccount) {
             return response()->json(['error' => 'User account configuration not found.'], 404);
