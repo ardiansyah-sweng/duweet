@@ -19,7 +19,9 @@ class FinancialAccountColumns
     public const CREATED_AT     = 'created_at';
     public const UPDATED_AT     = 'updated_at';
 
-    
+    /**
+     * Get fillable columns (exclude id, created_at, updated_at)
+     */
     public static function getFillable(): array
     {
         return [
