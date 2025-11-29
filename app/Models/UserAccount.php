@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +31,7 @@ class UserAccount extends Model
     ];
 
     public function user(): BelongsTo
+    // Relasi ke User
     {
         return $this->belongsTo(User::class, 'id_user');
     }
