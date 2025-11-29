@@ -9,4 +9,6 @@ Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
 
 
 
-
+Route::get('/', function () {
+    return view('welcome');
+});

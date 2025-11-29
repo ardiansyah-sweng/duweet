@@ -19,7 +19,7 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     protected $fillable = [
-        'id_user',
+        'user_account_id',
         'username',
         'email',
         'password',

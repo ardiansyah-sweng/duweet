@@ -126,7 +126,7 @@ class DemoDataSeeder extends Seeder
             DB::table('transactions')->insert([
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => 1,
+                    'user_account_id'              => 1,
                     'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 150000,
@@ -138,7 +138,7 @@ class DemoDataSeeder extends Seeder
                 ],
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => 1,
+                    'user_account_id'              => 1,
                     'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 200000,
@@ -150,7 +150,7 @@ class DemoDataSeeder extends Seeder
                 ],
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => 2,
+                    'user_account_id'              => 2,
                     'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 50000,
@@ -162,7 +162,7 @@ class DemoDataSeeder extends Seeder
                 ],
                 [
                     'transaction_group_id' => (string) Str::uuid(),
-                    'user_id'              => 2,
+                    'user_account_id'              => 2,
                     'financial_account_id' => $accIdBiaya,
                     'entry_type'           => 'debit',
                     'amount'               => 100000,

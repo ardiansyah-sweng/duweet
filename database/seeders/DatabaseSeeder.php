@@ -28,9 +28,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            DemoDataSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
+            DemoDataSeeder::class,
         ]);
     }
 }

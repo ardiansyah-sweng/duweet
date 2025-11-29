@@ -10,3 +10,6 @@ Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
 
 
 
+use App\Http\Controllers\UserAccountController;
+
+// UserAccount API Routes (no CSRF protection needed)
