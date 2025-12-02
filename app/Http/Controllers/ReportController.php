@@ -41,29 +41,19 @@ class ReportController extends Controller
                 ], 404);
             }
 
-            // Prepare filter options for model method
+            // Prepare filter options for DML method
             $options = [];
-            
-            // Filter by type (default: AS + LI)
             $typeParam = request('type', 'AS+LI');
-            if ($typeParam === 'AS+LI') {
-                $options['type'] = ['AS', 'LI'];
-            } else {
-                $options['type'] = $typeParam;
-            }
-
-            // Filter by active status
+            $options['type'] = ($typeParam === 'AS+LI') ? ['AS','LI'] : $typeParam;
             if (request()->boolean('include_inactive')) {
                 $options['include_inactive'] = true;
             }
-
-            // Filter by minimum balance
             if (request()->filled('min_balance')) {
-                $options['min_balance'] = request('min_balance');
+                $options['min_balance'] = (int) request('min_balance');
             }
 
-            // Call model method instead of raw query
-            $total = $user->totalLiquidAsset($options);
+            // Use DML raw SQL path in FinancialAccount model
+            $total = \App\Models\FinancialAccount::sumLiquidAssetByUser($user->id, $options);
 
             // Response format
             $response = [

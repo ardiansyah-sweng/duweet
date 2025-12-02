@@ -48,36 +48,64 @@ class FinancialAccount extends Model
             throw new \InvalidArgumentException('Asset balance cannot be negative');
         }
 
-        // Parent type check (simplified)
+        // Parent type check (simplified) dengan raw DML SELECT
         if (!empty($data['parent_id'])) {
-            $parent = self::query()->where('id',$data['parent_id'])->first();
+            $parent = DB::selectOne(
+                "SELECT type FROM financial_accounts WHERE id = ? LIMIT 1",
+                [$data['parent_id']]
+            );
             if ($parent && $parent->type !== $data['type']) {
                 throw new \InvalidArgumentException('Parent and child must share the same type');
             }
         }
+        // Gunakan transaction + DML (raw SQL) agar atomic & sesuai permintaan
+        return DB::transaction(function () use ($data, $isGroup, $initial) {
+            $now = now();
+            DB::insert(
+                "INSERT INTO financial_accounts (name, type, balance, initial_balance, is_group, description, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $data['name'],
+                    $data['type'],
+                    $initial,
+                    $initial,
+                    $isGroup ? 1 : 0,
+                    $data['description'] ?? null,
+                    1,
+                    $now,
+                    $now,
+                ]
+            );
 
-        $fa = self::create([
-            'name'            => $data['name'],
-            'type'            => $data['type'],
-            'balance'         => $initial,
-            'initial_balance' => $initial,
-            'is_group'        => $isGroup,
-            'description'     => $data['description'] ?? null,
-            'is_active'       => true,
-        ]);
+            $accountId = (int) DB::getPdo()->lastInsertId();
 
-        // Buat relasi user jika bukan group
-        if (!$isGroup) {
-            \App\Models\UserFinancialAccount::create([
-                'user_id'              => $data['user_id'],
-                'financial_account_id' => $fa->id,
-                'balance'              => $fa->balance,
-                'initial_balance'      => $fa->initial_balance,
-                'is_active'            => true,
-            ]);
-        }
+            if (!$isGroup) {
+                DB::insert(
+                    "INSERT INTO user_financial_accounts (user_id, financial_account_id, balance, initial_balance, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [
+                        $data['user_id'],
+                        $accountId,
+                        $initial,
+                        $initial,
+                        1,
+                        $now,
+                        $now,
+                    ]
+                );
+            }
 
-        return $fa;
+            // Kembalikan instance model tanpa query Eloquent (hydrate manual)
+            $row = DB::selectOne(
+                "SELECT id, name, type, balance, initial_balance, is_group, description, is_active, created_at, updated_at FROM financial_accounts WHERE id = ? LIMIT 1",
+                [$accountId]
+            );
+
+            $fa = new self();
+            foreach ((array)$row as $key => $value) {
+                $fa->setAttribute($key, $value);
+            }
+            $fa->exists = true;
+            return $fa;
+        });
     }
 
     /**
@@ -106,20 +134,24 @@ class FinancialAccount extends Model
         $isGroup = (bool)($data['is_group'] ?? false);
         $balance = $isGroup ? 0 : (int)$data['initial_balance'];
 
-        // DML Query INSERT menggunakan Query Builder
-        $accountId = DB::table('financial_accounts')->insertGetId([
-            'name'            => $data['name'],
-            'type'            => $data['type'],
-            'balance'         => $balance,
-            'initial_balance' => $balance,
-            'is_group'        => $isGroup,
-            'description'     => $data['description'] ?? null,
-            'is_active'       => $data['is_active'] ?? true,
-            'created_at'      => now(),
-            'updated_at'      => now(),
-        ]);
+        // DML Query INSERT menggunakan raw SQL
+        $now = now();
+        DB::insert(
+            "INSERT INTO financial_accounts (name, type, balance, initial_balance, is_group, description, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $data['name'],
+                $data['type'],
+                $balance,
+                $balance,
+                $isGroup ? 1 : 0,
+                $data['description'] ?? null,
+                ($data['is_active'] ?? true) ? 1 : 0,
+                $now,
+                $now,
+            ]
+        );
 
-        return $accountId;
+        return (int) DB::getPdo()->lastInsertId();
     }
 
     /**
@@ -132,18 +164,20 @@ class FinancialAccount extends Model
      */
     public static function insertUserFinancialAccount(int $userId, int $financialAccountId, int $balance): bool
     {
-        // DML Query INSERT untuk pivot table
-        $inserted = DB::table('user_financial_accounts')->insert([
-            'user_id'              => $userId,
-            'financial_account_id' => $financialAccountId,
-            'balance'              => $balance,
-            'initial_balance'      => $balance,
-            'is_active'            => true,
-            'created_at'           => now(),
-            'updated_at'           => now(),
-        ]);
-
-        return $inserted;
+        // DML Query INSERT untuk pivot table (raw SQL)
+        $now = now();
+        return DB::insert(
+            "INSERT INTO user_financial_accounts (user_id, financial_account_id, balance, initial_balance, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [
+                $userId,
+                $financialAccountId,
+                $balance,
+                $balance,
+                1,
+                $now,
+                $now,
+            ]
+        );
     }
 
     /**
@@ -198,34 +232,35 @@ class FinancialAccount extends Model
      */
     public static function sumLiquidAssetByUser(int $userId, array $options = []): int
     {
-        // DML Query SELECT dengan SUM aggregate function
-        $query = DB::table('user_financial_accounts as ufa')
-            ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
-            ->where('ufa.user_id', $userId)
-            ->where('fa.is_group', false);
-
-        // Filter by account type (default: AS + LI)
+        // Bangun raw SELECT SUM dengan parameter binding manual
         $types = $options['type'] ?? ['AS', 'LI'];
         if (is_string($types)) {
-            $query->where('fa.type', $types);
-        } else {
-            $query->whereIn('fa.type', $types);
+            $types = [$types];
         }
 
-        // Filter by active status (default: active only)
+        $sql = "SELECT SUM(ufa.balance) AS total \n FROM user_financial_accounts ufa \n JOIN financial_accounts fa ON fa.id = ufa.financial_account_id \n WHERE ufa.user_id = ? AND fa.is_group = 0";
+        $bindings = [$userId];
+
+        // Filter type IN (...)
+        if (!empty($types)) {
+            $placeholders = implode(',', array_fill(0, count($types), '?'));
+            $sql .= " AND fa.type IN ($placeholders)";
+            $bindings = array_merge($bindings, $types);
+        }
+
+        // Active filter
         if (empty($options['include_inactive'])) {
-            $query->where('ufa.is_active', 1);
+            $sql .= " AND ufa.is_active = 1";
         }
 
-        // Filter by minimum balance
+        // Min balance
         if (isset($options['min_balance'])) {
-            $query->where('ufa.balance', '>=', $options['min_balance']);
+            $sql .= " AND ufa.balance >= ?";
+            $bindings[] = (int)$options['min_balance'];
         }
 
-        // DML Query: SELECT SUM(balance)
-        $total = $query->sum('ufa.balance');
-
-        return (int) ($total ?? 0);
+        $row = DB::selectOne($sql, $bindings);
+        return (int)($row->total ?? 0);
     }
 
     /**
@@ -238,41 +273,29 @@ class FinancialAccount extends Model
      */
     public static function getLiquidAssetDetailsByUser(int $userId, array $options = []): \Illuminate\Support\Collection
     {
-        // DML Query SELECT dengan JOIN
-        $query = DB::table('user_financial_accounts as ufa')
-            ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
-            ->select([
-                'fa.id',
-                'fa.name',
-                'fa.type',
-                'fa.description',
-                'ufa.balance',
-                'ufa.initial_balance',
-                'ufa.is_active',
-            ])
-            ->where('ufa.user_id', $userId)
-            ->where('fa.is_group', false);
-
-        // Apply filters (same as sumLiquidAssetByUser)
+        // Raw SELECT dengan JOIN + dynamic filters
         $types = $options['type'] ?? ['AS', 'LI'];
-        if (is_string($types)) {
-            $query->where('fa.type', $types);
-        } else {
-            $query->whereIn('fa.type', $types);
-        }
+        if (is_string($types)) { $types = [$types]; }
 
+        $sql = "SELECT fa.id, fa.name, fa.type, fa.description, ufa.balance, ufa.initial_balance, ufa.is_active\n                FROM user_financial_accounts ufa\n                JOIN financial_accounts fa ON fa.id = ufa.financial_account_id\n                WHERE ufa.user_id = ? AND fa.is_group = 0";
+        $bindings = [$userId];
+
+        if (!empty($types)) {
+            $placeholders = implode(',', array_fill(0, count($types), '?'));
+            $sql .= " AND fa.type IN ($placeholders)";
+            $bindings = array_merge($bindings, $types);
+        }
         if (empty($options['include_inactive'])) {
-            $query->where('ufa.is_active', 1);
+            $sql .= " AND ufa.is_active = 1";
         }
-
         if (isset($options['min_balance'])) {
-            $query->where('ufa.balance', '>=', $options['min_balance']);
+            $sql .= " AND ufa.balance >= ?";
+            $bindings[] = (int) $options['min_balance'];
         }
+        $sql .= " ORDER BY ufa.balance DESC";
 
-        // Order by balance descending
-        $query->orderByDesc('ufa.balance');
-
-        return $query->get();
+        $rows = DB::select($sql, $bindings);
+        return collect($rows);
     }
 
     /**
@@ -283,20 +306,9 @@ class FinancialAccount extends Model
      */
     public static function getLiquidAssetSummaryByUser(int $userId): array
     {
-        // DML Query dengan GROUP BY untuk summary per type
-        $summary = DB::table('user_financial_accounts as ufa')
-            ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
-            ->select([
-                'fa.type',
-                DB::raw('SUM(ufa.balance) as total'),
-                DB::raw('COUNT(*) as count'),
-            ])
-            ->where('ufa.user_id', $userId)
-            ->where('fa.is_group', false)
-            ->where('ufa.is_active', 1)
-            ->whereIn('fa.type', ['AS', 'LI'])
-            ->groupBy('fa.type')
-            ->get();
+        // Raw SELECT dengan GROUP BY untuk summary per type
+        $sql = "SELECT fa.type, SUM(ufa.balance) AS total, COUNT(*) AS count\n                FROM user_financial_accounts ufa\n                JOIN financial_accounts fa ON fa.id = ufa.financial_account_id\n                WHERE ufa.user_id = ? AND fa.is_group = 0 AND ufa.is_active = 1 AND fa.type IN ('AS','LI')\n                GROUP BY fa.type";
+        $summary = DB::select($sql, [$userId]);
 
         // Format result
         $result = [
@@ -326,10 +338,11 @@ class FinancialAccount extends Model
      */
     public static function getUserPivot(int $accountId, int $userId)
     {
-        return DB::table('user_financial_accounts')
-            ->where('financial_account_id', $accountId)
-            ->where('user_id', $userId)
-            ->first();
+        $row = DB::selectOne(
+            "SELECT * FROM user_financial_accounts WHERE financial_account_id = ? AND user_id = ? LIMIT 1",
+            [$accountId, $userId]
+        );
+        return $row;
     }
 
     /**
@@ -339,20 +352,15 @@ class FinancialAccount extends Model
      */
     public static function listWithUserBalances(?int $userId = null)
     {
-        $q = DB::table('financial_accounts as fa')
-            ->leftJoin('user_financial_accounts as ufa', 'ufa.financial_account_id', '=', 'fa.id')
-            ->select(
-                'fa.id','fa.name','fa.type','fa.balance','fa.initial_balance',
-                'fa.description','fa.is_active','fa.created_at',
-                'ufa.user_id','ufa.balance as user_balance','ufa.initial_balance as user_initial_balance'
-            )
-            ->orderByDesc('fa.id');
-
+        $sql = "SELECT fa.id, fa.name, fa.type, fa.balance, fa.initial_balance, fa.description, fa.is_active, fa.created_at,\n                        ufa.user_id, ufa.balance AS user_balance, ufa.initial_balance AS user_initial_balance\n                FROM financial_accounts fa\n                LEFT JOIN user_financial_accounts ufa ON ufa.financial_account_id = fa.id";
+        $bindings = [];
         if (!is_null($userId)) {
-            $q->where('ufa.user_id', $userId);
+            $sql .= " WHERE ufa.user_id = ?";
+            $bindings[] = $userId;
         }
-
-        return $q->get();
+        $sql .= " ORDER BY fa.id DESC";
+        $rows = DB::select($sql, $bindings);
+        return collect($rows);
     }
 
     /**
@@ -362,14 +370,10 @@ class FinancialAccount extends Model
      */
     public static function findWithUserBalance(int $id)
     {
-        return DB::table('financial_accounts as fa')
-            ->leftJoin('user_financial_accounts as ufa', 'ufa.financial_account_id', '=', 'fa.id')
-            ->select(
-                'fa.id','fa.name','fa.type','fa.balance','fa.initial_balance',
-                'fa.description','fa.is_active','fa.created_at',
-                'ufa.user_id','ufa.balance as user_balance','ufa.initial_balance as user_initial_balance'
-            )
-            ->where('fa.id', $id)
-            ->first();
+        $row = DB::selectOne(
+            "SELECT fa.id, fa.name, fa.type, fa.balance, fa.initial_balance, fa.description, fa.is_active, fa.created_at,\n                    ufa.user_id, ufa.balance AS user_balance, ufa.initial_balance AS user_initial_balance\n             FROM financial_accounts fa\n             LEFT JOIN user_financial_accounts ufa ON ufa.financial_account_id = fa.id\n             WHERE fa.id = ? LIMIT 1",
+            [$id]
+        );
+        return $row;
     }
 }
