@@ -1,7 +1,13 @@
 <?php
 
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ReportController;
+use App\Models\FinancialAccount;
+use Illuminate\Http\Request as HttpRequest;
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
@@ -12,3 +18,16 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
+
+Route::get('/ping', fn () => response()->json(['pong' => true]));
+
+Route::get('/accounts', function () {
+    return response()->json(['ok' => true]);
+});
+
+
+Route::post('/financial_accounts', [AccountController::class, 'store']);
+Route::get('/financial_accounts', [AccountController::class, 'index']);
+Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
+
+Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
