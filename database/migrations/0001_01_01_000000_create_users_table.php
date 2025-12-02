@@ -2,22 +2,35 @@
 
 use App\Constants\UserColumns;
 use Illuminate\Support\Facades\Schema;
+<<<<<<< HEAD
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+=======
+use App\Constants\UserColumns;
+>>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
 
 return new class extends Migration
 {
     protected string $table;
 
+<<<<<<< HEAD
     public function __construct(){
 
     $this->table = config('db_tables.user');
     }
+=======
+    public function __construct()
+    {
+        $this->table = config('db_tables.user');
+    }
+
+>>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
     /**
      * Run the migrations.
      */
     public function up(): void
     {
+<<<<<<< HEAD
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string(UserColumns::NAME);
@@ -45,6 +58,30 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+=======
+        Schema::create($this->table, function (Blueprint $table) {
+            $table->id(UserColumns::ID);
+            $table->string(UserColumns::NAME);
+            $table->string(UserColumns::FIRST_NAME)->nullable();
+            $table->string(UserColumns::MIDDLE_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME)->nullable();
+            $table->string(UserColumns::EMAIL)->unique();
+            
+            // Address data
+            $table->string(UserColumns::PROVINSI);
+            $table->string(UserColumns::KABUPATEN);
+            $table->string(UserColumns::KECAMATAN);
+            $table->string(UserColumns::JALAN);
+            $table->string(UserColumns::KODE_POS);
+            
+            // Birth data
+            $table->integer(UserColumns::TANGGAL_LAHIR);
+            $table->integer(UserColumns::BULAN_LAHIR);
+            $table->integer(UserColumns::TAHUN_LAHIR);
+            $table->integer(UserColumns::USIA);
+        });
+
+>>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
     }
 
     /**
@@ -53,7 +90,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
     }
 };
