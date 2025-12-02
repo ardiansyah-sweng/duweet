@@ -2,34 +2,35 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\UserAccount;
+use Illuminate\Support\Facades\DB; 
+use App\Models\UserAccount; 
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    /**
      * Disable automatic timestamps because users table does not have created_at/updated_at
-     *
-     * @var bool
      */
     public $timestamps = false;
+
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
         'name',
         'first_name',
         'middle_name',
         'last_name',
         'email',
+
+        'password',
+        'photo',
+        'preference',
+
         'provinsi',
         'kabupaten',
         'kecamatan',
@@ -42,9 +43,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Attributes to hide.
      */
     protected $hidden = [
         'password',
@@ -52,19 +51,35 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
+     * Casting.
      */
     protected $casts = [
         'password' => 'hashed',
+        'email_verified_at' => 'datetime',
+        'preference' => 'array',
     ];
 
     /**
-     * One user can have many user accounts (credentials)
+     * Relation to UserAccount
      */
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    /**
+     * Query update user
+     */
+    public static function editUser($id, $data)
+    {
+        return DB::table('users')
+            ->where('id', $id)
+            ->update([
+                'name' => $data['name'] ?? null,
+                'email' => $data['email'] ?? null,
+                'photo' => $data['photo'] ?? null,
+                'preference' => isset($data['preference']) ? json_encode($data['preference']) : null,
+                'updated_at' => now(),
+            ]);
     }
 }
