@@ -3,9 +3,11 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ReportController;
 
+// UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
