@@ -1,6 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\MonthlyExpenseController;
+
+
+Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
+
+
 
 Route::get('/', function () {
     return view('welcome');
