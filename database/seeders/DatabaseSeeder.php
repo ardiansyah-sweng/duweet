@@ -11,10 +11,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Run seeders in order: users -> user_accounts -> transactions
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
-            //AccountSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
