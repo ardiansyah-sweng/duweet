@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\UserAccountController;
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -12,3 +13,5 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
+
+Route::get('/reports/transactions-per-user', [ReportsController::class, 'getTotalTransactionsPerUser']);
