@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Constants\UserAccountColumns;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class UserAccount extends Model
 {
@@ -13,39 +15,61 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     /**
-     * Fillable columns
+     * Table tidak menggunakan timestamps (created_at & updated_at)
      */
-    protected $fillable = [
-        'user_id',
-        'username',
-        'email',
-        'password',
-        'verified_at',
-        'is_active',
-    ];
+    public $timestamps = false;
+
+    /**
+     * Fillable attributes menggunakan konfigurasi terpusat
+     * dari UserAccountColumns
+     */
+    public function getFillable()
+    {
+        return UserAccountColumns::getFillable();
+    }
 
     /**
      * Hidden attributes
      */
     protected $hidden = [
-        'password',
+        UserAccountColumns::PASSWORD,
     ];
 
     /**
-     * Attribute casting
+     * Casts
      */
     protected $casts = [
-        'verified_at' => 'datetime',
-        'is_active' => 'boolean',
-        'password' => 'hashed',
+        UserAccountColumns::IS_ACTIVE   => 'boolean',
+        UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
     /**
-     * Relasi ke user
-     * Satu akun login dimiliki satu user profile
+     * Relasi ke User
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
+    }
+
+    /**
+     * Hapus satu UserAccount menggunakan raw query
+     */
+    public static function deleteUserAccountRaw($id)
+    {
+        try {
+            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            DB::delete($deleteQuery, [$id]);
+
+            return [
+                'success' => true,
+                'message' => 'UserAccount berhasil dihapus'
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
+            ];
+        }
     }
 }
