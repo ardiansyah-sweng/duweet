@@ -60,7 +60,6 @@ class Transaction extends Model
      * Returns essential transaction summary per user:
      * - User information (id, name, email)
      * - transaction_count: Number of transactions (count)
-     * - total_transactions: Total money from all transactions (sum of amounts)
      * - total_debit & total_credit: Total money per type
      * - net_balance: Net balance (debit - credit)
      *
@@ -103,7 +102,6 @@ class Transaction extends Model
                 COALESCE(tx.credit_count, 0) AS credit_count,
                 COALESCE(tx.total_debit, 0) AS total_debit,
                 COALESCE(tx.total_credit, 0) AS total_credit,
-                COALESCE(tx.total_transactions, 0) AS total_transactions,
                 COALESCE(tx.total_debit, 0) - COALESCE(tx.total_credit, 0) AS net_balance
             FROM {$userTable} AS u
             LEFT JOIN (
@@ -113,14 +111,13 @@ class Transaction extends Model
                     SUM(CASE WHEN t.{$entryTypeCol} = 'debit' THEN 1 ELSE 0 END) AS debit_count,
                     SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN 1 ELSE 0 END) AS credit_count,
                     COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'debit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_debit,
-                    COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_credit,
-                    COALESCE(SUM(t.{$amountCol}), 0) AS total_transactions
+                    COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_credit
                 FROM {$transactionTable} AS t
                 JOIN {$userAccountTable} AS ua ON t.{$userAccountIdCol} = ua.id
                 GROUP BY ua.{$idUserCol}
             ) AS tx ON tx.user_id = u.id
             {$whereClause}
-            ORDER BY total_transactions DESC
+            ORDER BY net_balance DESC
         ";
 
         // Execute raw SQL query
