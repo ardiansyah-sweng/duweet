@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
+use Illuminate\Support\Facades\DB; 
+
 use App\Models\UserAccount;
+
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +27,7 @@ class User extends Authenticatable
      * @var bool
      */
     public $timestamps = false;
+
     protected $fillable = [
         'name',
         'first_name',
@@ -41,15 +45,13 @@ class User extends Authenticatable
         'usia',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    
+    protected function casts(): array
 
     /**
      * The attributes that should be cast.
@@ -64,7 +66,28 @@ class User extends Authenticatable
      * One user can have many user accounts (credentials)
      */
     public function userAccounts()
+
     {
         return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    public static function getAllUsersRaw()
+    {
+        $query = "
+            SELECT
+                id,
+                CONCAT_WS(' ', first_name, middle_name, last_name) AS full_name,
+                email,
+                nomor_telepon,
+                role,
+                is_active,
+                created_at
+            FROM
+                users
+            ORDER BY
+                first_name ASC
+        ";
+
+        return DB::select($query);
     }
 }
