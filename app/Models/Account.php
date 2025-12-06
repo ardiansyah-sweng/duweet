@@ -42,8 +42,8 @@ class Account extends Model
      */
     public function recomputeBalanceFromChildren(): void
     {
-        $sum = $this->children()->sum(AccountColumns::BALANCE);
-        $this->{AccountColumns::BALANCE} = $sum;
+        $sum = $this->children()->sum('balance');
+        $this->balance = $sum;
         $this->save();
     }
 }

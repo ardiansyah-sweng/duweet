@@ -27,6 +27,11 @@ class Transaksi extends Model
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public static function validator(array $data, $updating = false)
     {
         $rules = [

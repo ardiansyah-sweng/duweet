@@ -36,7 +36,7 @@ class TransaksiController extends Controller
         }
 
         // Business rule: account must be leaf
-        if ($account->{\App\Constants\AccountColumns::IS_GROUP}) {
+        if ($account->is_group) {
             return response()->json(['error' => 'Account adalah group; tidak boleh menyimpan transaksi langsung'], 422);
         }
 
@@ -49,30 +49,44 @@ class TransaksiController extends Controller
             $tx->fill($data);
             $tx->save();
 
-            // If account changed, remove from old account and add to new
+            // If amount or account changed, adjust balances
             if (isset($data['amount']) || isset($data['account_id'])) {
                 $newAmount = $tx->amount;
-                $delta = $newAmount - $oldAmount;
+                $oldType = $tx->getOriginal('type') ?? $tx->type;
+                $newType = $tx->type;
 
-                // Adjust balances
-                // Deduct from old account
+                // If account changed, reverse old transaction and apply new one
                 if ($oldAccount && $oldAccount !== $account->id) {
                     $oldAcc = Account::find($oldAccount);
                     if ($oldAcc) {
-                        $oldAcc->{\App\Constants\AccountColumns::BALANCE} -= $oldAmount;
+                        // Reverse old transaction
+                        if ($oldType === 'debit') {
+                            $oldAcc->balance -= $oldAmount;
+                        } else {
+                            $oldAcc->balance += $oldAmount;
+                        }
                         $oldAcc->save();
-                        // recompute parents
                         $this->recomputeParents($oldAcc);
                     }
-                    // Add to new account
-                    $account->{\App\Constants\AccountColumns::BALANCE} += $newAmount;
+                    
+                    // Apply new transaction to new account
+                    if ($newType === 'debit') {
+                        $account->balance += $newAmount;
+                    } else {
+                        $account->balance -= $newAmount;
+                    }
                 } else {
-                    // Same account: apply delta
-                    $account->{\App\Constants\AccountColumns::BALANCE} += $delta;
+                    // Same account: calculate delta
+                    $delta = $newAmount - $oldAmount;
+                    if ($newType === 'debit') {
+                        $account->balance += $delta;
+                    } else {
+                        $account->balance -= $delta;
+                    }
                 }
 
                 // Check asset negative rule
-                if ($account->{\App\Constants\AccountColumns::TYPE} === 'AS' && $account->{\App\Constants\AccountColumns::BALANCE} < 0) {
+                if ($account->type === 'AS' && $account->balance < 0) {
                     throw new \Exception('Saldo asset tidak boleh negatif');
                 }
 
