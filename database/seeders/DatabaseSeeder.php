@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
@@ -11,22 +12,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create a test user only if not already exists
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::factory()->create([
+                'email' => 'test@example.com',
+                'name' => 'Test User',
+            ]);
+        }
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-
-        // Seed accounts with real world data
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
-            AccountSeeder::class,
+            FinancialAccountSeeder::class,
+            // AccountSeeder::class,
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
-            //AccountSeeder::class,
         ]);
     }
 }
