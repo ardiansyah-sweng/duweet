@@ -1,6 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+<<<<<<< HEAD
+
+Route::get('/test', function () {
+    return response()->json(['message' => 'API OK']);
+=======
 use App\Http\Controllers\UserAccountController;
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -11,4 +16,5 @@ Route::prefix('user-account')->group(function () {
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+>>>>>>> f69f6a334e79a0c91b6090aee470fb63b59926ce
 });
