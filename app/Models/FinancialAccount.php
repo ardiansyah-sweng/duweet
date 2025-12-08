@@ -4,7 +4,8 @@
 namespace App\Models;
 
 // Import konstanta Anda jika ada, atau tulis manual
-use App\Constants\AccountColumns; 
+use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

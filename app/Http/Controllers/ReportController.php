@@ -103,13 +103,13 @@ class ReportController extends Controller
             return response()->json(['error' => 'User not found. Provide email, user_id, or create users via seeder.'], 404);
         }
 
-        // Ambil user account terkait (pakai yang diberikan di query param bila ada)
-        if (!isset($userAccount)) {
+        // Ambil user account terkait hanya jika belum ditemukan dari user_account_id param
+        if (!isset($userAccount) || $userAccount === null) {
             $userAccount = DB::table('user_accounts')->where('id_user', $user->id)->first();
         }
 
         if (!$userAccount) {
-            return response()->json(['error' => 'User account configuration not found.'], 404);
+            return response()->json(['error' => 'User account configuration not found for user ID ' . $user->id . '.'], 404);
         }
 
         // Siapkan data user untuk metadata
