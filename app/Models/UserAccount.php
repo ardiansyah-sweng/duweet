@@ -56,9 +56,8 @@ class UserAccount extends Model
     public static function deleteUserAccountRaw($id)
     {
         try {
-            $query = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            DB::delete($query, [$id]);
-
+            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            DB::delete($deleteQuery, [$id]);
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'
@@ -70,6 +69,7 @@ class UserAccount extends Model
             ];
         }
     }
+    
 
     /**
      * DML: Cari user by email menggunakan RAW QUERY
