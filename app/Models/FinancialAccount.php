@@ -6,6 +6,7 @@ use App\Constants\FinancialAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FinancialAccount extends Model
 {
@@ -21,6 +22,13 @@ class FinancialAccount extends Model
 
     public $timestamps = false;
 
+    protected $casts = [
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
+    ];
+
     /**
      * Get the fillable attributes for the model.
      *
@@ -29,6 +37,14 @@ class FinancialAccount extends Model
     public function getFillable()
     {
         return FinancialAccountColumns::getFillable();
+    }
+
+    /**
+     * Relasi ke parent account
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
     /**
