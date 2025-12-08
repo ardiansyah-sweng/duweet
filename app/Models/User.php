@@ -14,40 +14,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * Table name
-     *
-     * @var string
-     */
     protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int,string>
-     */
-    protected $fillable = [
-        UserColumns::NAME,
-        UserColumns::FIRST_NAME,
-        UserColumns::MIDDLE_NAME,
-        UserColumns::LAST_NAME,
-        UserColumns::EMAIL,
-        UserColumns::PROVINSI,
-        UserColumns::KABUPATEN,
-        UserColumns::KECAMATAN,
-        UserColumns::JALAN,
-        UserColumns::KODE_POS,
-        UserColumns::TANGGAL_LAHIR,
-        UserColumns::BULAN_LAHIR,
-        UserColumns::TAHUN_LAHIR,
-        UserColumns::USIA,
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
-     */
     protected $casts = [
         UserColumns::TANGGAL_LAHIR => 'date',
         UserColumns::BULAN_LAHIR => 'integer',
@@ -58,16 +26,22 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    /**
-     * Accessors appended to model arrays.
-     *
-     * @var array<int,string>
-     */
     protected $appends = [
         'nama_lengkap',
         'usia_otomatis',
         'alamat_lengkap',
     ];
+
+    /**
+     * Get the fillable attributes for the model.
+     * Uses centralized definition from UserColumns constant class.
+     *
+     * @return array<string>
+     */
+    public function getFillable()
+    {
+        return UserColumns::getFillable();
+    }
 
     /**
      * Relations
@@ -77,9 +51,6 @@ class User extends Authenticatable
         return $this->hasMany(UserTelephone::class, 'user_id');
     }
 
-    /**
-     * One user can have many user accounts (credentials)
-     */
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
@@ -158,12 +129,10 @@ class User extends Authenticatable
      */
     public static function createUserRaw(array $data)
     {
-        // Validasi input dasar
         if (empty($data['email'])) {
             return 'Email harus diisi.';
         }
 
-        // Validasi format email
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return 'Format email tidak valid.';
         }
@@ -174,43 +143,30 @@ class User extends Authenticatable
             $now = now();
             $usia = null;
 
-            // Hitung usia otomatis jika ada tanggal_lahir
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
                 $usia = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR])->age;
             }
 
-            $insertQuery = "
-                INSERT INTO users 
-                    (name, first_name, middle_name, last_name, email, 
-                    provinsi, kabupaten, kecamatan, jalan, kode_pos, 
-                    tanggal_lahir, bulan_lahir, tahun_lahir, usia,
-                    created_at, updated_at) 
-                VALUES 
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ";
+            $columns = UserColumns::getAllColumns();
+            $values = [];
+            
+            foreach ($columns as $column) {
+                $values[] = $data[$column] ?? null;
+            }
+            
+            // Tambahkan timestamps
+            $columns[] = 'created_at';
+            $columns[] = 'updated_at';
+            $values[] = $now;
+            $values[] = $now;
 
-            DB::insert($insertQuery, [
-                $data[UserColumns::NAME] ?? null,
-                $data[UserColumns::FIRST_NAME] ?? null,
-                $data[UserColumns::MIDDLE_NAME] ?? null,
-                $data[UserColumns::LAST_NAME] ?? null,
-                $data['email'],
-                $data[UserColumns::PROVINSI] ?? null,
-                $data[UserColumns::KABUPATEN] ?? null,
-                $data[UserColumns::KECAMATAN] ?? null,
-                $data[UserColumns::JALAN] ?? null,
-                $data[UserColumns::KODE_POS] ?? null,
-                $data[UserColumns::TANGGAL_LAHIR] ?? null,
-                $data[UserColumns::BULAN_LAHIR] ?? null,
-                $data[UserColumns::TAHUN_LAHIR] ?? null,
-                $usia,
-                $now,
-                $now
-            ]);
+            $placeholders = str_repeat('?, ', count($values) - 1) . '?';
+            $insertQuery = "INSERT INTO users (" . implode(', ', $columns) . ") VALUES ($placeholders)";
+
+            DB::insert($insertQuery, $values);
 
             $userId = DB::getPdo()->lastInsertId();
 
-            // Insert nomor telepon jika ada
             if (isset($data['telephones']) && !empty($data['telephones'])) {
                 $telephones = is_array($data['telephones']) ? $data['telephones'] : [$data['telephones']];
                 
@@ -230,7 +186,6 @@ class User extends Authenticatable
         } catch (\Exception $e) {
             DB::rollBack();
             
-            // Tangani specifically duplicate entry error
             if (str_contains($e->getMessage(), 'Duplicate entry') || 
                 str_contains($e->getMessage(), '1062') ||
                 str_contains($e->getMessage(), 'unique')) {
