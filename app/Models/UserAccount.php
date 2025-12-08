@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class UserAccount extends Model
 {
@@ -22,8 +23,8 @@ class UserAccount extends Model
     public $timestamps = false;
 
     protected $casts = [
-        UserAccountColumns::IS_ACTIVE => 'boolean',
-        UserAccountColumns::VERIFIED_AT => 'datetime',
+        UserAccountColumns::IS_ACTIVE    => 'boolean',
+        UserAccountColumns::VERIFIED_AT  => 'datetime',
     ];
 
     protected $hidden = [
@@ -31,10 +32,7 @@ class UserAccount extends Model
     ];
 
     /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
+     * Fillable attributes defined in constant class
      */
     public function getFillable()
     {
@@ -50,10 +48,26 @@ class UserAccount extends Model
     }
 
     /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * 
-     * @param int $id
-     * @return array
+     * Update password user yang sedang login (diambil dari HEAD)
+     */
+    public static function updatePassword($newPassword)
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return false;
+        }
+
+        $hashed = bcrypt($newPassword);
+
+        return DB::update("
+            UPDATE user_accounts
+            SET password = ?, updated_at = NOW()
+            WHERE user_id = ?
+        ", [$hashed, $userId]);
+    }
+
+    /**
+     * Raw delete user account
      */
     public static function deleteUserAccountRaw($id)
     {
