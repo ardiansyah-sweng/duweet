@@ -106,6 +106,16 @@ class ReportController extends Controller
         // Ambil user account terkait hanya jika belum ditemukan dari user_account_id param
         if (!isset($userAccount) || $userAccount === null) {
             $userAccount = DB::table('user_accounts')->where('id_user', $user->id)->first();
+            
+            // Fallback: jika user tidak punya user_accounts, gunakan user_account pertama yang tersedia
+            if (!$userAccount) {
+                $userAccount = DB::table('user_accounts')->first();
+                if (!$userAccount) {
+                    return response()->json(['error' => 'No user accounts found in the system. Please seed the database first.'], 404);
+                }
+                // Update user ke pemilik user_account tersebut
+                $user = User::find($userAccount->id_user);
+            }
         }
 
         if (!$userAccount) {
