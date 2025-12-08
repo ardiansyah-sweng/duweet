@@ -13,10 +13,8 @@ class FinancialAccountSeeder extends Seeder
     {
         $table = config('db_tables.financial_account', 'financial_accounts');
 
-        // Disable foreign key checks to allow delete
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        DB::table($table)->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        // Clear existing data (compatible with SQLite and MySQL)
+        DB::table($table)->truncate();
 
         DB::table($table)->insert([
             [
