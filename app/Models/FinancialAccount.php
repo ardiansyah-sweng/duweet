@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Constants\FinancialAccountColumns as AccountColumns;
+use App\Constants\FinancialAccountColumns;
 
 class FinancialAccount extends Model
 {
@@ -21,33 +21,24 @@ class FinancialAccount extends Model
         $this->table = config('db_tables.financial_account'); // sesuai migration
     }
 
-    /**
-     * Kolom yang bisa diisi secara mass-assignment
-     */
     protected $fillable = [
-        AccountColumns::PARENT_ID,
-        AccountColumns::NAME,
-        AccountColumns::TYPE,
-        AccountColumns::BALANCE,
-        AccountColumns::INITIAL_BALANCE,
-        AccountColumns::IS_GROUP,
-        AccountColumns::DESCRIPTION,
-        AccountColumns::IS_ACTIVE,
-        AccountColumns::SORT_ORDER,
-        AccountColumns::LEVEL,
-        // color dan icon tidak ada di migration saat ini (belum diaktifkan)
+        FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::TYPE,
+        FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
     ];
 
-    /**
-     * Casting otomatis tipe data
-     */
     protected $casts = [
-        AccountColumns::IS_GROUP => 'boolean',
-        AccountColumns::IS_ACTIVE => 'boolean',
-        AccountColumns::BALANCE => 'integer',
-        AccountColumns::INITIAL_BALANCE => 'integer',
-        AccountColumns::SORT_ORDER => 'integer',
-        AccountColumns::LEVEL => 'integer',
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
     /**
@@ -55,7 +46,7 @@ class FinancialAccount extends Model
      */
     public function parent()
     {
-        return $this->belongsTo(FinancialAccount::class, AccountColumns::PARENT_ID);
+        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
     /**
@@ -63,7 +54,7 @@ class FinancialAccount extends Model
      */
     public function children()
     {
-        return $this->hasMany(FinancialAccount::class, AccountColumns::PARENT_ID);
+        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
     /**
@@ -71,7 +62,7 @@ class FinancialAccount extends Model
      */
     public function transactions()
     {
-        return $this->hasMany(Transaction::class, 'account_id');
+        return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
     }
 
     // Relasi ke UserFinancialAccount
