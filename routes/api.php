@@ -14,9 +14,9 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
-// FinancialAccount API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/', [FinancialAccountController::class, 'index'])->name('api.financial-account.index');
+    Route::get('/search/by-type', [FinancialAccountController::class, 'searchByType'])->name('api.financial-account.search-by-type');
+    Route::get('/search/by-id', [FinancialAccountController::class, 'searchById'])->name('api.financial-account.search-by-id');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
-    // other endpoints (store/update/delete) can be added similarly
 });

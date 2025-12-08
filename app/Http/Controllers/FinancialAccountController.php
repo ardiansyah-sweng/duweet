@@ -9,100 +9,209 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccountController extends Controller
 {
-   
+    
     public function index(Request $request)
     {
-        $q = $request->query('q');
+        try {
+            $table = config('db_tables.financial_account', 'financial_accounts');
+            
+            // Get query parameters
+            $q = $request->input('q');
+            $type = $request->input('type');
+            $perPage = (int) $request->input('per_page', 10);
+            $page = (int) $request->input('page', 1);
+            
+            // Build WHERE clause
+            $wheres = [];
+            $params = [];
+            
+            if (!empty($q)) {
+                $wheres[] = "(name LIKE ? OR description LIKE ?)";
+                $params[] = "%$q%";
+                $params[] = "%$q%";
+            }
+            
+            if (!empty($type)) {
+                $wheres[] = "type = ?";
+                $params[] = $type;
+            }
+            
+            $whereClause = !empty($wheres) ? "WHERE " . implode(" AND ", $wheres) : "";
+            
+            // Count total records
+            $countSql = "SELECT COUNT(*) as total FROM $table $whereClause";
+            $countResult = DB::select($countSql, $params);
+            $total = $countResult[0]->total;
+            
+            // Get paginated records
+            $offset = ($page - 1) * $perPage;
+            $dataSql = "SELECT * FROM $table $whereClause ORDER BY sort_order ASC LIMIT $perPage OFFSET $offset";
+            $records = DB::select($dataSql, $params);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $records,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'total' => (int) $total,
+                    'last_page' => ceil($total / $perPage)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 
-        $filters = [
-            'type' => $request->query('type'),
-            'is_active' => $request->has('is_active') ? filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : null,
-            'parent_id' => $request->query('parent_id'),
-            'level' => $request->query('level'),
-        ];
 
-        $sortBy = $request->query('sort_by', FinancialAccountColumns::SORT_ORDER);
-        $order = $request->query('order', 'asc');
-        $perPage = (int) $request->query('per_page', 15);
-
+    public function show($id)
+    {
         $table = config('db_tables.financial_account', 'financial_accounts');
 
-        $builder = DB::table($table)->select("{$table}.*");
-        if ($q !== null && trim($q) !== '') {
-            $term = '%' . trim($q) . '%';
-            $builder->whereRaw("({$table}." . FinancialAccountColumns::NAME . " LIKE ? OR {$table}." . FinancialAccountColumns::DESCRIPTION . " LIKE ?)", [$term, $term]);
-        }
+        $sql = "SELECT * FROM $table WHERE id = ? LIMIT 1";
+        $result = DB::select($sql, [$id]);
 
-        if (isset($filters['type']) && $filters['type'] !== null) {
-            $builder->where(FinancialAccountColumns::TYPE, $filters['type']);
-        }
-
-        if (isset($filters['is_active']) && $filters['is_active'] !== null) {
-            $builder->where(FinancialAccountColumns::IS_ACTIVE, (bool) $filters['is_active']);
-        }
-
-        if (isset($filters['parent_id']) && $filters['parent_id'] !== null) {
-            $builder->where(FinancialAccountColumns::PARENT_ID, $filters['parent_id']);
-        }
-
-        if (isset($filters['level']) && $filters['level'] !== null) {
-            $builder->where(FinancialAccountColumns::LEVEL, $filters['level']);
-        }
-
-        $builder->orderBy($sortBy, $order);
-
-        $page = $builder->paginate($perPage)->appends($request->query());
-
-        $items = collect($page->items())->map(function ($row) {
-            return (array) $row;
-        })->toArray();
-
-        if (!empty($items)) {
-            $ids = array_column($items, FinancialAccountColumns::ID);
-            $childrenRows = DB::table($table)
-                ->whereIn(FinancialAccountColumns::PARENT_ID, $ids)
-                ->orderBy(FinancialAccountColumns::SORT_ORDER)
-                ->get()
-                ->map(function ($r) { return (array) $r; })
-                ->toArray();
-
-
-            $grouped = [];
-            foreach ($childrenRows as $c) {
-                $parentId = $c[FinancialAccountColumns::PARENT_ID];
-                $grouped[$parentId][] = $c;
-            }
-
-            // attach children to items
-            foreach ($items as &$it) {
-                $it['children'] = $grouped[$it[FinancialAccountColumns::ID]] ?? [];
-            }
-            unset($it);
+        if (empty($result)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'FinancialAccount tidak ditemukan'
+            ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $items,
-            'meta' => [
-                'current_page' => $page->currentPage(),
-                'last_page' => $page->lastPage(),
-                'per_page' => $page->perPage(),
-                'total' => $page->total(),
-            ],
+            'data' => $result[0]
         ]);
     }
 
-    /**
-     * Show single financial account
-     */
-    public function show($id)
+
+   
+    public function searchByType(Request $request)
     {
-        $account = FinancialAccount::with('children', 'parent')->find($id);
+        try {
+            $type = $request->input('type');
+            
+            // Validasi input
+            if (empty($type)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parameter type diperlukan (IN, EX, SP, LI, AS)',
+                    'count' => 0,
+                    'data' => []
+                ], 400);
+            }
 
-        if (!$account) {
-            return response()->json(['success' => false, 'message' => 'FinancialAccount tidak ditemukan'], 404);
+            $table = config('db_tables.financial_account', 'financial_accounts');
+            $isActive = $request->input('is_active');
+            $perPage = (int) $request->input('per_page', 10);
+            $page = (int) $request->input('page', 1);
+            
+            // Build WHERE clause
+            $wheres = ["type = ?"];
+            $params = [$type];
+            
+            if ($isActive !== null) {
+                $wheres[] = "is_active = ?";
+                $params[] = (int) $isActive;
+            }
+            
+            $whereClause = "WHERE " . implode(" AND ", $wheres);
+            
+            // Count total records dengan type ini
+            $countSql = "SELECT COUNT(*) as total FROM $table $whereClause";
+            $countResult = DB::select($countSql, $params);
+            $total = (int) $countResult[0]->total;
+            
+            // Get paginated records
+            $offset = ($page - 1) * $perPage;
+            $dataSql = "SELECT * FROM $table $whereClause ORDER BY sort_order ASC LIMIT $perPage OFFSET $offset";
+            $records = DB::select($dataSql, $params);
+            
+            return response()->json([
+                'success' => true,
+                'type' => $type,
+                'count' => $total,
+                'data' => $records,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'last_page' => ceil($total / $perPage)
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'count' => 0,
+                'data' => []
+            ], 500);
         }
-
-        return response()->json(['success' => true, 'data' => $account]);
     }
+
+    
+     // API: Search financial accounts by ID (single atau multiple)
+ 
+    public function searchById(Request $request)
+    {
+        try {
+            $idsParam = $request->input('id');
+            $table = config('db_tables.financial_account', 'financial_accounts');
+
+            if (empty($idsParam)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parameter id diperlukan',
+                    'count' => 0,
+                    'data' => []
+                ], 400);
+            }
+
+            // Support single id atau multiple ids (dipisah koma)
+            $ids = array_filter(array_map('trim', explode(',', $idsParam)), 'strlen');
+            $ids = array_values(array_filter($ids, 'is_numeric'));
+
+            if (empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parameter id tidak valid',
+                    'count' => 0,
+                    'data' => []
+                ], 400);
+            }
+
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $sql = "SELECT * FROM {$table} WHERE id IN ($placeholders) ORDER BY sort_order ASC";
+            $results = DB::select($sql, $ids);
+
+            if (empty($results)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akun dengan ID tersebut tidak ditemukan',
+                    'count' => 0,
+                    'data' => []
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'search_type' => count($ids) > 1 ? 'multiple' : 'single',
+                'ids' => $ids,
+                'count' => count($results),
+                'data' => $results
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'count' => 0,
+                'data' => []
+            ], 500);
+        }
+    }
+
 }

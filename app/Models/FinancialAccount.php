@@ -4,72 +4,110 @@ namespace App\Models;
 
 use App\Constants\FinancialAccountColumns;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class FinancialAccount extends Model
 {
-    /**
-     * Set table name from config so it follows project convention
-     */
+    
     protected $table;
 
     protected $fillable = [];
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
-        $this->fillable = FinancialAccountColumns::getFillable();
-    }
 
-    public function parent()
+   
+    public static function searchWithFilters(?string $searchTerm = null, array $filters = [], int $limit = 15, int $offset = 0): array
     {
-        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
-    }
+        $table = config('db_tables.financial_account', 'financial_accounts');
+        
+        $sql = "SELECT * FROM {$table} WHERE 1=1 ";
+        $params = [];
 
-    public function children()
-    {
-        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID)->orderBy(FinancialAccountColumns::SORT_ORDER);
-    }
-
-    /**
-     * Scope: simple search on name and description
-     */
-    public function scopeSearch(Builder $query, ?string $term): Builder
-    {
-        if (!$term) {
-            return $query;
+        // Filter search term
+        if (!empty($searchTerm)) {
+            $sql .= " AND (name LIKE ? OR description LIKE ?) ";
+            $params[] = "%{$searchTerm}%";
+            $params[] = "%{$searchTerm}%";
         }
 
-        $term = trim($term);
+        // Filter type
+        if (!empty($filters['type'])) {
+            $sql .= " AND type = ? ";
+            $params[] = $filters['type'];
+        }
 
-        // Use raw SQL with bindings for the search to execute as a single DML-style clause.
-        // This keeps the query safe from injection while allowing raw SQL expression.
-        $like = "%{$term}%";
+        // Filter is_active
+        if (isset($filters['is_active']) && $filters['is_active'] !== null) {
+            $sql .= " AND is_active = ? ";
+            $params[] = (int) $filters['is_active'];
+        }
 
-        return $query->whereRaw(
-            '(' . FinancialAccountColumns::NAME . ' LIKE ? OR ' . FinancialAccountColumns::DESCRIPTION . ' LIKE ?)',
-            [$like, $like]
-        );
+        // Filter parent_id
+        if (!empty($filters['parent_id'])) {
+            $sql .= " AND parent_id = ? ";
+            $params[] = $filters['parent_id'];
+        }
+
+        // Filter level
+        if (!empty($filters['level'])) {
+            $sql .= " AND level = ? ";
+            $params[] = (int) $filters['level'];
+        }
+
+        // Sort
+        $sortBy = $filters['sort_by'] ?? 'sort_order';
+        $order = strtoupper($filters['order'] ?? 'asc') === 'DESC' ? 'DESC' : 'ASC';
+        $sql .= " ORDER BY {$sortBy} {$order} ";
+
+        // Limit dan offset
+        $sql .= " LIMIT ? OFFSET ? ";
+        $params[] = $limit;
+        $params[] = $offset;
+
+        // Execute
+        $results = DB::select($sql, $params);
+        return array_map(fn($row) => (array) $row, $results);
     }
 
-    /**
-     * Scope: apply common filters
-     */
-    public function scopeApplyFilters(Builder $query, array $filters): Builder
+   
+    public static function countWithFilters(?string $searchTerm = null, array $filters = []): int
     {
-        return $query
-            ->when(isset($filters['type']) && $filters['type'] !== null, function ($q) use ($filters) {
-                $q->where(FinancialAccountColumns::TYPE, $filters['type']);
-            })
-            ->when(isset($filters['is_active']) && $filters['is_active'] !== null, function ($q) use ($filters) {
-                $q->where(FinancialAccountColumns::IS_ACTIVE, (bool) $filters['is_active']);
-            })
-            ->when(isset($filters['parent_id']) && $filters['parent_id'] !== null, function ($q) use ($filters) {
-                $q->where(FinancialAccountColumns::PARENT_ID, $filters['parent_id']);
-            })
-            ->when(isset($filters['level']) && $filters['level'] !== null, function ($q) use ($filters) {
-                $q->where(FinancialAccountColumns::LEVEL, $filters['level']);
-            });
+        $table = config('db_tables.financial_account', 'financial_accounts');
+        
+        $sql = "SELECT COUNT(*) as total FROM {$table} WHERE 1=1 ";
+        $params = [];
+
+        // Filter search term
+        if (!empty($searchTerm)) {
+            $sql .= " AND (name LIKE ? OR description LIKE ?) ";
+            $params[] = "%{$searchTerm}%";
+            $params[] = "%{$searchTerm}%";
+        }
+
+        // Filter type
+        if (!empty($filters['type'])) {
+            $sql .= " AND type = ? ";
+            $params[] = $filters['type'];
+        }
+
+        // Filter is_active
+        if (isset($filters['is_active']) && $filters['is_active'] !== null) {
+            $sql .= " AND is_active = ? ";
+            $params[] = (int) $filters['is_active'];
+        }
+
+        // Filter parent_id
+        if (!empty($filters['parent_id'])) {
+            $sql .= " AND parent_id = ? ";
+            $params[] = $filters['parent_id'];
+        }
+
+        // Filter level
+        if (!empty($filters['level'])) {
+            $sql .= " AND level = ? ";
+            $params[] = (int) $filters['level'];
+        }
+
+        $result = DB::select($sql, $params);
+        return $result[0]->total ?? 0;
     }
 }
