@@ -4,17 +4,41 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Constants\FinancialAccountColumns;
 
 class FinancialAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'financial_accounts';
 
     protected $fillable = [
-        'name', 'type', 'balance', 'initial_balance',
-        'is_group', 'description', 'is_active'
+        FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::TYPE,
+        FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
+    ];
+
+    protected $casts = [
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
     public $timestamps = true;
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
+    }
 
     /**
      * Factory method untuk membuat akun keuangan sekaligus relasi UserFinancialAccount.
@@ -362,7 +386,7 @@ class FinancialAccount extends Model
         $rows = DB::select($sql, $bindings);
         return collect($rows);
     }
-
+    
     /**
      * Find account with joined user pivot (if exists)
      * @param int $id
