@@ -4,17 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Constants\FinancialAccountColumns;
 
 class FinancialAccount extends Model
 {
     use HasFactory;
-
-    protected $table = 'financial_accounts';
-
-    public $timestamps = false;
 
     protected $fillable = [
         FinancialAccountColumns::NAME,
@@ -36,19 +30,8 @@ class FinancialAccount extends Model
         FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
-    /**
-     * Parent financial account relation
-     */
-    public function parent(): BelongsTo
+    public function parent()
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
-    }
-
-    /**
-     * Child financial accounts relation
-     */
-    public function children(): HasMany
-    {
-        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
     }
 }

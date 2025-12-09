@@ -32,13 +32,14 @@ class FinancialAccountColumns
             self::TYPE,
             self::BALANCE,
             self::INITIAL_BALANCE,
-            self::DESCRIPTION,
             self::IS_GROUP,
             self::IS_ACTIVE,
             self::SORT_ORDER,
             self::LEVEL,
             self::COLOR,
             self::ICON,
+            self::DESCRIPTION,
+
         ];
     }
 }
