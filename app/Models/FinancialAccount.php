@@ -2,35 +2,22 @@
 
 namespace App\Models;
 
-use App\Constants\FinancialAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Constants\FinancialAccountColumns;
 
 class FinancialAccount extends Model
 {
     use HasFactory;
 
-    /**
-     * Tentukan nama tabel secara eksplisit
-     */
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        // Set nama tabel dari config
-        $this->table = config('db_tables.financial_account');
-    }
-
-    /**
-     * Kolom yang boleh diisi
-     */
     protected $fillable = [
-        FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::TYPE,
         FinancialAccountColumns::BALANCE,
         FinancialAccountColumns::INITIAL_BALANCE,
-        FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::IS_ACTIVE,
         FinancialAccountColumns::SORT_ORDER,
         FinancialAccountColumns::LEVEL,
