@@ -99,17 +99,22 @@ class User extends Authenticatable
         // define all enum types expected
         $types = ['IN', 'EX', 'SP', 'LI', 'AS'];
 
-        $rows = \DB::table('user_financial_accounts as ufa')
-            ->join('financial_accounts as fa', 'ufa.financial_account_id', '=', 'fa.id')
-            ->where('fa.is_group', false)
-            ->where('fa.is_active', true)
-            ->where('ufa.is_active', true)
-            ->select('fa.type', \DB::raw('SUM(ufa.balance) as total_balance'))
-            ->groupBy('fa.type')
-            ->get();
+        // raw SQL for aggregation (uses bindings to avoid injection)
+        $sql = <<<'SQL'
+            SELECT fa.type, SUM(ufa.balance) AS total_balance
+            FROM user_financial_accounts ufa
+            JOIN financial_accounts fa ON ufa.financial_account_id = fa.id
+            WHERE fa.is_group = ?
+              AND fa.is_active = ?
+              AND ufa.is_active = ?
+            GROUP BY fa.type
+        SQL;
+
+        $rows = \DB::select($sql, [0, 1, 1]);
 
         $result = array_fill_keys($types, 0);
         foreach ($rows as $r) {
+            // $r is stdClass with properties 'type' and 'total_balance'
             $result[$r->type] = (int) $r->total_balance;
         }
 
