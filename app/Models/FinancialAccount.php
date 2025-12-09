@@ -2,52 +2,70 @@
 
 namespace App\Models;
 
-use App\Enums\AccountType;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\AccountType;                // dari branch dinar-188
+use App\Constants\FinancialAccountColumns;
 
 class FinancialAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'financial_accounts';
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * Fillable fields (menggabungkan dari branch main + enum branch)
      */
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'type' => AccountType::class, // <-- Otomatis cast ke Enum
-        'balance' => 'integer',
-        'initial_balance' => 'integer',
-        'is_group' => 'boolean',
-        'is_active' => 'boolean',
-        'sort_order' => 'integer',
-        'level' => 'integer',
+    protected $fillable = [
+        FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::TYPE,
+        FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
     ];
 
     /**
-     * Get the parent account.
+     * Casting (menggabungkan enum cast + boolean cast dari kedua branch)
+     */
+    protected $casts = [
+        FinancialAccountColumns::TYPE => AccountType::class,   // enum cast
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
+        FinancialAccountColumns::SORT_ORDER => 'integer',
+        FinancialAccountColumns::LEVEL => 'integer',
+    ];
+
+    /**
+     * Relasi Parent
      */
     public function parent()
     {
-        return $this->belongsTo(FinancialAccount::class, 'parent_id');
+        return $this->belongsTo(
+            self::class,
+            FinancialAccountColumns::PARENT_ID
+        );
     }
 
     /**
-     * Get the children accounts.
+     * Relasi Children
      */
     public function children()
     {
-        return $this->hasMany(FinancialAccount::class, 'parent_id');
+        return $this->hasMany(
+            self::class,
+            FinancialAccountColumns::PARENT_ID
+        );
     }
 
     /**
-     * Get the transactions for this account.
+     * Relasi Transactions
      */
     public function transactions()
     {
@@ -55,7 +73,7 @@ class FinancialAccount extends Model
     }
 
     /**
-     * Get the users associated with this financial account.
+     * Relasi Users many-to-many (dari branch dinar-188)
      */
     public function users()
     {
