@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccount extends Model
 {
-    use HasFactory;
+use HasFactory;
 
     protected $table = 'financial_accounts';
 
@@ -20,6 +20,15 @@ class FinancialAccount extends Model
         FinancialAccountColumns::BALANCE,
         FinancialAccountColumns::IS_ACTIVE,
     ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 
     public static function getActiveAccounts()
     {

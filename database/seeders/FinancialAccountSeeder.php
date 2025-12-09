@@ -10,7 +10,6 @@ class FinancialAccountSeeder extends Seeder
 {
     public function run(): void
     {
-        // Account 1: Aktif
         FinancialAccount::create([
             FinancialAccountColumns::PARENT_ID       => null,
             FinancialAccountColumns::NAME            => 'Bank BNI',
@@ -19,12 +18,23 @@ class FinancialAccountSeeder extends Seeder
             FinancialAccountColumns::INITIAL_BALANCE => 100000,
             FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BNI',
             FinancialAccountColumns::IS_GROUP        => false,
-            FinancialAccountColumns::IS_ACTIVE       => true, 
+            FinancialAccountColumns::IS_ACTIVE       => true,
+            FinancialAccountColumns::SORT_ORDER      => 1,
+            FinancialAccountColumns::LEVEL           => 0,
+        ]);
+            FinancialAccount::create([
+            FinancialAccountColumns::PARENT_ID       => null,
+            FinancialAccountColumns::NAME            => 'Bank BRI',
+            FinancialAccountColumns::TYPE            => 'AS',
+            FinancialAccountColumns::BALANCE         => 1500000,
+            FinancialAccountColumns::INITIAL_BALANCE => 1500000,
+            FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BRI',
+            FinancialAccountColumns::IS_GROUP        => false,
+            FinancialAccountColumns::IS_ACTIVE       => true,
             FinancialAccountColumns::SORT_ORDER      => 1,
             FinancialAccountColumns::LEVEL           => 0,
         ]);
 
-        // Account 2: Tidak Aktif
         FinancialAccount::create([
             FinancialAccountColumns::PARENT_ID       => null,
             FinancialAccountColumns::NAME            => 'Bank BCA',
