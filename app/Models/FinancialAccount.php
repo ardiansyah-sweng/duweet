@@ -34,4 +34,27 @@ class FinancialAccount extends Model
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
+    public function children()
+    {
+        return $this->hasMany(FinancialAccount::class, 'parent_id');
+    }
+
+    /**
+     * Get the transactions for this account.
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'account_id');
+    }
+
+    /**
+     * Get the users associated with this financial account.
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_financial_accounts', 'financial_account_id', 'user_id')
+            ->using(UserFinancialAccount::class)
+            ->withPivot('balance', 'initial_balance', 'is_active')
+            ->withTimestamps();
+    }
 }

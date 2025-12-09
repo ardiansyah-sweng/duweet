@@ -67,4 +67,32 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
+    public function telephones()
+    {
+        return $this->hasMany(UserTelephone::class, 'user_id');
+    }
+
+    /**
+     * A user can have many transactions
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_id');
+    }
+
+    /**
+     * Many-to-Many relationship with pivot financial accounts
+     */
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(
+            FinancialAccount::class,
+            'user_financial_accounts',
+            'user_id',
+            'financial_account_id'
+        )
+        ->using(UserFinancialAccount::class)
+        ->withPivot('balance', 'initial_balance', 'is_active')
+        ->withTimestamps();
+    }
 }

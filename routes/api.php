@@ -12,3 +12,5 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
+
+Route::get('/transactions', [TransactionController::class, 'index']);
