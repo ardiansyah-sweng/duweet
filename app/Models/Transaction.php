@@ -58,69 +58,54 @@ class Transaction extends Model
     }
 
     /**
-     * Get total transactions per user using raw SQL query.
+     * Get total transactions per user account using raw SQL query.
      *
-     * Returns essential transaction summary per user:
-     * - User information (id, name, email)
-     * - transaction_count: Number of transactions (count)
-     * - total_debit & total_credit: Total money per type
-     * - net_balance: Net balance (debit - credit)
+     * Returns transaction summary per user account:
+     * - user_account_id: User account ID
+     * - user_account_email: User account email
+     * - transaction_count: Count of unique transaction groups (DISTINCT transaction_group_id)
      *
-     * Usage: \App\Models\Transaction::getTotalTransactionsPerUser();
-     * Optional parameter: $userId
+     * Usage: \App\Models\Transaction::getTotalTransactionsPerUserAccount();
+     * Optional parameter: $userAccountId (filter by user account ID)
      *
-     * @param  int|null  $userId  Filter by specific user ID
+     * @param  int|null  $userAccountId  Filter by specific user account ID
      * @return \Illuminate\Support\Collection
      */
-    public static function getTotalTransactionsPerUser(?int $userId = null)
+    public static function getTotalTransactionsPerUserAccount(?int $userAccountId = null)
     {
         // Get table names from config
         $transactionTable = config('db_tables.transaction');
         $userAccountTable = config('db_tables.user_account');
-        $userTable = config('db_tables.user');
 
         // Get column names from constants
         $userAccountIdCol = TransactionColumns::USER_ACCOUNT_ID;
-        $idUserCol = UserAccountColumns::ID_USER;
-        $entryTypeCol = TransactionColumns::ENTRY_TYPE;
-        $amountCol = TransactionColumns::AMOUNT;
+        $transactionGroupIdCol = TransactionColumns::TRANSACTION_GROUP_ID;
 
-        // Build WHERE clause for filtering by user ID
+        // Build WHERE clause for filtering
         $whereClause = '';
         $bindings = [];
         
-        if ($userId !== null) {
-            $whereClause = "WHERE u.id = ?";
-            $bindings[] = $userId;
+        if ($userAccountId !== null) {
+            $whereClause = "WHERE ua.id = ?";
+            $bindings[] = $userAccountId;
         }
 
         // Raw SQL query using DML (Data Manipulation Language)
         $sql = "
             SELECT 
-                u.id AS user_id,
-                u.name AS user_name,
-                u.email AS user_email,
-                COALESCE(tx.transaction_count, 0) AS transaction_count,
-                COALESCE(tx.debit_count, 0) AS debit_count,
-                COALESCE(tx.credit_count, 0) AS credit_count,
-                COALESCE(tx.total_debit, 0) AS total_debit,
-                COALESCE(tx.total_credit, 0) AS total_credit,
-                COALESCE(tx.total_debit, 0) - COALESCE(tx.total_credit, 0) AS net_balance
-            FROM {$userTable} AS u
+                ua.id AS user_account_id,
+                ua.email AS user_account_email,
+                COALESCE(tx.transaction_count, 0) AS transaction_count
+            FROM {$userAccountTable} AS ua
             LEFT JOIN (
                 SELECT 
-                    ua.{$idUserCol} AS user_id,
-                    COUNT(t.id) AS transaction_count,
-                    SUM(CASE WHEN t.{$entryTypeCol} = 'debit' THEN 1 ELSE 0 END) AS debit_count,
-                    SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN 1 ELSE 0 END) AS credit_count,
-                    COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'debit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_debit,
-                    COALESCE(SUM(CASE WHEN t.{$entryTypeCol} = 'credit' THEN t.{$amountCol} ELSE 0 END), 0) AS total_credit
+                    t.{$userAccountIdCol} AS user_account_id,
+                    COUNT(DISTINCT t.{$transactionGroupIdCol}) AS transaction_count
                 FROM {$transactionTable} AS t
-                JOIN {$userAccountTable} AS ua ON t.{$userAccountIdCol} = ua.id
-                GROUP BY ua.{$idUserCol}
-            ) AS tx ON tx.user_id = u.id
+                GROUP BY t.{$userAccountIdCol}
+            ) AS tx ON ua.id = tx.user_account_id
             {$whereClause}
-            ORDER BY net_balance DESC
+            ORDER BY transaction_count DESC, ua.id ASC
         ";
 
         // Execute raw SQL query

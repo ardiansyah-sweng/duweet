@@ -14,4 +14,8 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
-Route::get('/reports/transactions-per-user', [ReportsController::class, 'getTotalTransactionsPerUser']);
+// Reports API Routes
+Route::prefix('reports')->group(function () {
+    Route::get('/transactions-per-user-account', [ReportsController::class, 'getTotalTransactionsPerUserAccount'])
+        ->name('api.reports.transactions-per-user-account');
+});
