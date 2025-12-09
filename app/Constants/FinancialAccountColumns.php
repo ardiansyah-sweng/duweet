@@ -25,21 +25,18 @@ class FinancialAccountColumns
      * Get fillable columns (exclude id, created_at, updated_at)
      */
     public static function getFillable(): array
-    {
-        return [
-            self::NAME,
-            self::PARENT_ID,
-            self::TYPE,
-            self::BALANCE,
-            self::INITIAL_BALANCE,
-            self::IS_GROUP,
-            self::DESCRIPTION,
-            self::IS_ACTIVE,
-            self::SORT_ORDER,
-            self::LEVEL,
-            self::COLOR,
-            self::ICON,
-
-        ];
-    }
+{
+    return [
+        self::TYPE,
+        self::BALANCE,
+        self::INITIAL_BALANCE,
+        self::DESCRIPTION, 
+        self::IS_GROUP,
+        self::IS_ACTIVE,
+        self::SORT_ORDER,
+        self::LEVEL,
+        self::COLOR,         
+        self::ICON,          
+    ];
+}
 }
