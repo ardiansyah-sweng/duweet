@@ -86,26 +86,22 @@ class Transaction extends Model
         $bindings = [];
         
         if ($userAccountId !== null) {
-            $whereClause = "WHERE ua.id = ?";
+            $whereClause = "WHERE user_accounts.id = ?";
             $bindings[] = $userAccountId;
         }
 
-        // Raw SQL query using DML (Data Manipulation Language)
+        // Raw SQL query - full version without abbreviations
         $sql = "
             SELECT 
-                ua.id AS user_account_id,
-                ua.email AS user_account_email,
-                COALESCE(tx.transaction_count, 0) AS transaction_count
-            FROM {$userAccountTable} AS ua
-            LEFT JOIN (
-                SELECT 
-                    t.{$userAccountIdCol} AS user_account_id,
-                    COUNT(DISTINCT t.{$transactionGroupIdCol}) AS transaction_count
-                FROM {$transactionTable} AS t
-                GROUP BY t.{$userAccountIdCol}
-            ) AS tx ON ua.id = tx.user_account_id
+                user_accounts.id AS user_account_id,
+                user_accounts.email AS user_account_email,
+                COUNT(DISTINCT transactions.{$transactionGroupIdCol}) AS transaction_count
+            FROM {$userAccountTable} AS user_accounts
+            LEFT JOIN {$transactionTable} AS transactions 
+                ON user_accounts.id = transactions.{$userAccountIdCol}
             {$whereClause}
-            ORDER BY transaction_count DESC, ua.id ASC
+            GROUP BY user_accounts.id, user_accounts.email
+            ORDER BY transaction_count DESC, user_accounts.id ASC
         ";
 
         // Execute raw SQL query
