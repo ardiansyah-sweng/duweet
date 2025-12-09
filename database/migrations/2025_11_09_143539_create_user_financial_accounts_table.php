@@ -16,7 +16,7 @@ return new class extends Migration
     public function __construct()
     {
         $this->table = config('db_tables.user_financial_account');
-        $this->userTable = config('db_tables.user');
+        $this->userTable = config('db_tables.user_account');
         $this->financialAccountTable = config('db_tables.financial_account');
     }
 
@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserFinancialAccountColumns::ID);
 
-            $table->foreignId(UserFinancialAccountColumns::USER_ID)
+            $table->foreignId(UserFinancialAccountColumns::USER_ACCOUNT_ID)
                 ->constrained($this->userTable)
                 ->onDelete('cascade');
 
@@ -43,7 +43,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index([
-                UserFinancialAccountColumns::USER_ID,
+                UserFinancialAccountColumns::USER_ACCOUNT_ID,
                 UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID,
             ], 'idx_user_financial_account');
 
