@@ -13,16 +13,23 @@ class FinancialAccount extends Model
     use HasFactory;
 
     protected $fillable = [
-        'parent_id',
-        'name',
-        'type',
-        'balance',
-        'initial_balance',
-        'is_group',
-        'description',
-        'is_active',
-        'sort_order',
-        'level',
+        FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::TYPE,
+        FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
+    ];
+
+    protected $casts = [
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
     public function __construct(array $attributes = [])
@@ -36,7 +43,7 @@ class FinancialAccount extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(FinancialAccount::class, FinancialAccountColumns::PARENT_ID);
+        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
     /**
@@ -44,7 +51,7 @@ class FinancialAccount extends Model
      */
     public function children(): HasMany
     {
-        return $this->hasMany(FinancialAccount::class, FinancialAccountColumns::PARENT_ID);
+        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
     /**
