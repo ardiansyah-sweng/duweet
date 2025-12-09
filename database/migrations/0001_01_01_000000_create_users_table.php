@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use App\Constants\UserColumns;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -20,27 +20,39 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-            $table->id(UserColumns::ID);
+            $table->id(); // Primary key
+
+            // Profil user
             $table->string(UserColumns::NAME);
-            $table->string(UserColumns::FIRST_NAME)->nullable();
+            $table->string(UserColumns::FIRST_NAME);
             $table->string(UserColumns::MIDDLE_NAME)->nullable();
-            $table->string(UserColumns::LAST_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME);
+
+            // Email dan credential
             $table->string(UserColumns::EMAIL)->unique();
-            
-            // Address data
-            $table->string(UserColumns::PROVINSI);
-            $table->string(UserColumns::KABUPATEN);
-            $table->string(UserColumns::KECAMATAN);
-            $table->string(UserColumns::JALAN);
-            $table->string(UserColumns::KODE_POS);
-            
-            // Birth data
-            $table->integer(UserColumns::TANGGAL_LAHIR);
-            $table->integer(UserColumns::BULAN_LAHIR);
-            $table->integer(UserColumns::TAHUN_LAHIR);
-            $table->integer(UserColumns::USIA);
+
+            // Data personal (dari HEAD)
+            $table->date(UserColumns::TANGGAL_LAHIR)->nullable();
+            $table->enum(UserColumns::JENIS_KELAMIN, ['L', 'P'])->nullable();
+
+            // Alamat
+            $table->string(UserColumns::PROVINSI)->nullable();
+            $table->string(UserColumns::KABUPATEN)->nullable();
+            $table->string(UserColumns::KECAMATAN)->nullable();
+            $table->string(UserColumns::JALAN)->nullable();
+            $table->string(UserColumns::KODE_POS)->nullable();
+
+            $table->timestamps();
         });
 
+        Schema::create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
+        });
     }
 
     /**
@@ -48,6 +60,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists($this->table);
+        Schema::dropIfExists('sessions');
     }
 };

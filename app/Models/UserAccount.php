@@ -15,31 +15,33 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     /**
-     * This table does not use created_at/updated_at timestamps.
-     *
-     * @var bool
+     * Table tidak menggunakan timestamps (created_at & updated_at)
      */
     public $timestamps = false;
 
-    protected $casts = [
-        UserAccountColumns::IS_ACTIVE => 'boolean',
-        UserAccountColumns::VERIFIED_AT => 'datetime',
-    ];
-
-    protected $hidden = [
-        UserAccountColumns::PASSWORD,
-    ];
-
     /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
+     * Fillable attributes menggunakan konfigurasi terpusat
+     * dari UserAccountColumns
      */
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
     }
+
+    /**
+     * Hidden attributes
+     */
+    protected $hidden = [
+        UserAccountColumns::PASSWORD,
+    ];
+
+    /**
+     * Casts
+     */
+    protected $casts = [
+        UserAccountColumns::IS_ACTIVE   => 'boolean',
+        UserAccountColumns::VERIFIED_AT => 'datetime',
+    ];
 
     /**
      * Relasi ke User
@@ -50,20 +52,19 @@ class UserAccount extends Model
     }
 
     /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * 
-     * @param int $id
-     * @return array
+     * Hapus satu UserAccount menggunakan raw query
      */
     public static function deleteUserAccountRaw($id)
     {
         try {
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
+
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'
             ];
+
         } catch (\Exception $e) {
             return [
                 'success' => false,

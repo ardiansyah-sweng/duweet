@@ -2,28 +2,27 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
+
+use App\Models\Transaction;
 use App\Models\UserAccount;
+use App\Models\UserTelephone;
+use App\Models\FinancialAccount;
+use App\Models\UserFinancialAccount;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'users';
+
     /**
-     * The attributes that are mass assignable.
+     * Mass assignable attributes
      *
-     * @var list<string>
+     * @var array<int, string>
      */
-    /**
-     * Disable automatic timestamps because users table does not have created_at/updated_at
-     *
-     * @var bool
-     */
-    public $timestamps = false;
     protected $fillable = [
         'name',
         'first_name',
@@ -42,9 +41,9 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Hidden attributes
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -52,19 +51,51 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
+     * Casts
      *
-     * @var array<string,string>
+     * @var array<string, string>
      */
     protected $casts = [
         'password' => 'hashed',
     ];
 
     /**
-     * One user can have many user accounts (credentials)
+     * One user can have many user accounts
      */
     public function userAccounts()
     {
-        return $this->hasMany(UserAccount::class, 'id_user');
+        return $this->hasMany(UserAccount::class, 'user_id');
+    }
+
+    /**
+     * One user can have many phone numbers
+     */
+    public function telephones()
+    {
+        return $this->hasMany(UserTelephone::class, 'user_id');
+    }
+
+    /**
+     * A user can have many transactions
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_id');
+    }
+
+    /**
+     * Many-to-Many relationship with pivot financial accounts
+     */
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(
+            FinancialAccount::class,
+            'user_financial_accounts',
+            'user_id',
+            'financial_account_id'
+        )
+        ->using(UserFinancialAccount::class)
+        ->withPivot('balance', 'initial_balance', 'is_active')
+        ->withTimestamps();
     }
 }

@@ -1,7 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserAccountController;
+
+// Default route
+Route::get('/', function () {
+    return view('welcome');
+});
+
+// Transaction routes
+Route::get('/transactions', [TransactionController::class, 'index']);
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
