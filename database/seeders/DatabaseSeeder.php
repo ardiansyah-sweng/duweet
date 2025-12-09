@@ -8,15 +8,16 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * See
-     * d the application's database.
+     * dhe application's database.
      */
     public function run(): void
     {
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
-            AccountSeeder::class,
-            TransaksiSeeder::class,
+              AccountSeeder::class,
+              TransaksiSeeder::class,
+              FinancialAccountSeeder::class,
         ]);
     }
 }
