@@ -13,7 +13,6 @@ class Transaction extends Model
 
     protected $table = 'transactions';
 
-    // inisialisasi kosong, nanti di-set di constructor
     protected $fillable = [];
 
     protected $casts = [
@@ -24,8 +23,6 @@ class Transaction extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-
-        // set fillable pada waktu runtime
         $this->fillable = TransactionColumns::getFillable();
     }
 
@@ -46,5 +43,36 @@ class Transaction extends Model
     public function financialAccount()
     {
         return $this->belongsTo(FinancialAccount::class, TransactionColumns::FINANCIAL_ACCOUNT_ID);
+    }
+
+    /**
+     * Ambil detail transaksi lengkap via JOIN
+     */
+    public static function getDetailById($id)
+    {
+        return self::query()
+            ->from('transactions as t')
+            ->join('user_accounts as ua', 'ua.id', '=', 't.user_account_id')
+            ->join('users as u', 'u.id', '=', 'ua.id_user')
+            ->join('financial_accounts as fa', 'fa.id', '=', 't.financial_account_id')
+            ->select(
+                't.id as transaction_id',
+                't.transaction_group_id',
+                't.amount',
+                't.entry_type',
+                't.balance_effect',
+                't.is_balance',
+                't.description',
+                't.created_at as transaction_date',
+                'ua.id as user_account_id',
+                'ua.username as user_account_username',
+                'ua.email as user_account_email',
+                'u.id as id_user',
+                'u.name as user_name',
+                'fa.id as financial_account_id',
+                'fa.name as financial_account_name'
+            )
+            ->where('t.id', $id)
+            ->first();
     }
 }
