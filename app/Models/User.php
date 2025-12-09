@@ -25,7 +25,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     /**
-           // sesuai PRD + tabel utama untuk pengguna
+           //sesuai PRD + tabel utama untuk pengguna
            $this->table = config('db_tables.user', 'users');
      * @var bool
      */
