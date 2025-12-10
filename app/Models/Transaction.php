@@ -63,7 +63,8 @@ class Transaction extends Model
      */
     public function scopeByPeriod($query, $startDate, $endDate)
     {
-        return $query->whereBetween(TransactionColumns::CREATED_AT, [$startDate, $endDate]);
+        return $query->whereDate(TransactionColumns::CREATED_AT, '>=', $startDate)
+                     ->whereDate(TransactionColumns::CREATED_AT, '<=', $endDate);
     }
 
     /**

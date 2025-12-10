@@ -17,12 +17,13 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
             AccountSeeder::class,
-            TransactionSeeder::class,
             FinancialAccountSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
