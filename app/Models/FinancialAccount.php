@@ -34,6 +34,14 @@ class FinancialAccount extends Model
     ];
 
     /**
+     * Parent relationship (self-referencing)
+     */
+    public function parent()
+    {
+        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
+    }
+
+    /**
      * Scope to filter active financial accounts
      */
     public function scopeActive($query)
