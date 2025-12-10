@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+
+// Dari branch 188-dinar-test
 use App\Enums\TransactionEntryType;
 use App\Enums\TransactionBalanceEffect;
-// Asumsi Anda punya model UserAccount
-use App\Models\UserAccount; 
+use App\Models\UserAccount;
+
+// Dari branch main
+use App\Constants\TransactionColumns;
+use Carbon\Carbon;
 
 class Transaction extends Model
 {
@@ -23,6 +28,9 @@ class Transaction extends Model
         'is_balance'     => 'boolean',
     ];
 
+    /**
+     * RELATIONS
+     */
     public function userAccount()
     {
         return $this->belongsTo(UserAccount::class, 'user_account_id', 'id');
@@ -33,6 +41,10 @@ class Transaction extends Model
         return $this->belongsTo(FinancialAccount::class, 'financial_account_id', 'id');
     }
 
+    /**
+     * FUNC A – DARI BRANCH 188-dinar-test
+     * Mendapatkan aktivitas terbaru (7 hari terakhir)
+     */
     public static function getLatestActivitiesRaw()
     {
         $query = "
@@ -41,38 +53,71 @@ class Transaction extends Model
                 t.description,
                 t.created_at,
                 t.entry_type, 
-                
-                -- Mengambil 'username' dari tabel 'user_accounts'
                 ua.username as user_name,
-                
-                -- Mengambil nama dari rekening KATEGORI
                 a.name as category_name,
                 a.type as category_type
             FROM
                 transactions as t
             JOIN
-                -- PERBAIKAN 1:
-                -- Sambungkan ke 'user_accounts' (ua)
-                -- menggunakan 't.user_account_id' (dari transactions)
-                -- dan 'ua.id' (primary key dari user_accounts)
                 user_accounts as ua ON t.user_account_id = ua.id
             JOIN
-                -- PERBAIKAN 2:
-                -- Sambungkan ke 'financial_accounts' (a)
-                -- menggunakan 't.financial_account_id' (dari transactions)
-                -- dan 'a.id' (primary key dari financial_accounts)
                 financial_accounts as a ON t.financial_account_id = a.id
             WHERE
                 t.created_at >= NOW() - INTERVAL 7 DAY
-                
-                -- Filter ini tetap sama
-                AND a.type IN ('IN', 'EX', 'SP') 
-                
+                AND a.type IN ('IN', 'EX', 'SP')
             ORDER BY
                 t.created_at DESC
             LIMIT 20
         ";
 
         return DB::select($query);
+    }
+
+    /**
+     * FUNC B – DARI BRANCH main
+     * Ringkasan total income per periode
+     */
+    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
+        }
+
+        $sql = "
+            SELECT 
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_income
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE 
+                t.user_account_id = ?
+                AND fa.type = 'IN'
+                AND t.balance_effect = 'increase'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
     }
 }
