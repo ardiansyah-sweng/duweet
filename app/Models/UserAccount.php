@@ -50,6 +50,14 @@ class UserAccount extends Model
     }
 
     /**
+     * Get financial accounts for this user account
+     */
+    public function financialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_account_id');
+    }
+
+    /**
      * Hapus satu UserAccount berdasarkan ID dengan raw query
      * 
      * @param int $id
@@ -70,5 +78,42 @@ class UserAccount extends Model
                 'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
             ];
         }
+    }
+
+    /**
+     * Get user accounts that don't have financial accounts setup
+     */
+    public static function getAccountsWithoutFinancialSetup()
+    {
+        return self::whereRaw(
+            "id NOT IN (SELECT user_account_id FROM user_financial_accounts)"
+        )
+        ->select('id', UserAccountColumns::ID_USER, UserAccountColumns::USERNAME, UserAccountColumns::EMAIL, UserAccountColumns::IS_ACTIVE, UserAccountColumns::VERIFIED_AT)
+        ->orderBy(UserAccountColumns::ID, 'desc')
+        ->get();
+    }
+
+    /**
+     * Get user accounts without active financial accounts
+     */
+    public static function getAccountsWithoutActiveFinancial()
+    {
+        return self::whereRaw(
+            "id NOT IN (SELECT user_account_id FROM user_financial_accounts WHERE is_active = 1)"
+        )
+        ->select('id', UserAccountColumns::ID_USER, UserAccountColumns::USERNAME, UserAccountColumns::EMAIL, UserAccountColumns::IS_ACTIVE, UserAccountColumns::VERIFIED_AT)
+        ->orderBy(UserAccountColumns::ID, 'desc')
+        ->get();
+    }
+
+    /**
+     * Get all user accounts with their financial account status
+     */
+    public static function getAllAccountsWithFinancialStatus()
+    {
+        return self::with(['user:id,name,email', 'financialAccounts:id,name,type,balance'])
+            ->select('id', UserAccountColumns::ID_USER, UserAccountColumns::USERNAME, UserAccountColumns::EMAIL, UserAccountColumns::IS_ACTIVE)
+            ->orderBy(UserAccountColumns::ID, 'desc')
+            ->get();
     }
 }
