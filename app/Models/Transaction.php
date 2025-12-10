@@ -2,59 +2,91 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
+use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table;
+    // Nama tabel yang sesuai dengan konfigurasi
+    protected $table = 'transactions';
 
     /**
-     * Disable automatic timestamps if the table doesn't have created_at/updated_at
+     * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
+     * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
      *
-     * @var bool
+     * DML SQL (MySQL/MariaDB):
+     * -----------------------------------------------------------
+     * SELECT 
+     *     DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
+     *     COALESCE(SUM(t.amount), 0) AS total_income
+     * FROM transactions t
+     * INNER JOIN financial_accounts fa ON t.financial_account_id = fa.id
+     * WHERE t.user_account_id = ?
+     *   AND fa.type = 'IN'
+     *   AND t.balance_effect = 'increase'
+     *   AND fa.is_group = 0
+     *   AND t.created_at BETWEEN ? AND ?
+     * GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
+     * ORDER BY periode ASC;
+     * -----------------------------------------------------------
+     *
+     * @param int $userAccountId
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
      */
-    public $timestamps = false;
-
-    /**
-     * Initialize the model with table name from config.
-     */
-    public function __construct(array $attributes = [])
+    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        parent::__construct($attributes);
-        $this->table = config('db_tables.transaction');
-    }
+        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'user_account_id',
-        'financial_account_id',
-        'amount',
-        'entry_type',
-        'transaction_date',
-        'description',
-    ];
+        // Tentukan fungsi format tanggal berdasarkan driver database
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
 
-    /**
-     * Get the user account that owns the transaction.
-     */
-    public function userAccount()
-    {
-        return $this->belongsTo(UserAccount::class, 'user_account_id');
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        // Susun DML SQL murni (alias tabel: t, fa)
+        $sql = "
+            SELECT 
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_income
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE 
+                t.user_account_id = ?
+                AND fa.type = 'IN'
+                AND t.balance_effect = 'increase'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        // Eksekusi raw SQL dengan parameter binding
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
     }
 
     /**
