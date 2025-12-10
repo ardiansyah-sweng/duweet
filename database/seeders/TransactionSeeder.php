@@ -3,55 +3,104 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Transaction;
-use App\Models\UserAccount;
-use App\Models\FinancialAccount;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
+use App\Constants\TransactionColumns;
 
 class TransactionSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // Nonaktifkan FK sementara supaya bisa truncate
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        Transaction::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
 
-        // Ambil user account pertama
-        $userAccounts = DB::table('user_accounts')->pluck('id');
-        $financialAccounts = DB::table('financial_accounts')->where('is_group', false)->pluck('id');
+        Schema::disableForeignKeyConstraints();
 
-        $transactions = [];
-        foreach ($userAccounts as $i => $userAccountId) {
-            foreach ($financialAccounts as $financialAccountId) {
-                $transactions[] = [
-                    'user_account_id' => $userAccountId,
-                    'financial_account_id' => $financialAccountId,
-                    'entry_type' => 'debit',
-                    'amount' => 250000,
-                    'balance_effect' => 'increase',
-                    'description' => 'Pembelian peralatan kantor',
-                    'is_balance' => false,
-                    'transaction_group_id' => \Illuminate\Support\Str::uuid(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-                $transactions[] = [
-                    'user_account_id' => $userAccountId,
-                    'financial_account_id' => $financialAccountId,
-                    'entry_type' => 'credit',
-                    'amount' => 250000,
-                    'balance_effect' => 'decrease',
-                    'description' => 'Pembayaran hutang ke supplier',
-                    'is_balance' => false,
-                    'transaction_group_id' => \Illuminate\Support\Str::uuid(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+        // Ensure at least one income and one expense account exist
+        $incomeAccount = DB::table($accountsTable)->where('type', 'IN')->first();
+        if (! $incomeAccount) {
+            $incomeId = DB::table($accountsTable)->insertGetId([
+                'name' => 'Gaji Bulanan',
+                'type' => 'IN',
+                'balance' => 0,
+                'initial_balance' => 0,
+                'is_group' => false,
+                'is_active' => true,
+                'level' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $incomeId = $incomeAccount->id;
+        }
+
+        $expenseAccount = DB::table($accountsTable)->where('type', 'EX')->first();
+        if (! $expenseAccount) {
+            $expenseId = DB::table($accountsTable)->insertGetId([
+                'name' => 'Biaya Sewa / Cicilan',
+                'type' => 'EX',
+                'balance' => 0,
+                'initial_balance' => 0,
+                'is_group' => false,
+                'is_active' => true,
+                'level' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $expenseId = $expenseAccount->id;
+        }
+
+        // Build transactions for each user_account (Jan-Dec 2025)
+        $start = Carbon::create(2025, 1, 1);
+        $end = Carbon::create(2025, 12, 1);
+
+        $userAccounts = DB::table($userAccountsTable)->get();
+
+        foreach ($userAccounts as $ua) {
+            $current = $start->copy();
+            while ($current->lte($end)) {
+                $month = $current->month;
+                $txDate = $current->copy()->day(5);
+
+                // income
+                DB::table($transactionsTable)->insert([
+                    TransactionColumns::TRANSACTION_GROUP_ID => (string) Str::uuid(),
+                    TransactionColumns::USER_ACCOUNT_ID => $ua->id,
+                    TransactionColumns::FINANCIAL_ACCOUNT_ID => $incomeId,
+                    TransactionColumns::ENTRY_TYPE => 'credit',
+                    TransactionColumns::AMOUNT => 8000000 + ($month === 5 ? 5000000 : 0),
+                    TransactionColumns::BALANCE_EFFECT => 'increase',
+                    TransactionColumns::DESCRIPTION => 'Gaji Bulanan ' . $txDate->format('M Y'),
+                    TransactionColumns::IS_BALANCE => true,
+                    TransactionColumns::CREATED_AT => $txDate,
+                    TransactionColumns::UPDATED_AT => $txDate,
+                ]);
+
+                // expense
+                DB::table($transactionsTable)->insert([
+                    TransactionColumns::TRANSACTION_GROUP_ID => (string) Str::uuid(),
+                    TransactionColumns::USER_ACCOUNT_ID => $ua->id,
+                    TransactionColumns::FINANCIAL_ACCOUNT_ID => $expenseId,
+                    TransactionColumns::ENTRY_TYPE => 'debit',
+                    TransactionColumns::AMOUNT => 2000000,
+                    TransactionColumns::BALANCE_EFFECT => 'decrease',
+                    TransactionColumns::DESCRIPTION => 'Biaya Sewa Bulanan ' . $txDate->format('M Y'),
+                    TransactionColumns::IS_BALANCE => true,
+                    TransactionColumns::CREATED_AT => $current->copy()->day(1),
+                    TransactionColumns::UPDATED_AT => $current->copy()->day(1),
+                ]);
+
+                $current->addMonth();
             }
         }
 
-        DB::table('transactions')->insert($transactions);
-
+        Schema::enableForeignKeyConstraints();
     }
 }
