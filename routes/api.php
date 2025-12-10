@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -16,6 +16,6 @@ Route::prefix('user-account')->group(function () {
 
 // Reports API Routes
 Route::prefix('reports')->group(function () {
-    Route::get('/transactions-per-user-account', [ReportsController::class, 'getTotalTransactionsPerUserAccount'])
+    Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
 });
