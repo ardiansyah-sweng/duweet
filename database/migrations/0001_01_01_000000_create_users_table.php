@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Constants\UserColumns;
 
 return new class extends Migration
 {
@@ -10,7 +11,7 @@ return new class extends Migration
 
     public function __construct()
     {
-        // sesuai PRD → tabel utama untuk pengguna
+        // table name from config with fallback
         $this->table = config('db_tables.user', 'users');
     }
 
@@ -20,27 +21,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-            $table->id();
+            $table->id(UserColumns::ID);
+            $table->string(UserColumns::NAME);
+            $table->string(UserColumns::FIRST_NAME)->nullable();
+            $table->string(UserColumns::MIDDLE_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME)->nullable();
+            $table->string(UserColumns::EMAIL)->unique();
 
-            // Kolom sesuai PRD
-            $table->string('name', 100);
-            $table->string('first_name')->nullable();
-            $table->string('middle_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('email')->unique();
+            // Address data
+            $table->string('provinsi')->nullable();
+            $table->string('kabupaten')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('jalan')->nullable();
+            $table->string('kode_pos')->nullable();
 
-            $table->unsignedTinyInteger('usia')->nullable();        // 0–255
-            $table->unsignedTinyInteger('bulan_lahir')->nullable(); // 1–12 (opsional kalau masih dipakai)
-            $table->date('tanggal_lahir')->nullable();
+            // Birth data
+            $table->integer(UserColumns::TANGGAL_LAHIR)->nullable();
+            $table->integer(UserColumns::BULAN_LAHIR)->nullable();
+            $table->integer(UserColumns::TAHUN_LAHIR)->nullable();
+            $table->integer(UserColumns::USIA)->nullable();
 
-            // Tambahan umum Laravel
+            // Authentication
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
-
-            // Index tambahan (opsional)
-            $table->index(['last_name', 'first_name']);
         });
     }
 
