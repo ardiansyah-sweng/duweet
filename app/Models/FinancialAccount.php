@@ -9,21 +9,37 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccount extends Model
 {
-use HasFactory;
+    use HasFactory;
 
     protected $table = 'financial_accounts';
 
     protected $fillable = [
-        FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::TYPE,
         FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
+
+    /**
+     * Scope to filter active financial accounts
+     */
+    public function scopeActive($query)
+    {
+        return $query->where(FinancialAccountColumns::IS_ACTIVE, true);
+    }
 
     public static function getActiveAccounts()
     {
@@ -36,3 +52,4 @@ use HasFactory;
         return DB::select($sql);
     }
 }
+?>

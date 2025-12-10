@@ -2,50 +2,82 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\FinancialAccount;
 use App\Constants\FinancialAccountColumns;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class FinancialAccountSeeder extends Seeder
 {
     public function run(): void
     {
-        FinancialAccount::create([
-            FinancialAccountColumns::PARENT_ID       => null,
-            FinancialAccountColumns::NAME            => 'Bank BNI',
-            FinancialAccountColumns::TYPE            => 'AS',
-            FinancialAccountColumns::BALANCE         => 100000,
-            FinancialAccountColumns::INITIAL_BALANCE => 100000,
-            FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BNI',
-            FinancialAccountColumns::IS_GROUP        => false,
-            FinancialAccountColumns::IS_ACTIVE       => true,
-            FinancialAccountColumns::SORT_ORDER      => 1,
-            FinancialAccountColumns::LEVEL           => 0,
-        ]);
-            FinancialAccount::create([
-            FinancialAccountColumns::PARENT_ID       => null,
-            FinancialAccountColumns::NAME            => 'Bank BRI',
-            FinancialAccountColumns::TYPE            => 'AS',
-            FinancialAccountColumns::BALANCE         => 1500000,
-            FinancialAccountColumns::INITIAL_BALANCE => 1500000,
-            FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BRI',
-            FinancialAccountColumns::IS_GROUP        => false,
-            FinancialAccountColumns::IS_ACTIVE       => true,
-            FinancialAccountColumns::SORT_ORDER      => 1,
-            FinancialAccountColumns::LEVEL           => 0,
-        ]);
+        $table = config('db_tables.financial_account', 'financial_accounts');
 
-        FinancialAccount::create([
-            FinancialAccountColumns::PARENT_ID       => null,
-            FinancialAccountColumns::NAME            => 'Bank BCA',
-            FinancialAccountColumns::TYPE            => 'AS',
-            FinancialAccountColumns::BALANCE         => 5000000,
-            FinancialAccountColumns::INITIAL_BALANCE => 5000000,
-            FinancialAccountColumns::DESCRIPTION     => 'Rekening utama BCA',
-            FinancialAccountColumns::IS_GROUP        => false,
-            FinancialAccountColumns::IS_ACTIVE       => false,
-            FinancialAccountColumns::SORT_ORDER      => 2,
-            FinancialAccountColumns::LEVEL           => 0,
+        $dbDriver = DB::getDriverName();
+
+        if ($dbDriver !== 'sqlite') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
+
+        DB::table($table)->delete();
+
+        if ($dbDriver !== 'sqlite') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
+
+        DB::table($table)->insert([
+
+            [
+                FinancialAccountColumns::NAME            => 'Cash',
+                FinancialAccountColumns::TYPE            => 'AS',
+                FinancialAccountColumns::BALANCE         => 0,
+                FinancialAccountColumns::INITIAL_BALANCE => 0,
+                FinancialAccountColumns::IS_GROUP        => false,
+                FinancialAccountColumns::DESCRIPTION     => 'Cash on hand',
+                FinancialAccountColumns::IS_ACTIVE       => true,
+                FinancialAccountColumns::SORT_ORDER      => 1,
+                FinancialAccountColumns::LEVEL           => 0,
+                FinancialAccountColumns::PARENT_ID       => null,
+            ],
+
+            [
+                FinancialAccountColumns::NAME            => 'Bank BCA',
+                FinancialAccountColumns::TYPE            => 'AS',
+                FinancialAccountColumns::BALANCE         => 0,
+                FinancialAccountColumns::INITIAL_BALANCE => 0,
+                FinancialAccountColumns::IS_GROUP        => false,
+                FinancialAccountColumns::DESCRIPTION     => 'Bank account for transactions',
+                FinancialAccountColumns::IS_ACTIVE       => true,
+                FinancialAccountColumns::SORT_ORDER      => 2,
+                FinancialAccountColumns::LEVEL           => 0,
+                FinancialAccountColumns::PARENT_ID       => null,
+            ],
+
+            [
+                FinancialAccountColumns::NAME            => 'Expense: Food & Drinks',
+                FinancialAccountColumns::TYPE            => 'EX',
+                FinancialAccountColumns::BALANCE         => 0,
+                FinancialAccountColumns::INITIAL_BALANCE => 0,
+                FinancialAccountColumns::IS_GROUP        => false,
+                FinancialAccountColumns::DESCRIPTION     => 'Daily food & beverage expenses',
+                FinancialAccountColumns::IS_ACTIVE       => true,
+                FinancialAccountColumns::SORT_ORDER      => 3,
+                FinancialAccountColumns::LEVEL           => 0,
+                FinancialAccountColumns::PARENT_ID       => null,
+            ],
+
+
+            [
+                FinancialAccountColumns::NAME            => 'Income: Salary',
+                FinancialAccountColumns::TYPE            => 'IN',
+                FinancialAccountColumns::BALANCE         => 0,
+                FinancialAccountColumns::INITIAL_BALANCE => 0,
+                FinancialAccountColumns::IS_GROUP        => false,
+                FinancialAccountColumns::DESCRIPTION     => 'Monthly salary income',
+                FinancialAccountColumns::IS_ACTIVE       => true,
+                FinancialAccountColumns::SORT_ORDER      => 4,
+                FinancialAccountColumns::LEVEL           => 0,
+                FinancialAccountColumns::PARENT_ID       => null,
+            ],
         ]);
     }
 }

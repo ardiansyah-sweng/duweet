@@ -9,7 +9,6 @@ class FinancialAccountController extends Controller
 {
     public function getActiveAccounts(Request $request)
     {
-        // Menggunakan scopeActive() dari model
         $activeAccounts = FinancialAccount::active()->get();
 
         return response()->json([
