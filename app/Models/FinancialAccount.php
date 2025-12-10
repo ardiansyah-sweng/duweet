@@ -25,11 +25,6 @@ use HasFactory;
         'is_active' => 'boolean',
     ];
 
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', 1);
-    }
-
     public static function getActiveAccounts()
     {
         $sql = "
