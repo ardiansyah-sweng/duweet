@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Transaction>
+ * Transaction Factory
+ *
+ * Creates balanced transaction pairs following double-entry bookkeeping principles.
+ * Each transaction has a debit and credit entry with the same transaction_group_id.
  */
 class TransactionFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
     protected $model = Transaction::class;
 
     /**
@@ -26,21 +34,22 @@ class TransactionFactory extends Factory
         return [
             TransactionColumns::TRANSACTION_GROUP_ID => Str::uuid()->toString(),
             TransactionColumns::USER_ACCOUNT_ID => UserAccount::factory(),
-            TransactionColumns::FINANCIAL_ACCOUNT_ID => null, // Will be set by seeder
-            TransactionColumns::ENTRY_TYPE => fake()->randomElement(['debit', 'credit']),
-            TransactionColumns::AMOUNT => fake()->numberBetween(10000, 1000000),
-            TransactionColumns::BALANCE_EFFECT => fake()->randomElement(['increase', 'decrease']),
+            TransactionColumns::FINANCIAL_ACCOUNT_ID => 1,
+            TransactionColumns::ENTRY_TYPE => 'debit',
+            TransactionColumns::AMOUNT => fake()->numberBetween(10000, 5000000),
+            TransactionColumns::BALANCE_EFFECT => 'increase',
             TransactionColumns::DESCRIPTION => fake()->sentence(),
-            TransactionColumns::IS_BALANCE => false,
-            TransactionColumns::CREATED_AT => fake()->dateTimeBetween('-30 days', 'now'),
-            TransactionColumns::UPDATED_AT => now(),
+            TransactionColumns::IS_BALANCE => true,
         ];
     }
 
     /**
-     * Create a balanced transaction pair (debit + credit with same amount and group_id)
-     * This follows double-entry bookkeeping principles where every transaction
-     * must have equal debit and credit entries.
+     * Create a balanced transaction pair (debit + credit) following double-entry bookkeeping.
+     * 
+     * Balance effect is determined by account type and entry type:
+     * - Asset/Expense (AS/EX): Debit increases, Credit decreases
+     * - Income/Liability (IN/LI): Debit decreases, Credit increases
+     * - Spending (SP): Debit increases, Credit decreases
      *
      * @param int $userAccountId User account ID
      * @param int $debitAccountId Financial account for debit entry
@@ -59,6 +68,19 @@ class TransactionFactory extends Factory
         $groupId = Str::uuid()->toString();
         $timestamp = fake()->dateTimeBetween('-30 days', 'now');
 
+        // Get account types to determine balance effect
+        $debitAccount = DB::table(config('db_tables.financial_account'))->find($debitAccountId);
+        $creditAccount = DB::table(config('db_tables.financial_account'))->find($creditAccountId);
+
+        // Determine balance effect based on account type and entry type
+        // Asset (AS), Expense (EX), Spending (SP): Debit increases, Credit decreases
+        // Income (IN), Liability (LI): Debit decreases, Credit increases
+        $debitIncreaseTypes = ['AS', 'EX', 'SP'];
+        $creditIncreaseTypes = ['IN', 'LI'];
+
+        $debitBalanceEffect = in_array($debitAccount->type, $debitIncreaseTypes) ? 'increase' : 'decrease';
+        $creditBalanceEffect = in_array($creditAccount->type, $creditIncreaseTypes) ? 'increase' : 'decrease';
+
         // Debit entry
         $debit = [
             TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
@@ -66,9 +88,9 @@ class TransactionFactory extends Factory
             TransactionColumns::FINANCIAL_ACCOUNT_ID => $debitAccountId,
             TransactionColumns::ENTRY_TYPE => 'debit',
             TransactionColumns::AMOUNT => $amount,
-            TransactionColumns::BALANCE_EFFECT => 'increase',
+            TransactionColumns::BALANCE_EFFECT => $debitBalanceEffect,
             TransactionColumns::DESCRIPTION => $description,
-            TransactionColumns::IS_BALANCE => true, // Marked as balanced
+            TransactionColumns::IS_BALANCE => true,
             TransactionColumns::CREATED_AT => $timestamp,
             TransactionColumns::UPDATED_AT => $timestamp,
         ];
@@ -80,9 +102,9 @@ class TransactionFactory extends Factory
             TransactionColumns::FINANCIAL_ACCOUNT_ID => $creditAccountId,
             TransactionColumns::ENTRY_TYPE => 'credit',
             TransactionColumns::AMOUNT => $amount,
-            TransactionColumns::BALANCE_EFFECT => 'decrease',
+            TransactionColumns::BALANCE_EFFECT => $creditBalanceEffect,
             TransactionColumns::DESCRIPTION => $description,
-            TransactionColumns::IS_BALANCE => true, // Marked as balanced
+            TransactionColumns::IS_BALANCE => true,
             TransactionColumns::CREATED_AT => $timestamp,
             TransactionColumns::UPDATED_AT => $timestamp,
         ];
