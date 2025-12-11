@@ -8,3 +8,4 @@ return [
         'user_financial_account' => 'user_financial_accounts',
         'transaction' => 'transactions',
     ];
+

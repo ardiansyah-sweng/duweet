@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController; // PENTING: Import Controller
 
 Route::get('/test/liquid-assets', function () {
     try {
@@ -30,6 +31,24 @@ Route::get('/accounts/{id}', [AccountController::class, 'show']);
 
 
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
+
+// Route Dasar Laravel
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Route GET yang Benar untuk endpoint incomeSummary
+// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
+
+// Tambahkan route lain di sini jika ada...
