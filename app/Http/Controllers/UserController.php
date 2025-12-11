@@ -36,30 +36,16 @@ class UserController extends Controller
         $result = User::createUserRaw($validated);
 
         if (is_string($result)) {
-            $status = 400;
-            if (str_contains(strtolower($result), 'email sudah digunakan') ||
-                str_contains($result, '1062') ||
-                str_contains(strtolower($result), 'duplicate')) {
-                $status = 200; 
-            }
-
             return response()->json([
-                'success' => true,
+                'success' => false,
                 'message' => $result
-            ], $status);
+            ], 400);
         }
-
-        // Jika model mengembalikan id (sukses)
-        $userId = (int) $result;
-        $user = User::with('telephones')->find($userId);
 
         return response()->json([
             'success' => true,
             'message' => 'User berhasil dibuat.',
-            'data' => [
-                'user_id' => $userId,
-                'user' => $user
-            ]
+            'data' => $result,
         ], 201);
     }
 }
