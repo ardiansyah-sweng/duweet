@@ -2,36 +2,48 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Constants\FinancialAccountColumns;
 
 class FinancialAccount extends Model
 {
+    use HasFactory;
+
     protected $table = 'financial_accounts';
 
     protected $fillable = [
-        'parent_id',
-        'name', 
-        'type', 
-        'balance', 
-        'initial_balance',
-        'is_group', 
-        'description', 
-        'is_active',
-        'sort_order',
-        'level'
+        FinancialAccountColumns::NAME,
+        FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::TYPE,
+        FinancialAccountColumns::BALANCE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::DESCRIPTION,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::SORT_ORDER,
+        FinancialAccountColumns::LEVEL,
     ];
 
     protected $casts = [
-        'balance' => 'integer',
-        'initial_balance' => 'integer',
-        'is_group' => 'boolean',
-        'is_active' => 'boolean',
+        FinancialAccountColumns::BALANCE => 'integer',
+        FinancialAccountColumns::INITIAL_BALANCE => 'integer',
+        FinancialAccountColumns::IS_GROUP => 'boolean',
+        FinancialAccountColumns::IS_ACTIVE => 'boolean',
         'sort_order' => 'integer',
         'level' => 'integer',
     ];
 
     public $timestamps = true;
+
+    /**
+     * Relationship: parent financial account
+     */
+    public function parent()
+    {
+        return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
+    }
 
     /**
      * Get financial account by ID

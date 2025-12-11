@@ -13,15 +13,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create test user
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Create a test user only if not already exists
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::factory()->create([
+                'email' => 'test@example.com',
+                'name' => 'Test User',
+            ]);
+        }
 
-        // Seed financial accounts with real world data
+        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
-            AccountSeeder::class,
+            UserSeeder::class,
+            UserAccountSeeder::class,
+            FinancialAccountSeeder::class,
+            TransactionSeeder::class,
         ]);
 
         // Calculate and display liquid assets for admin

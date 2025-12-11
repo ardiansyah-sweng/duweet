@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Constants\UserColumns;
 
 return new class extends Migration
 {
@@ -20,20 +21,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
-            $table->id();
-
-            // Kolom sesuai PRD
-            $table->string('name', 100);
-            $table->string('first_name')->nullable();
-            $table->string('middle_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('email')->unique();
-
-            // Data lahir sesuai PRD (integer terpisah)
-            $table->unsignedTinyInteger('tanggal_lahir')->nullable(); // 1-31
-            $table->unsignedTinyInteger('bulan_lahir')->nullable();   // 1-12
-            $table->unsignedSmallInteger('tahun_lahir')->nullable();  // tahun (4 digit)
-            $table->unsignedTinyInteger('usia')->nullable();          // umur saat ini
+            $table->id(UserColumns::ID);
+            $table->string(UserColumns::NAME);
+            $table->string(UserColumns::FIRST_NAME)->nullable();
+            $table->string(UserColumns::MIDDLE_NAME)->nullable();
+            $table->string(UserColumns::LAST_NAME)->nullable();
+            $table->string(UserColumns::EMAIL)->unique();
+            
+            // Address data
+            $table->string('provinsi')->nullable();
+            $table->string('kabupaten')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('jalan')->nullable();
+            $table->string('kode_pos')->nullable();
+            
+            // Birth data
+            $table->integer(UserColumns::TANGGAL_LAHIR)->nullable();
+            $table->integer(UserColumns::BULAN_LAHIR)->nullable();
+            $table->integer(UserColumns::TAHUN_LAHIR)->nullable();
+            $table->integer(UserColumns::USIA)->nullable();
 
             // Tambahan umum Laravel
             $table->timestamp('email_verified_at')->nullable();
