@@ -71,4 +71,16 @@ class UserAccount extends Model
             ];
         }
     }
+
+
+    public static function findByUsername(string $username)
+    {
+        return DB::select("
+            SELECT * FROM user_accounts 
+            WHERE username = :username 
+            LIMIT 1
+        ", [
+            'username' => $username
+        ]);
+    }
 }
