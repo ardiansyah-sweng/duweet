@@ -20,9 +20,11 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
+<<<<<<< HEAD
 <<<<<<< HEAD
             AccountSeeder::class,
             TransactionSeeder::class, 
@@ -30,6 +32,10 @@ class DatabaseSeeder extends Seeder
             //AccountSeeder::class,
             FinancialAccountSeeder::class,
 >>>>>>> 1ddf2b86ee702e9d70eeccf8ccd250a7abec4494
+=======
+            FinancialAccountSeeder::class,
+            TransactionSeeder::class,
+>>>>>>> 704974a8edd2f12696008b0f7dd219ec55e5e922
         ]);
     }
 }
