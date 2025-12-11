@@ -121,36 +121,4 @@ class User extends Authenticatable
         return $result;
     }
 
-    /**
-     * Sum balances for this user grouped by financial account type.
-     * Same filtering rules as the admin method.
-     *
-     * @return array<string,int>
-     */
-    public function sumUserFinancialAccountsByType(): array
-    {
-        $types = ['IN', 'EX', 'SP', 'LI', 'AS'];
-
-        $rows = \DB::table('user_financial_accounts as ufa')
-            ->join('financial_accounts as fa', 'ufa.financial_account_id', '=', 'fa.id')
-            ->where('fa.is_group', false)
-            ->where('fa.is_active', true)
-            ->where('ufa.is_active', true)
-            ->where('ufa.user_id', $this->id)
-            ->select('fa.type', \DB::raw('SUM(ufa.balance) as total_balance'))
-            ->groupBy('fa.type')
-            ->get();
-
-        $result = array_fill_keys($types, 0);
-        foreach ($rows as $r) {
-            $result[$r->type] = (int) $r->total_balance;
-        }
-
-        return $result;
-    }
-
-    
-
-   
-    
 }
