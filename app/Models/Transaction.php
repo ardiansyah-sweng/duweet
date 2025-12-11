@@ -17,28 +17,7 @@ class Transaction extends Model
 
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
-     * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
-     *
-     * DML SQL (MySQL/MariaDB):
-     * -----------------------------------------------------------
-     * SELECT 
-     *     DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
-     *     COALESCE(SUM(t.amount), 0) AS total_income
-     * FROM transactions t
-     * INNER JOIN financial_accounts fa ON t.financial_account_id = fa.id
-     * WHERE t.user_account_id = ?
-     *   AND fa.type = 'IN'
-     *   AND t.balance_effect = 'increase'
-     *   AND fa.is_group = 0
-     *   AND t.created_at BETWEEN ? AND ?
-     * GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
-     * ORDER BY periode ASC;
-     * -----------------------------------------------------------
-     *
-     * @param int $userAccountId
-     * @param \Carbon\Carbon $startDate
-     * @param \Carbon\Carbon $endDate
-     * @return \Illuminate\Support\Collection
+     * ... (Metode getIncomeSummaryByPeriod yang sudah ada)
      */
     public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
@@ -86,5 +65,30 @@ class Transaction extends Model
         ]);
 
         return collect($rows);
+    }
+
+    // --- METODE BARU: MENGHAPUS SATU TRANSAKSI ---
+
+    /**
+     * Menghapus satu transaksi berdasarkan ID.
+     *
+     * @param int $transactionId ID dari transaksi yang akan dihapus.
+     * @return bool True jika transaksi ditemukan dan berhasil dihapus, false sebaliknya.
+     */
+    public static function deleteTransactionById(int $transactionId): bool
+    {
+        // Temukan transaksi berdasarkan ID, dan hapus jika ditemukan.
+        // Metode delete() akan mengembalikan true jika baris terhapus, false jika gagal.
+        // Metode find() akan mengembalikan null jika tidak ditemukan.
+        
+        $transaction = static::find($transactionId);
+
+        if ($transaction) {
+            // Hapus transaksi. Mengembalikan boolean
+            return $transaction->delete();
+        }
+
+        // Jika transaksi tidak ditemukan
+        return false; 
     }
 }
