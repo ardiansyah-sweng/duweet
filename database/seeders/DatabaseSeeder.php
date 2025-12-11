@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,6 +11,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // \App\Models\User::factory(10)->create();
         // User::factory(10)->create();
 
         // Create test user only if it doesn't already exist.
@@ -27,6 +26,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AccountSeeder::class,
             UserFinancialAccountSeeder::class,
+        ]);
+        $this->call([
+            UserSeeder::class,
+            UserAccountSeeder::class,
+
         ]);
     }
 }
