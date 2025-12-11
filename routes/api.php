@@ -1,7 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserAccountController;
+
+// User API Routes (untuk registrasi dan pencarian berdasarkan nama/email/alamat)
+Route::prefix('user')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('api.user.index');
+    Route::get('/search', [UserController::class, 'search'])->name('api.user.search');
+    Route::post('/', [UserController::class, 'store'])->name('api.user.store');
+    Route::get('/{id}', [UserController::class, 'show'])->name('api.user.show');
+    Route::put('/{id}', [UserController::class, 'update'])->name('api.user.update');
+    Route::delete('/{id}', [UserController::class, 'destroy'])->name('api.user.destroy');
+});
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
