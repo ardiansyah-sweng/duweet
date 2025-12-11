@@ -101,7 +101,7 @@ class UserAccountSeeder extends Seeder
                 UserAccountColumns::ID_USER => $user3->id,
                 UserAccountColumns::EMAIL => 'bobjohnson@duweet.com',
                 UserAccountColumns::PASSWORD => bcrypt('mewing'),
-                UserAccountColumns::VERIFIED_AT => null,
+                UserAccountColumns::VERIFIED_AT => now(),
                 UserAccountColumns::IS_ACTIVE => false,
             ]
         );
