@@ -17,60 +17,78 @@ class AccountController extends Controller
 {
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'user_id'         => 'required|integer|exists:users,id',
-            'name'            => 'required|string|max:100',
-            'type'            => 'required|in:AS,LI,IN,EX,SP',
-            'initial_balance' => 'required|numeric|min:0',
-            'description'     => 'nullable|string',
-            'parent_id'       => 'nullable|integer|exists:financial_accounts,id',
-            'is_group'        => 'sometimes|boolean',
-            // Query parameters untuk kontrol tambahan
-            'auto_activate'   => 'sometimes|boolean', // Auto activate account (default: true)
-            'return_detail'   => 'sometimes|boolean', // Return detailed info (default: false)
-        ]);
-
         try {
-            $financial_account = \App\Models\FinancialAccount::createForUser([
-                'user_id'         => $validated['user_id'],
-                'name'            => $validated['name'],
-                'type'            => $validated['type'],
-                'initial_balance' => (int) $validated['initial_balance'],
-                'description'     => $validated['description'] ?? null,
-                'parent_id'       => $validated['parent_id'] ?? null,
-                'is_group'        => (bool)($validated['is_group'] ?? false),
+            // Validasi input dengan user_account_id
+            $validated = $request->validate([
+                'user_account_id'    => 'required|integer|exists:user_accounts,id',
+                'name'               => 'required|string|max:255',
+                'type'               => 'required|string|in:AS,LI',
+                'initial_balance'    => 'required|integer|min:0',
+                'is_group'           => 'nullable|boolean',
+                'is_active'          => 'nullable|boolean',
             ]);
 
-            // Response basic
-            $response = [
-                'status'  => 'success',
-                'message' => 'Akun berhasil dibuat',
-                'data'    => [
-                    'id'              => $financial_account->id,
-                    'name'            => $financial_account->name,
-                    'type'            => $financial_account->type,
-                    'initial_balance' => $financial_account->initial_balance,
-                ],
-            ];
+            // Cek duplikat nama account untuk user_account yang sama
+            $user_account_id = $validated['user_account_id'];
+            $account_name = trim($validated['name']);
+            
+            $isDuplicate = DB::table('financial_accounts')
+                ->join('user_financial_accounts', 'financial_accounts.id', '=', 'user_financial_accounts.financial_account_id')
+                ->where('user_financial_accounts.user_account_id', $user_account_id)
+                ->where('financial_accounts.name', $account_name)
+                ->exists();
 
-            // Include detailed info if requested
-            if (request()->boolean('return_detail')) {
-                $response['data'] = $financial_account->toArray();
-                $response['data']['pivot'] = \App\Models\FinancialAccount::getUserPivot($financial_account->id, $validated['user_id']);
-                    
-                // Include parent info if exists
-                if ($financial_account->parent_id) {
-                    $response['data']['parent'] = FinancialAccount::find($financial_account->parent_id);
-                }
+            if ($isDuplicate) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => "Account dengan nama '{$account_name}' sudah ada untuk user_account ini",
+                ], 409);
             }
 
-            return response()->json($response, 201);
-            
-        } catch (\InvalidArgumentException $e) {
+            // Validasi user_account exists
+            $userAccount = DB::table('user_accounts')->find($user_account_id);
+            if (!$userAccount) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => "User account dengan ID {$user_account_id} tidak ditemukan",
+                ], 404);
+            }
+
+            // Gunakan method DML yang baru dengan user_account_id
+            $result = \App\Models\FinancialAccount::createForUserAccount(
+                $user_account_id,
+                $validated['name'],
+                $validated['type'],
+                $validated['initial_balance'],
+                $validated['is_group'] ?? false,
+                $validated['is_active'] ?? true
+            );
+
+            return response()->json([
+                'status'           => 'success',
+                'message'          => 'Financial account berhasil dibuat',
+                'user_account_id'  => $user_account_id,
+                'account'          => [
+                    'id'              => $result['account_id'],
+                    'name'            => $validated['name'],
+                    'type'            => $validated['type'],
+                    'initial_balance' => $validated['initial_balance'],
+                    'is_group'        => $validated['is_group'] ?? false,
+                    'is_active'       => $validated['is_active'] ?? true,
+                ],
+                'created_at'       => now()->toIso8601String(),
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => 'validation_error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => $e->getMessage(),
-            ], 422);
+                'message' => 'Gagal membuat financial account: ' . $e->getMessage(),
+            ], 500);
         }
     }
     public function index(Request $request)

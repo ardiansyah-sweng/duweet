@@ -156,28 +156,28 @@ class ReportController extends Controller
     public function userLiquidAsset(int $id)
     {
         try {
-            // Validasi query parameters (optional)
-            $validated = request()->validate([
-                'type'             => 'nullable|string|in:AS,LI,AS+LI',  // Filter by account type
-                'include_inactive' => 'nullable|boolean',                 // Include inactive accounts
-                'min_balance'      => 'nullable|numeric',                 // Minimum balance filter
-                'format'           => 'nullable|string|in:json,formatted' // Response format
-            ]);
-
-            // Find user using Eloquent
-            $user = User::find($id);
-            
-            if (!$user) {
+            // Validasi user_account exists
+            $userAccount = DB::table('user_accounts')->find($id);
+            if (!$userAccount) {
                 return response()->json([
                     'status'  => 'not_found',
-                    'message' => 'User tidak ditemukan',
+                    'message' => "User account dengan ID {$id} tidak ditemukan",
                 ], 404);
             }
 
-            // Prepare filter options for DML method
+            // Validasi query parameters
+            $validated = request()->validate([
+                'type'             => 'nullable|string|in:AS,LI,AS+LI',
+                'include_inactive' => 'nullable|boolean',
+                'min_balance'      => 'nullable|numeric',
+                'format'           => 'nullable|string|in:json,formatted'
+            ]);
+
+            // Prepare filter options
             $options = [];
             $typeParam = request('type', 'AS+LI');
             $options['type'] = ($typeParam === 'AS+LI') ? ['AS','LI'] : $typeParam;
+            
             if (request()->boolean('include_inactive')) {
                 $options['include_inactive'] = true;
             }
@@ -185,14 +185,14 @@ class ReportController extends Controller
                 $options['min_balance'] = (int) request('min_balance');
             }
 
-            // Use DML raw SQL path in FinancialAccount model
-            $total = \App\Models\FinancialAccount::sumLiquidAssetByUser($user->id, $options);
+            // Use DML raw SQL path with user_account_id
+            $total = \App\Models\FinancialAccount::sumLiquidAssetByUserAccount($id, $options);
 
-            // Response format
+            // Response
             $response = [
                 'status'             => 'success',
-                'user_id'            => $user->id,
-                'name'               => $user->name,
+                'user_account_id'    => $userAccount->id,
+                'user_id'            => $userAccount->id_user,
                 'total_liquid_asset' => $total,
                 'filters'            => [
                     'type'             => $typeParam,
@@ -202,19 +202,17 @@ class ReportController extends Controller
                 'generated_at'       => now()->toIso8601String(),
             ];
 
-            // Add formatted version if requested
+            // Add formatted currency if requested
             if (request('format') !== 'json') {
                 $response['formatted'] = $this->rupiah($total);
             }
 
             return response()->json($response, 200);
 
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
             ], 500);
         }
     }

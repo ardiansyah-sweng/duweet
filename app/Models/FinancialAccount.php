@@ -287,4 +287,132 @@ class FinancialAccount extends Model
         return (int)($row->total ?? 0);
     }
 
+    /**
+     * Factory method untuk membuat akun keuangan dengan user_account_id.
+     * Menerapkan business rules dari PRD dengan pivot user_account_id.
+     * 
+     * @param int $userAccountId ID dari user_account (bukan user_id)
+     * @param string $name Nama akun
+     * @param string $type Tipe akun (AS atau LI)
+     * @param int $initialBalance Saldo awal
+     * @param bool $isGroup Apakah group account
+     * @param bool $isActive Apakah aktif
+     * @return array ['account_id' => int]
+     */
+    public static function createForUserAccount(
+        int $userAccountId,
+        string $name,
+        string $type,
+        int $initialBalance,
+        bool $isGroup = false,
+        bool $isActive = true
+    ): array {
+        // Validasi type
+        $validTypes = ['AS', 'LI'];
+        if (!in_array($type, $validTypes, true)) {
+            throw new \InvalidArgumentException("Invalid account type. Must be AS or LI");
+        }
+
+        // Balance logic
+        $balance = $isGroup ? 0 : $initialBalance;
+
+        if (!$isGroup && $type === 'AS' && $initialBalance < 0) {
+            throw new \InvalidArgumentException('Asset balance cannot be negative');
+        }
+
+        // Use transaction untuk atomic operation
+        return DB::transaction(function () use (
+            $userAccountId,
+            $name,
+            $type,
+            $initialBalance,
+            $balance,
+            $isGroup,
+            $isActive
+        ) {
+            $now = now();
+
+            // 1. Insert financial account
+            DB::insert(
+                "INSERT INTO financial_accounts (name, type, balance, initial_balance, is_group, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $name,
+                    $type,
+                    $balance,
+                    $balance,
+                    $isGroup ? 1 : 0,
+                    $isActive ? 1 : 0,
+                    $now,
+                    $now,
+                ]
+            );
+
+            $accountId = (int) DB::getPdo()->lastInsertId();
+
+            // 2. Insert pivot dengan user_account_id (bukan user_id)
+            if (!$isGroup) {
+                DB::insert(
+                    "INSERT INTO user_financial_accounts (user_account_id, financial_account_id, balance, initial_balance, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [
+                        $userAccountId,
+                        $accountId,
+                        $balance,
+                        $balance,
+                        $isActive ? 1 : 0,
+                        $now,
+                        $now,
+                    ]
+                );
+            }
+
+            return [
+                'account_id' => $accountId,
+            ];
+        });
+    }
+
+    /**
+     * DML Query SUM untuk menghitung total liquid asset berdasarkan user_account_id.
+     * Query ini menggunakan user_account_id sebagai filter, bukan user_id.
+     * 
+     * Liquid asset = Account dengan tipe AS (Asset) atau LI (Liability) 
+     * yang aktif dan bukan group account.
+     * 
+     * @param int $userAccountId ID dari user_account
+     * @param array $options Filter options (type, include_inactive, min_balance)
+     * @return int Total liquid asset dalam integer
+     */
+    public static function sumLiquidAssetByUserAccount(int $userAccountId, array $options = []): int
+    {
+        // Bangun raw SELECT SUM dengan parameter binding
+        $types = $options['type'] ?? ['AS', 'LI'];
+        if (is_string($types)) {
+            $types = [$types];
+        }
+
+        $sql = "SELECT SUM(ufa.balance) AS total \n FROM user_financial_accounts ufa \n JOIN financial_accounts fa ON fa.id = ufa.financial_account_id \n WHERE ufa.user_account_id = ? AND fa.is_group = 0";
+        $bindings = [$userAccountId];
+
+        // Filter type IN (...)
+        if (!empty($types)) {
+            $placeholders = implode(',', array_fill(0, count($types), '?'));
+            $sql .= " AND fa.type IN ($placeholders)";
+            $bindings = array_merge($bindings, $types);
+        }
+
+        // Active filter
+        if (empty($options['include_inactive'])) {
+            $sql .= " AND ufa.is_active = 1";
+        }
+
+        // Min balance
+        if (isset($options['min_balance'])) {
+            $sql .= " AND ufa.balance >= ?";
+            $bindings[] = (int)$options['min_balance'];
+        }
+
+        $row = DB::selectOne($sql, $bindings);
+        return (int)($row->total ?? 0);
+    }
+
 }
