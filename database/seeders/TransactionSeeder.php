@@ -22,7 +22,13 @@ class TransactionSeeder extends Seeder
 
         Schema::disableForeignKeyConstraints();
 
-        // Ensure at least one income and one expense account exist
+        /*
+        |--------------------------------------------------------------------------
+        | Ensure at least one Income & Expense Account Exists
+        |--------------------------------------------------------------------------
+        */
+
+        // Check / Create INCOME account
         $incomeAccount = DB::table($accountsTable)->where('type', 'IN')->first();
         if (! $incomeAccount) {
             $incomeId = DB::table($accountsTable)->insertGetId([
@@ -33,6 +39,7 @@ class TransactionSeeder extends Seeder
                 'is_group' => false,
                 'is_active' => true,
                 'level' => 0,
+                'sort_order' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -40,6 +47,7 @@ class TransactionSeeder extends Seeder
             $incomeId = $incomeAccount->id;
         }
 
+        // Check / Create EXPENSE account
         $expenseAccount = DB::table($accountsTable)->where('type', 'EX')->first();
         if (! $expenseAccount) {
             $expenseId = DB::table($accountsTable)->insertGetId([
@@ -50,6 +58,7 @@ class TransactionSeeder extends Seeder
                 'is_group' => false,
                 'is_active' => true,
                 'level' => 0,
+                'sort_order' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -57,44 +66,61 @@ class TransactionSeeder extends Seeder
             $expenseId = $expenseAccount->id;
         }
 
-        // Build transactions for each user_account (Jan-Dec 2025)
+        /*
+        |--------------------------------------------------------------------------
+        | Generate Monthly Transactions for Each User (Jan–Dec 2025)
+        |--------------------------------------------------------------------------
+        */
+
         $start = Carbon::create(2025, 1, 1);
-        $end = Carbon::create(2025, 12, 1);
+        $end   = Carbon::create(2025, 12, 1);
 
         $userAccounts = DB::table($userAccountsTable)->get();
 
         foreach ($userAccounts as $ua) {
             $current = $start->copy();
-            while ($current->lte($end)) {
-                $month = $current->month;
-                $txDate = $current->copy()->day(5);
 
-                // income
+            while ($current->lte($end)) {
+                $month      = $current->month;
+                $salaryDate = $current->copy()->day(5);
+                $expenseDate = $current->copy()->day(1);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Income Transaction (KREDIT)
+                |--------------------------------------------------------------------------
+                */
+
                 DB::table($transactionsTable)->insert([
                     TransactionColumns::TRANSACTION_GROUP_ID => (string) Str::uuid(),
-                    TransactionColumns::USER_ACCOUNT_ID => $ua->id,
+                    TransactionColumns::USER_ACCOUNT_ID     => $ua->id,
                     TransactionColumns::FINANCIAL_ACCOUNT_ID => $incomeId,
-                    TransactionColumns::ENTRY_TYPE => 'credit',
-                    TransactionColumns::AMOUNT => 8000000 + ($month === 5 ? 5000000 : 0),
-                    TransactionColumns::BALANCE_EFFECT => 'increase',
-                    TransactionColumns::DESCRIPTION => 'Gaji Bulanan ' . $txDate->format('M Y'),
-                    TransactionColumns::IS_BALANCE => true,
-                    TransactionColumns::CREATED_AT => $txDate,
-                    TransactionColumns::UPDATED_AT => $txDate,
+                    TransactionColumns::ENTRY_TYPE          => 'kredit',   // fixed enum
+                    TransactionColumns::AMOUNT              => 8000000 + ($month === 5 ? 5000000 : 0),
+                    TransactionColumns::BALANCE_EFFECT      => 'increase',
+                    TransactionColumns::DESCRIPTION         => 'Gaji Bulanan ' . $salaryDate->format('M Y'),
+                    TransactionColumns::IS_BALANCE          => true,
+                    TransactionColumns::CREATED_AT          => $salaryDate,
+                    TransactionColumns::UPDATED_AT          => $salaryDate,
                 ]);
 
-                // expense
+                /*
+                |--------------------------------------------------------------------------
+                | Expense Transaction (DEBIT)
+                |--------------------------------------------------------------------------
+                */
+
                 DB::table($transactionsTable)->insert([
                     TransactionColumns::TRANSACTION_GROUP_ID => (string) Str::uuid(),
-                    TransactionColumns::USER_ACCOUNT_ID => $ua->id,
+                    TransactionColumns::USER_ACCOUNT_ID     => $ua->id,
                     TransactionColumns::FINANCIAL_ACCOUNT_ID => $expenseId,
-                    TransactionColumns::ENTRY_TYPE => 'debit',
-                    TransactionColumns::AMOUNT => 2000000,
-                    TransactionColumns::BALANCE_EFFECT => 'decrease',
-                    TransactionColumns::DESCRIPTION => 'Biaya Sewa Bulanan ' . $txDate->format('M Y'),
-                    TransactionColumns::IS_BALANCE => true,
-                    TransactionColumns::CREATED_AT => $current->copy()->day(1),
-                    TransactionColumns::UPDATED_AT => $current->copy()->day(1),
+                    TransactionColumns::ENTRY_TYPE          => 'debit',    // fixed enum
+                    TransactionColumns::AMOUNT              => 2000000,
+                    TransactionColumns::BALANCE_EFFECT      => 'decrease',
+                    TransactionColumns::DESCRIPTION         => 'Biaya Sewa Bulanan ' . $expenseDate->format('M Y'),
+                    TransactionColumns::IS_BALANCE          => true,
+                    TransactionColumns::CREATED_AT          => $expenseDate,
+                    TransactionColumns::UPDATED_AT          => $expenseDate,
                 ]);
 
                 $current->addMonth();

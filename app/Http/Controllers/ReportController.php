@@ -66,6 +66,57 @@ class ReportController extends Controller
     }
 
     /**
+ * Mengambil laporan Surplus / Defisit dengan metadata lengkap
+ */
+public function surplusDeficitSummary(Request $request)
+{
+    // 1. Ambil data dasar pengguna dan account
+    $baseData = $this->getReportBaseData($request);
+
+    if ($baseData instanceof \Illuminate\Http\JsonResponse) {
+        return $baseData;
+    }
+
+    ['user' => $user, 'userAccount' => $userAccount, 'userData' => $userData, 'userAccountData' => $userAccountData] = $baseData;
+    $userAccountId = $userAccount->id;
+
+    // 2. Periode laporan
+    $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+    $defaultEndDate = Carbon::create(2025, 12, 31)->endOfDay();
+
+    $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : $defaultStartDate;
+    $endDate   = $request->input('end_date')   ? Carbon::parse($request->input('end_date'))->endOfDay()   : $defaultEndDate;
+
+    if ($startDate->greaterThan($endDate)) {
+        return response()->json(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.'], 400);
+    }
+
+    // 3. Ambil data Surplus/Defisit dari Model
+    try {
+        $summary = Transaction::getSurplusDeficitByPeriod(
+            $userAccountId,
+            $startDate,
+            $endDate
+        );
+
+        // 4. Format output dengan metadata
+        return response()->json([
+            'user'         => $userData,
+            'user_account' => $userAccountData,
+            'summary'      => $summary,
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error'   => 'Gagal mengambil data surplus/defisit.',
+            'message' => $e->getMessage(),
+            'hint'    => 'Periksa apakah method Transaction::getSurplusDeficitByPeriod() sudah benar.',
+        ], 500);
+    }
+}
+
+
+    /**
      * Helper privat untuk mengambil data dasar User dan User Account.
      * Mengurangi duplikasi kode di dalam controller.
      *

@@ -87,4 +87,59 @@ class Transaction extends Model
 
         return collect($rows);
     }
+
+    /**
+ * Ambil surplus/defisit per periode (bulan) untuk ADMIN.
+ *
+ * SQL:
+ * SELECT 
+ *   DATE_FORMAT(created_at, '%Y-%m') AS periode,
+ *   SUM(CASE WHEN balance_effect='increase' THEN amount END) AS income,
+ *   SUM(CASE WHEN balance_effect='decrease' THEN amount END) AS expense
+ * FROM transactions
+ * WHERE created_at BETWEEN ? AND ?
+ * GROUP BY periode
+ * ORDER BY periode;
+ */
+public static function getSurplusDefisitByPeriodForAdmin(Carbon $startDate, Carbon $endDate)
+{
+    $transactionsTable = config('db_tables.transaction', 'transactions');
+
+    // Gunakan driver-aware DATE_FORMAT
+    try {
+        $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+    } catch (\Exception $e) {
+        $driver = 'mysql';
+    }
+
+    if ($driver === 'sqlite') {
+        $periodeExpr = "strftime('%Y-%m', created_at)";
+    } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+        $periodeExpr = "to_char(created_at, 'YYYY-MM')";
+    } else {
+        $periodeExpr = "DATE_FORMAT(created_at, '%Y-%m')";
+    }
+
+    $sql = "
+        SELECT 
+            {$periodeExpr} AS periode,
+            COALESCE(SUM(CASE WHEN balance_effect='increase' THEN amount END), 0) AS total_income,
+            COALESCE(SUM(CASE WHEN balance_effect='decrease' THEN amount END), 0) AS total_expense
+        FROM {$transactionsTable}
+        WHERE created_at BETWEEN ? AND ?
+        GROUP BY {$periodeExpr}
+        ORDER BY periode ASC
+    ";
+
+    $rows = DB::select($sql, [
+        $startDate->toDateTimeString(),
+        $endDate->toDateTimeString()
+    ]);
+
+    return collect($rows)->map(function ($r) {
+        $r->surplus = $r->total_income - $r->total_expense;
+        return $r;
+    });
+}
+
 }

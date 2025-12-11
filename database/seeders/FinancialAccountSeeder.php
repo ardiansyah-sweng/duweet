@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Constants\FinancialAccountColumns as AccountColumns;
 use App\Models\FinancialAccount;
 
@@ -13,10 +14,9 @@ class FinancialAccountSeeder extends Seeder
     {
         $table = config('db_tables.financial_account', 'financial_accounts');
 
-        // Disable foreign key checks to allow delete
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::disableForeignKeyConstraints();
         DB::table($table)->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        Schema::enableForeignKeyConstraints();
 
         DB::table($table)->insert([
             [
