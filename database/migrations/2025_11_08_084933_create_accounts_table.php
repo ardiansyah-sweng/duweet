@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('accounts', function (Blueprint $table) {
+        Schema::create
+         ('accounts', function (Blueprint $table) 
+        {
             $table->id(); // hanya sekali!
 
             // tambahkan parent_id untuk struktur akun bertingkat
