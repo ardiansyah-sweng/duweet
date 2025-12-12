@@ -8,7 +8,8 @@ use App\Models\User;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * See
+     * dhe application's database.
      */
     public function run(): void
     {
@@ -26,6 +27,8 @@ class DatabaseSeeder extends Seeder
             UserAccountSeeder::class,
             FinancialAccountSeeder::class,
             TransactionSeeder::class,
+            AccountSeeder::class,
+            TransaksiSeeder::class,
         ]);
     }
 }
