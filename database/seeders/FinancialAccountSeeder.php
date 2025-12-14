@@ -13,10 +13,15 @@ class FinancialAccountSeeder extends Seeder
     {
         $table = config('db_tables.financial_account', 'financial_accounts');
 
-        // Disable foreign key checks to allow delete
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        // Disable foreign key checks to allow delete (MySQL/MariaDB only)
+        $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver !== 'sqlite') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
         DB::table($table)->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        if ($driver !== 'sqlite') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
 
         DB::table($table)->insert([
             [
