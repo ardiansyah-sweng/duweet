@@ -7,6 +7,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth'])->prefix('admin')->group(function () {
-    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
+// ROUTE ADMIN (tanpa auth dulu)
+Route::prefix('admin')->group(function () {
+    Route::get('/users', [UserController::class, 'index'])
+        ->name('admin.users.index');
 });
