@@ -27,7 +27,20 @@ Route::get('/report/income-summary', [ReportController::class, 'incomeSummary'])
 // Tambahkan route lain di sini jika ada...
 // Convenience web routes so hitting `/financial-account` in tools like Postman
 // (or browsers) will return the same JSON as the API endpoint.
-// Use the 'api' middleware so these helper web routes don't trigger session middleware
-// (avoids requiring the DB sessions table during lightweight API testing tools).
-Route::get('/financial-account', [FinancialAccountController::class, 'index'])->middleware('api');
-Route::get('/financial-account/{id}', [FinancialAccountController::class, 'show'])->middleware('api');
+// Helper web routes so requests to `/financial-account` work in tools like Postman.
+// These routes explicitly remove session/cookie middleware to avoid depending on the
+// database-backed sessions table in development. They still use the controller
+// implementation so behaviour stays consistent with the API.
+Route::get('/financial-account', [FinancialAccountController::class, 'index'])
+    ->withoutMiddleware([
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    ]);
+
+Route::get('/financial-account/{id}', [FinancialAccountController::class, 'show'])
+    ->withoutMiddleware([
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    ]);
