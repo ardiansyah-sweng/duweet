@@ -13,18 +13,21 @@ class FinancialAccountSeeder extends Seeder
     {
         $table = config('db_tables.financial_account', 'financial_accounts');
 
-        // Disable foreign key checks to allow delete. Use driver-specific statements.
-        $driver = DB::connection()->getDriverName();
-        if ($driver === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF');
-            DB::table($table)->delete();
-            DB::statement('PRAGMA foreign_keys = ON');
-        } else {
-            // MySQL / MariaDB
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            DB::table($table)->delete();
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        }
+// Disable foreign key checks (MySQL) / PRAGMA (SQLite)
+if (DB::getDriverName() === 'mysql') {
+    DB::statement('SET FOREIGN_KEY_CHECKS=0');
+} elseif (DB::getDriverName() === 'sqlite') {
+    DB::statement('PRAGMA foreign_keys = OFF');
+}
+
+DB::table($table)->delete();
+
+if (DB::getDriverName() === 'mysql') {
+    DB::statement('SET FOREIGN_KEY_CHECKS=1');
+} elseif (DB::getDriverName() === 'sqlite') {
+    DB::statement('PRAGMA foreign_keys = ON');
+}
+
 
         DB::table($table)->insert([
             [
