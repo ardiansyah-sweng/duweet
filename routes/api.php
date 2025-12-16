@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\FinancialAccountController;
 
 // User API Routes (untuk registrasi dan pencarian berdasarkan nama/email/alamat)
 Route::prefix('user')->group(function () {
@@ -22,4 +23,8 @@ Route::prefix('user-account')->group(function () {
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+});
+
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
