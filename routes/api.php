@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\FinancialAccountController;
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
@@ -34,4 +35,7 @@ Route::prefix('transactions')->group(function () {
     // Statistics
     Route::get('/stats/user-account/{userAccountId}', [TransactionController::class, 'getStatsByUserAccount'])
         ->name('api.transactions.stats-by-user-account');
+});
+    Route::prefix('financial-account')->group(function () {
+        Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });

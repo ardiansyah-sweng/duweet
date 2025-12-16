@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Constants\FinancialAccountColumns;
+use App\Constants\TransactionColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,7 +18,7 @@ class FinancialAccount extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('db_tables.financial_account');
+        $this->table = config('db_tables.financial_account', 'financial_accounts');
     }
 
     public $timestamps = false;
@@ -52,6 +53,6 @@ class FinancialAccount extends Model
      */
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
+        return $this->hasMany(Transaction::class, TransactionColumns::FINANCIAL_ACCOUNT_ID, FinancialAccountColumns::ID);
     }
 }
