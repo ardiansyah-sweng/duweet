@@ -8,6 +8,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ReportController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
+use App\Http\Controllers\FinancialAccountController;
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
@@ -31,3 +32,6 @@ Route::get('/financial_accounts', [AccountController::class, 'index']);
 Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+});
