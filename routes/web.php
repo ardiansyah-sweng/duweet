@@ -23,4 +23,7 @@ Route::get('/', function () {
 // FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
+// Route untuk admin: ringkasan pengeluaran per periode
+Route::get('/report/expenses-summary-admin', [ReportController::class, 'expensesSummaryAdmin']);
+
 // Tambahkan route lain di sini jika ada...

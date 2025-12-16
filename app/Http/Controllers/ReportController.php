@@ -66,6 +66,47 @@ class ReportController extends Controller
     }
 
     /**
+     * Untuk admin: Ambil ringkasan total pengeluaran per periode (bulan).
+     * Jika diberikan query param `user_account_id` maka akan mengembalikan untuk user tersebut,
+     * jika tidak diberikan maka mengakumulasi untuk semua user (admin view).
+     */
+    public function expensesSummaryAdmin(Request $request)
+    {
+        // Penanganan Periode (sama seperti incomeSummary)
+        $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+        $defaultEndDate = Carbon::create(2025, 12, 31)->endOfDay();
+
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : $defaultStartDate;
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : $defaultEndDate;
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.'], 400);
+        }
+
+        // optional user_account_id filter (untuk admin yang ingin melihat per user)
+        $userAccountId = $request->query('user_account_id');
+        $userAccountId = $userAccountId ? (int)$userAccountId : null;
+
+        try {
+            $summary = Transaction::getExpensesSummaryByPeriod(
+                $userAccountId,
+                $startDate,
+                $endDate
+            );
+
+            return response()->json([
+                'summary' => $summary,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Gagal mengambil ringkasan pengeluaran.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Helper privat untuk mengambil data dasar User dan User Account.
      * Mengurangi duplikasi kode di dalam controller.
      *

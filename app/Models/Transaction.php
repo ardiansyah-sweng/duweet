@@ -87,4 +87,73 @@ class Transaction extends Model
 
         return collect($rows);
     }
+
+    /**
+     * Ambil ringkasan total pengeluaran berdasarkan periode (Bulan).
+     * Jika $userAccountId diberikan, filter berdasarkan user_account tersebut,
+     * jika null maka akan mengakumulasi untuk semua user_account (untuk admin).
+     *
+     * @param int|null $userAccountId
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getExpensesSummaryByPeriod(?int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        // Bangun klausa user_account jika diberikan
+        if ($userAccountId !== null) {
+            $userFilter = "AND t.user_account_id = ?";
+        } else {
+            $userFilter = "";
+        }
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_expenses
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE
+                fa.type = 'EX'
+                AND t.balance_effect = 'decrease'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+                {$userFilter}
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $params = [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ];
+
+        if ($userAccountId !== null) {
+            // jika filter user_account, letakkan param setelah tanggal
+            $params[] = $userAccountId;
+            // note: original income method used userAccountId first; here we put dates first to match clause order
+            // but parameter order must match placeholders: we used ? for dates then ? for userAccountId
+        }
+
+        $rows = DB::select($sql, $params);
+
+        return collect($rows);
+    }
 }
