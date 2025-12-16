@@ -38,6 +38,18 @@ class FinancialAccount extends Model
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
+    /**
+     * Scope a query to only include active financial accounts.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where(FinancialAccountColumns::IS_ACTIVE, true);
+    }
+
+
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);

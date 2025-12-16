@@ -9,6 +9,38 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccountController extends Controller
 {
+    public function index(Request $request)
+    {
+        try {
+            $query = FinancialAccount::query();
+
+            // If is_active is provided as query param, use it; otherwise default to active only
+            if ($request->has('is_active')) {
+                $flag = filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if (is_null($flag)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid is_active value'
+                    ], 422);
+                }
+                $query->where(FinancialAccountColumns::IS_ACTIVE, $flag);
+            } else {
+                $query->active();
+            }
+
+            $data = $query->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
    
     
     public function show($id)
