@@ -62,6 +62,16 @@ class User extends Authenticatable
         );
     }
 
+    /**
+     * Scope untuk mendapatkan user yang belum setup account (belum punya user account)
+     */
+    public function scopeWithoutUserAccount($query)
+    {
+        return $query->whereRaw(
+            "id NOT IN (SELECT DISTINCT id_user FROM user_accounts)"
+        );
+    }
+
     public function scopeWithoutActiveAccounts($query)
     {
         return $query->whereRaw(
@@ -100,6 +110,26 @@ class User extends Authenticatable
 
         return $users;
     }
+
+    /**
+     * Get semua user yang belum setup account (belum punya user account)
+     */
+    public static function getUsersWithoutSetupAccount()
+    {
+        return self::withoutUserAccount()
+            ->select([
+                'id',
+                'name',
+                'email',
+                'usia',
+                'bulan_lahir',
+                'tanggal_lahir',
+                'tahun_lahir'
+            ])
+            ->orderBy('id', 'asc')
+            ->get();
+    }
+
 
     public static function getAllUsersWithoutActiveAccounts()
     {

@@ -10,6 +10,19 @@ use Illuminate\Http\JsonResponse;
 class UserAccountController extends Controller
 {
     /**
+     * API: Get users yang belum setup account (belum punya user account)
+     */
+    public function usersWithoutSetupAccount()
+    {
+        $users = \App\Models\User::getUsersWithoutSetupAccount();
+        return response()->json([
+            'success' => true,
+            'data' => $users,
+            'message' => 'Data user yang belum setup account'
+        ]);
+    }
+
+    /**
      * Display a listing of user accounts (Web View)
      */
     public function indexWeb()

@@ -2,25 +2,18 @@
 
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FinancialAccountController;
 
-Route::get('/ping', function () {
-    return response()->json(['status' => 'success', 'message' => 'API is running']);
-});
-
-Route::get('/accounts', function () {
-    return response()->json(['status' => 'success', 'message' => 'Accounts endpoint']);
-});
-
-Route::get('/without-accounts', [ReportController::class, 'usersWithoutAccounts']);
-Route::get('/without-active-accounts', [ReportController::class, 'usersWithoutActiveAccounts']);
-Route::get('/{id}/liquid-assets', [ReportController::class, 'userLiquidAsset']);
-Route::get('/income-summary', [ReportController::class, 'incomeSummary']);
-
+// UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index']);
     Route::post('/', [UserAccountController::class, 'store']);
+    Route::get('without-setup', [UserAccountController::class, 'usersWithoutSetupAccount']);
     Route::get('{id}', [UserAccountController::class, 'show']);
     Route::put('{id}', [UserAccountController::class, 'update']);
     Route::delete('{id}', [UserAccountController::class, 'destroy']);
+});
+
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });

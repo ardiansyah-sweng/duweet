@@ -11,14 +11,16 @@ return new class extends Migration
 
     public function __construct()
     {
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
+        $this->table = config('db_tables.financial_account');
     }
-
+    
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-
             $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();
             $table->string(FinancialAccountColumns::NAME, 100);
             $table->enum(FinancialAccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
@@ -27,40 +29,29 @@ return new class extends Migration
             $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
-            $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
-            $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0);
-
-            $table->timestamps();
-
             
-            $table->index([
-                FinancialAccountColumns::PARENT_ID,
-                FinancialAccountColumns::SORT_ORDER
-            ]);
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
+            
+            $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
+            $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
+            $table->timestamps();
+            
+            // Foreign key constraint
+            $table->foreign(FinancialAccountColumns::PARENT_ID)->references(FinancialAccountColumns::ID)->on($this->table)->onDelete('cascade');
 
-            $table->index([
-                FinancialAccountColumns::TYPE,
-                FinancialAccountColumns::IS_ACTIVE
-            ]);
-
+            // Indexes for performance
+            $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
+            $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
-        });
-
-        
-        Schema::table($this->table, function (Blueprint $table) {
-            $table->foreign(columns: FinancialAccountColumns::PARENT_ID)
-                ->references(FinancialAccountColumns::ID)
-                ->on($this->table)
-                ->onDelete('cascade');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::table($this->table, function (Blueprint $table) {
-            $table->dropForeign([FinancialAccountColumns::PARENT_ID]);
-        });
-
         Schema::dropIfExists($this->table);
     }
 };
