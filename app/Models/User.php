@@ -2,16 +2,35 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Constants\UserColumns;
+=======
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\UserAccount;
+8edd2f12696008b0f7dd219ec55e5e922
 
-class User extends Authenticatable
+class User extends Model
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory;
+
+
+    protected $table = 'users';
+    protected $primaryKey = UserColumns::ID;
+    protected $fillable = UserColumns::getFillable();
+
+    protected $casts = [
+        UserColumns::TANGGAL_LAHIR => 'integer',
+        UserColumns::BULAN_LAHIR   => 'integer',
+        UserColumns::TAHUN_LAHIR   => 'integer',
+        UserColumns::USIA          => 'integer',
+    ];
+
+    public function accounts()
+    {
+        return $this->hasMany(UserAccount::class, 'user_id', 'id');
 
     /**
      * The attributes that are mass assignable.
@@ -66,5 +85,30 @@ class User extends Authenticatable
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
+>>>>>>> 704974a8edd2f12696008b0f7dd219ec55e5e922
+    }
+
+    public function scopeActiveUsers($query)
+    {
+        return $query->whereHas('accounts', function ($q) {
+            $q->where('is_active', true);
+        });
+    }
+     
+    public static function getActiveUsers()
+    {
+        return self::with(['accounts' => function ($q) {
+            $q->where('is_active', true)
+              ->select('id', 'user_id', 'username', 'email', 'is_active');
+        }])
+        ->whereHas('accounts', function ($q) {
+            $q->where('is_active', true);
+        })
+        ->orderBy(UserColumns::NAME)
+        ->get([
+            UserColumns::ID,
+            UserColumns::NAME,
+            UserColumns::EMAIL,
+        ]);
     }
 }
