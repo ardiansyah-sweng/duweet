@@ -37,6 +37,7 @@ Route::get('/financial-account', [FinancialAccountController::class, 'index'])
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         \Illuminate\Cookie\Middleware\EncryptCookies::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
     ]);
 
 Route::get('/financial-account/{id}', [FinancialAccountController::class, 'show'])
@@ -45,4 +46,5 @@ Route::get('/financial-account/{id}', [FinancialAccountController::class, 'show'
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         \Illuminate\Cookie\Middleware\EncryptCookies::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
     ]);
