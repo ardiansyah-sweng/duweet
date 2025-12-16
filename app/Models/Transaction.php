@@ -5,9 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-use App\Constants\TransactionColumns;
-use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
 {
@@ -52,6 +49,7 @@ class Transaction extends Model
     {
         return $this->belongsTo(FinancialAccount::class, 'financial_account_id');
     }
+
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
      * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.

@@ -13,26 +13,4 @@ class UserFinancialAccountColumns
     public const IS_ACTIVE = 'is_active';
     public const CREATED_AT = 'created_at';
     public const UPDATED_AT = 'updated_at';
-
-    /**
-     * Kolom yang bisa diisi (fillable)
-     */
-    public static function getFillable(): array
-    {
-        return [
-            self::USER_ID,
-            self::FINANCIAL_ACCOUNT_ID,
-            self::BALANCE,
-            self::INITIAL_BALANCE,
-            self::IS_ACTIVE,
-        ];
-    }
-
-    /**
-     * Semua kolom (termasuk ID)
-     */
-    public static function getAllColumns(): array
-    {
-        return array_merge([self::ID], self::getFillable());
-    }
 }

@@ -45,7 +45,7 @@ class UserController extends Controller
 
             // 3️⃣ Hapus semua user_financial_accounts milik user
             DB::table('user_financial_accounts')
-                ->where(UserFinancialAccountColumns::USER_ID, $id)
+                ->where(UserFinancialAccountColumns::USER_ACCOUNT_ID, $id)
                 ->delete();
 
             // 4️⃣ Hapus semua nomor telepon milik user
