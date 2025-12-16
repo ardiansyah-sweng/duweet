@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\FinancialAccountController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -36,4 +37,8 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])
         ->whereNumber('id')
         ->name('api.user-account.destroy-raw');
+});
+
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
