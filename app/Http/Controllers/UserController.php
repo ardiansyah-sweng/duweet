@@ -25,7 +25,7 @@ class UserController extends Controller
             'kecamatan' => 'sometimes|string|max:255',
             'jalan' => 'sometimes|string',
             'kode_pos' => 'sometimes|string|max:20',
-            'tanggal_lahir' => 'sometimes|date',
+            'tanggal_lahir' => 'sometimes|integer|min:1|max:31',
             'bulan_lahir' => 'sometimes|integer|min:1|max:12',
             'tahun_lahir' => 'sometimes|integer|min:1900|max:' . date('Y'),
             'usia' => 'sometimes|integer|min:0',
@@ -45,7 +45,6 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User berhasil dibuat.',
-            'data' => $result,
         ], 201);
     }
 }

@@ -32,9 +32,24 @@ class User extends Authenticatable
             $now = now();
             $nowString = $now->toDateTimeString();
 
-            $usia = null;
+            // SQL DML dasar: SELECT + WHERE untuk cek email sudah ada
+            $existingUser = DB::selectOne(
+                "SELECT id FROM users WHERE email = ?",
+                [$data['email']]
+            );
+
+            // Jika ada tanggal_lahir format date, extract hari/bulan/tahun
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
-                $usia = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR])->age;
+                $carbonDate = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR]);
+                $tanggal = $carbonDate->day;
+                $bulan = $carbonDate->month;
+                $tahun = $carbonDate->year;
+                $usia = $carbonDate->age;
+            } else {
+                // Jika terpisah, ambil langsung dari data
+                $tanggal = $data[UserColumns::TANGGAL_LAHIR] ?? null;
+                $bulan = $data[UserColumns::BULAN_LAHIR] ?? null;
+                $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
             // INSERT user
@@ -55,7 +70,7 @@ class User extends Authenticatable
                     $data[UserColumns::TANGGAL_LAHIR] ?? null,
                     $data[UserColumns::BULAN_LAHIR] ?? null,
                     $data[UserColumns::TAHUN_LAHIR] ?? null,
-                    $usia,
+                    $usia ?? null,
                 ]
             );
 
@@ -76,25 +91,7 @@ class User extends Authenticatable
                 }
             }
 
-            // untuk kembalikan data
-            $userRow = DB::selectOne(
-                "SELECT id, name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia
-                FROM users WHERE id = ?",
-                [$userId]
-            );
-
-            $telephonesRows = DB::select(
-                "SELECT id, user_id, number, created_at, updated_at FROM user_telephones WHERE user_id = ?",
-                [$userId]
-            );
-
             DB::commit();
-
-            return [
-                'user_id' => $userId,
-                'user' => $userRow ? (array) $userRow : null,
-                'telephones' => array_map(static fn($row) => (array) $row, $telephonesRows),
-            ];
 
         } catch (\Exception $e) {
             DB::rollBack();
