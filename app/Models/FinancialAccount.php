@@ -44,39 +44,6 @@ class FinancialAccount extends Model
         $this->table = config('db_tables.financial_account', 'financial_accounts');
     }
 
-    public function getAll($q = null, $type = null, $perPage = 10, $page = 1){
-        $wheres = [];
-        $params = [];
-        
-        if (!empty($q)) {
-            $wheres[] = "(name LIKE ? OR description LIKE ?)";
-            $params[] = "%$q%";
-            $params[] = "%$q%";
-        }
-        
-        if (!empty($type)) {
-            $wheres[] = "type = ?";
-            $params[] = $type;
-        }
-        
-        $whereClause = !empty($wheres) ? "WHERE " . implode(" AND ", $wheres) : "";
-        
-        // Get total count
-        $countSql = "SELECT COUNT(*) as total FROM {$this->table} {$whereClause}";
-        $countResult = DB::select($countSql, $params);
-        $total = $countResult[0]->total ?? 0;
-        
-        // Get paginated data
-        $offset = ($page - 1) * $perPage;
-        $dataSql = "SELECT * FROM {$this->table} {$whereClause} ORDER BY sort_order ASC LIMIT ? OFFSET ?";
-        $dataParams = array_merge($params, [$perPage, $offset]);
-        $records = DB::select($dataSql, $dataParams);
-        
-        return [
-            'records' => $records,
-            'total' => $total
-        ];
-    }
 
     public function getById($id){
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
