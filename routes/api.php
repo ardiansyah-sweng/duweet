@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\FinancialAccountController;
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
@@ -12,6 +13,11 @@ Route::prefix('user-account')->group(function () {
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+});
+
+// Financial Account API Routes
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
 // Reports API Routes
