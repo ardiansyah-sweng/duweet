@@ -28,17 +28,18 @@ class User extends Authenticatable
         }
 
         try {
+            // memulai transaksi database
             DB::beginTransaction();
             $now = now();
             $nowString = $now->toDateTimeString();
 
-            // SQL DML dasar: SELECT + WHERE untuk cek email sudah ada
+            // Validasi email jika sudah ada
             $existingUser = DB::selectOne(
                 "SELECT id FROM users WHERE email = ?",
                 [$data['email']]
             );
 
-            // Jika ada tanggal_lahir format date, extract hari/bulan/tahun
+            // Menghitung usia
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
                 $carbonDate = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR]);
                 $tanggal = $carbonDate->day;
