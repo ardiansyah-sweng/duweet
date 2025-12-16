@@ -4,19 +4,13 @@ namespace App\Constants;
 
 class UserFinancialAccountColumns
 {
-    // Kolom utama
-    public const ID = 'id'; // Primary key
-
-    // Relasi antar tabel
-    public const USER_ID = 'id_user'; // Foreign key ke tabel users.id
-    public const FINANCIAL_ACCOUNT_ID = 'financial_account_id'; // FK ke financial_accounts.id
-
-    // Informasi saldo
-    public const BALANCE = 'balance'; // Saldo berjalan
-    public const INITIAL_BALANCE = 'initial_balance'; // Saldo awal
-    public const IS_ACTIVE = 'is_active'; // Status aktif/tidak
-
-    // Timestamp
+    public const TABLE = 'user_financial_accounts';
+    public const ID = 'id';
+    public const USER_ACCOUNT_ID = 'user_account_id';
+    public const FINANCIAL_ACCOUNT_ID = 'financial_account_id';
+    public const INITIAL_BALANCE = 'initial_balance';
+    public const BALANCE = 'balance';
+    public const IS_ACTIVE = 'is_active';
     public const CREATED_AT = 'created_at';
     public const UPDATED_AT = 'updated_at';
 

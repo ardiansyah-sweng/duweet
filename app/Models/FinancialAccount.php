@@ -5,20 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Constants\FinancialAccountColumns;
+use Illuminate\Support\Facades\DB;
+
 
 class FinancialAccount extends Model
 {
+    protected $table;
     use HasFactory;
 
     /**
      * Nama tabel diambil dari config/db_tables.php
      */
-    protected $table;
-
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('db_tables.financial_account'); // sesuai migration
+        $this->table = config('db_tables.financial_account', 'financial_accounts');
     }
 
     protected $fillable = [
@@ -89,4 +90,11 @@ class FinancialAccount extends Model
             }
         });
     }
+
+    public function getById($id){
+        $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
+        $result = DB::select($sql, [$id]);
+        return !empty($result) ? $result[0] : null;
+    }
+
 }
