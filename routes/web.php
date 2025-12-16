@@ -1,25 +1,27 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReportController; // PENTING: Import Controller
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserAccountController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
-// Route Dasar Laravel
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Route GET yang Benar untuk endpoint incomeSummary
-// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
+// Route report (punya dosen / sebelumnya)
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
+// ===============================
+// TUGAS:
+// Query ambil semua account milik user
+// ===============================
+Route::get(
+    '/user-account/{id}/accounts',
+    [UserAccountController::class, 'getAllAccounts']
+)->name('api.user-account.accounts');
