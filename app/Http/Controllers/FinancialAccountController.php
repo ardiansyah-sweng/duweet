@@ -18,7 +18,7 @@ public function getActiveFinancialAccounts(Request $request) // Nama method yang
         $count = count($activeAccounts); 
 
         return response()->json([
-            'message' => 'Daftar Akun Keuangan yang Aktif',
+            'message' => 'Daftar Akun Keuangan yang Aktif: ',
             'count' => $count, // Menggunakan variabel $count yang sudah benar
             'data' => $activeAccounts
         ]);
