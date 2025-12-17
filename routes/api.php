@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserAccountController;
-use App\Http\Controllers\FinancialAccountController; 
+use App\Http\Controllers\FinancialAccountController;
 
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
@@ -13,4 +13,6 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
-Route::get('/financial-accounts/getActive', [FinancialAccountController::class, 'getActiveAccounts']);
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+});
