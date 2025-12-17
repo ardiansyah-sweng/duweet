@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash; // Tambahan: Import Hash
 
 class UserAccount extends Model
 {
@@ -32,9 +33,6 @@ class UserAccount extends Model
 
     /**
      * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
      */
     public function getFillable()
     {
@@ -58,9 +56,26 @@ class UserAccount extends Model
     }
 
     /**
+     * Insert UserAccount baru dengan Raw Query (DB::insert)
+     * Logika hashing dan default value dilakukan di sini.
+     * * @param array $data Data yang sudah divalidasi
+     * @return bool
+     */
+    public static function insertUserAccountRaw(array $data)
+    {
+        if (isset($data[UserAccountColumns::PASSWORD])) {
+            $data[UserAccountColumns::PASSWORD] = Hash::make($data[UserAccountColumns::PASSWORD]);
+        }
+
+        $data[UserAccountColumns::VERIFIED_AT] = now();
+        $data[UserAccountColumns::IS_ACTIVE]   = true;
+
+        return DB::table('user_accounts')->insert($data);
+    }
+
+    /**
      * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * 
-     * @param int $id
+     * * @param int $id
      * @return array
      */
     public static function deleteUserAccountRaw($id)

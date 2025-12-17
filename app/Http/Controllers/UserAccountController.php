@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\UserAccountColumns;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Hash; // Tetap dipakai untuk update (jika diperlukan)
 
 class UserAccountController extends Controller
 {
@@ -57,10 +56,11 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Store a new user account (RAW QUERY BUILDER – versi final)
+     * Store a new user account (RAW QUERY BUILDER – Via Model)
      */
     public function storeRaw(Request $request)
     {
+        // 1. Validasi Input
         $validated = $request->validate([
             UserAccountColumns::ID_USER   => 'required|exists:users,id',
             UserAccountColumns::USERNAME  => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME,
@@ -68,24 +68,24 @@ class UserAccountController extends Controller
             UserAccountColumns::PASSWORD  => 'required|string|min:8',
         ]);
 
-        // Enkripsi password
-        $validated[UserAccountColumns::PASSWORD] = Hash::make($validated[UserAccountColumns::PASSWORD]);
+        try {
+            UserAccount::insertUserAccountRaw($validated);
 
-        // Set nilai default tambahan
-        $validated[UserAccountColumns::VERIFIED_AT] = now();
-        $validated[UserAccountColumns::IS_ACTIVE]   = true;
+            return response()->json([
+                'success' => true,
+                'message' => 'UserAccount berhasil ditambahkan (raw query via Model)!',
+                'data'    => [
+                    UserAccountColumns::USERNAME => $validated[UserAccountColumns::USERNAME],
+                    UserAccountColumns::EMAIL    => $validated[UserAccountColumns::EMAIL],
+                ],
+            ], 201);
 
-        // Insert pakai query builder / raw style
-        DB::table('user_accounts')->insert($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'UserAccount berhasil ditambahkan (raw query)!',
-            'data'    => [
-                UserAccountColumns::USERNAME => $validated[UserAccountColumns::USERNAME],
-                UserAccountColumns::EMAIL    => $validated[UserAccountColumns::EMAIL],
-            ],
-        ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
