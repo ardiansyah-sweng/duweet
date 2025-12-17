@@ -22,7 +22,6 @@ class FinancialAccount extends Model
         FinancialAccountColumns::TYPE,
         FinancialAccountColumns::BALANCE,
         FinancialAccountColumns::IS_ACTIVE,
-        // Tambahan kolom yang biasanya fillable (berdasarkan Constant yang umum)
         FinancialAccountColumns::INITIAL_BALANCE,
         FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::DESCRIPTION,
