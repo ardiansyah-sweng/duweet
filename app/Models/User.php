@@ -57,9 +57,11 @@ class User extends Authenticatable
 
     public function scopeWithoutAccounts($query)
     {
-        return $query->whereRaw(
-            "id NOT IN (SELECT DISTINCT id_user FROM user_accounts WHERE id IN (SELECT user_account_id FROM user_financial_accounts))"
-        );
+        return $query
+            ->leftJoin('user_accounts as ua', 'ua.id_user', '=', 'users.id')
+            ->leftJoin('user_financial_accounts as ufa', 'ufa.user_account_id', '=', 'ua.id')
+            ->whereNull('ufa.id')
+            ->select('users.*');
     }
 
     /**
@@ -67,16 +69,22 @@ class User extends Authenticatable
      */
     public function scopeWithoutUserAccount($query)
     {
-        return $query->whereRaw(
-            "id NOT IN (SELECT DISTINCT id_user FROM user_accounts)"
-        );
+        return $query
+            ->leftJoin('user_accounts as ua', 'ua.id_user', '=', 'users.id')
+            ->whereNull('ua.id')
+            ->select('users.*');
     }
 
     public function scopeWithoutActiveAccounts($query)
     {
-        return $query->whereRaw(
-            "id NOT IN (SELECT DISTINCT id_user FROM user_accounts WHERE id IN (SELECT user_account_id FROM user_financial_accounts WHERE is_active = 1))"
-        );
+        return $query
+            ->leftJoin('user_accounts as ua_active', 'ua_active.id_user', '=', 'users.id')
+            ->leftJoin('user_financial_accounts as ufa_active', function ($join) {
+                $join->on('ufa_active.user_account_id', '=', 'ua_active.id')
+                    ->where('ufa_active.is_active', 1);
+            })
+            ->whereNull('ufa_active.id')
+            ->select('users.*');
     }
 
     public static function getAllUsersWithoutAccounts()
@@ -118,13 +126,13 @@ class User extends Authenticatable
     {
         return self::withoutUserAccount()
             ->select([
-                'id',
-                'name',
-                'email',
-                'usia',
-                'bulan_lahir',
-                'tanggal_lahir',
-                'tahun_lahir'
+                'users.id',
+                'users.name',
+                'users.email',
+                'users.usia',
+                'users.bulan_lahir',
+                'users.tanggal_lahir',
+                'users.tahun_lahir'
             ])
             ->orderBy('id', 'asc')
             ->get();

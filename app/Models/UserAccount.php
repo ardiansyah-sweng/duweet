@@ -85,12 +85,18 @@ class UserAccount extends Model
      */
     public static function getAccountsWithoutFinancialSetup()
     {
-        return self::whereRaw(
-            "id NOT IN (SELECT user_account_id FROM user_financial_accounts)"
-        )
-        ->select('id', UserAccountColumns::ID_USER, UserAccountColumns::USERNAME, UserAccountColumns::EMAIL, UserAccountColumns::IS_ACTIVE, UserAccountColumns::VERIFIED_AT)
-        ->orderBy(UserAccountColumns::ID, 'desc')
-        ->get();
+        return self::leftJoin('user_financial_accounts as ufa', 'ufa.user_account_id', '=', 'user_accounts.id')
+            ->whereNull('ufa.id')
+            ->select(
+                'user_accounts.id',
+                UserAccountColumns::ID_USER,
+                UserAccountColumns::USERNAME,
+                UserAccountColumns::EMAIL,
+                UserAccountColumns::IS_ACTIVE,
+                UserAccountColumns::VERIFIED_AT
+            )
+            ->orderBy(UserAccountColumns::ID, 'desc')
+            ->get();
     }
 
     /**
@@ -98,12 +104,21 @@ class UserAccount extends Model
      */
     public static function getAccountsWithoutActiveFinancial()
     {
-        return self::whereRaw(
-            "id NOT IN (SELECT user_account_id FROM user_financial_accounts WHERE is_active = 1)"
-        )
-        ->select('id', UserAccountColumns::ID_USER, UserAccountColumns::USERNAME, UserAccountColumns::EMAIL, UserAccountColumns::IS_ACTIVE, UserAccountColumns::VERIFIED_AT)
-        ->orderBy(UserAccountColumns::ID, 'desc')
-        ->get();
+        return self::leftJoin('user_financial_accounts as ufa_active', function ($join) {
+                $join->on('ufa_active.user_account_id', '=', 'user_accounts.id')
+                    ->where('ufa_active.is_active', 1);
+            })
+            ->whereNull('ufa_active.id')
+            ->select(
+                'user_accounts.id',
+                UserAccountColumns::ID_USER,
+                UserAccountColumns::USERNAME,
+                UserAccountColumns::EMAIL,
+                UserAccountColumns::IS_ACTIVE,
+                UserAccountColumns::VERIFIED_AT
+            )
+            ->orderBy(UserAccountColumns::ID, 'desc')
+            ->get();
     }
 
     /**

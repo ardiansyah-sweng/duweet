@@ -28,7 +28,11 @@ return new class extends Migration
             $table->string(UserAccountColumns::EMAIL)->unique();
             $table->string(UserAccountColumns::PASSWORD);
             $table->timestamp(UserAccountColumns::VERIFIED_AT)->nullable();
-            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);           
+            $table->boolean(UserAccountColumns::IS_ACTIVE)->default(true);
+
+            // Index untuk mempercepat pencarian user tanpa account (LEFT JOIN) dan filter status
+            $table->index(UserAccountColumns::ID_USER);
+            $table->index(UserAccountColumns::IS_ACTIVE);
         });
     }
 
