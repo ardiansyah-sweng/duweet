@@ -14,5 +14,6 @@ Route::prefix('user-account')->group(function () {
 });
 
 Route::prefix('financial-account')->group(function () {
+    Route::get('/active', [FinancialAccountController::class, 'getActiveFinancialAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });

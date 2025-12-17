@@ -58,7 +58,7 @@ class FinancialAccount extends Model
      * TUGAS: Mengambil FinancialAccounts yang is_active = true menggunakan raw SQL.
      * Mengganti getActiveAccounts() yang ada dengan prepared statement.
      */
-    public static function getActiveAccountsRawSql()
+    public static function getActiveAccounts()
     {
         // Mendapatkan nama tabel dari instance Model (mempertimbangkan config/construct)
         $modelInstance = new self();
