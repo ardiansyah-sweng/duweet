@@ -3,9 +3,9 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\ReportController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
@@ -35,6 +35,13 @@ Route::get('/financial_accounts', [AccountController::class, 'index']);
 Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
+// Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+});
+
+// Reports API Routes
+Route::prefix('reports')->group(function () {
+    Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
+        ->name('api.reports.transactions-per-user-account');
 });
