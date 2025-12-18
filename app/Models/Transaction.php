@@ -16,18 +16,28 @@ class Transaction extends Model
 
     protected $table;
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->table = config('db_tables.transaction', 'transactions');
-    }
-
     protected $casts = [
         TransactionColumns::AMOUNT => 'integer',
         TransactionColumns::IS_BALANCE => 'boolean',
         TransactionColumns::CREATED_AT => 'datetime',
         TransactionColumns::UPDATED_AT => 'datetime',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = config('db_tables.transaction', 'transactions');
+        $this->fillable = TransactionColumns::getFillable();
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
+                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
+            }
+        });
+    }
 
     /**
      * Get the fillable attributes for the model.
@@ -162,38 +172,6 @@ class Transaction extends Model
         ]);
 
         return collect($rows);
-    }
-
-    protected $fillable = [];
-
-    protected $casts = [
-        TransactionColumns::AMOUNT => 'integer',
-        TransactionColumns::IS_BALANCE => 'boolean',
-    ];
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->fillable = TransactionColumns::getFillable();
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($transaction) {
-            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
-                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
-            }
-        });
-    }
-
-    public function userAccount()
-    {
-        return $this->belongsTo(UserAccount::class, TransactionColumns::USER_ACCOUNT_ID);
-    }
-
-    public function financialAccount()
-    {
-        return $this->belongsTo(FinancialAccount::class, TransactionColumns::FINANCIAL_ACCOUNT_ID);
     }
 
     /**
