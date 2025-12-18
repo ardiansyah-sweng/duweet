@@ -67,4 +67,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
+
+    /**
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+    }
 }
