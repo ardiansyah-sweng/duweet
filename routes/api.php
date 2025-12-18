@@ -4,10 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
 // Monthly expenses
 Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
+// Transaction detail
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
 // tambahkan route UserAccount sesuai kebutuhan, contoh:
