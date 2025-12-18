@@ -5,6 +5,8 @@ use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
