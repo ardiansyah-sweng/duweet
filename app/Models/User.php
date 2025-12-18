@@ -105,8 +105,7 @@ class User extends Authenticatable
             
             return 'Gagal menyimpan user ke database: ' . $e->getMessage();
         }
-    }
-
+    }    
     /**
      * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
      */
@@ -115,4 +114,5 @@ class User extends Authenticatable
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 }
+
 
