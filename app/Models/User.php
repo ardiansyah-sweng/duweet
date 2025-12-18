@@ -135,4 +135,12 @@ class User extends Authenticatable
                 ->selectRaw('COALESCE(SUM(ufa.balance),0)')
         ]);
     }
+
+    /**
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+    }
 }

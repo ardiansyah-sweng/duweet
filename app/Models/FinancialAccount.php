@@ -14,6 +14,15 @@ class FinancialAccount extends Model
 
     protected $table;
 
+    /**
+     * Nama tabel diambil dari config/db_tables.php
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = config('db_tables.financial_account', 'financial_accounts');
+    }
+
     protected $fillable = [
         FinancialAccountColumns::NAME,
         FinancialAccountColumns::PARENT_ID,
@@ -36,9 +45,53 @@ class FinancialAccount extends Model
 
     public $timestamps = true;
 
+    /**
+     * Relasi ke parent account
+     */
     public function parent()
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
+    }
+
+    /**
+     * Relasi ke child accounts
+     */
+    public function children()
+    {
+        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
+    }
+
+    /**
+     * Relasi ke transaksi (leaf accounts)
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
+    }
+
+    // Relasi ke UserFinancialAccount
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class);
+    }
+
+
+    /**
+     * Aturan dasar sebelum delete (mencegah kehilangan data penting)
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($account) {
+            // Tidak boleh menghapus akun grup jika masih punya anak
+            if ($account->{AccountColumns::IS_GROUP} && $account->children()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
+            }
+
+            // Tidak boleh menghapus akun leaf yang masih punya transaksi
+            if (!$account->{AccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
+            }
+        });
     }
 
     /**
@@ -416,18 +469,10 @@ class FinancialAccount extends Model
         return (int)($row->total ?? 0);
     }
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
-    }
-
-
     public function getById($id){
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
         return !empty($result) ? $result[0] : null;
     }
 
-   
 }

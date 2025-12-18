@@ -8,7 +8,10 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ReportController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
+
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
