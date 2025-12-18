@@ -206,4 +206,56 @@ class Transaction extends Model
         ->where('t.id', $id)
         ->first();
     }
+
+    /**
+     * Scope: Filter transactions by date range (period)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string|Carbon  $startDate
+     * @param  string|Carbon  $endDate
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByPeriod($query, $startDate, $endDate)
+    {
+        $startDate = $startDate instanceof Carbon ? $startDate->toDateString() : $startDate;
+        $endDate = $endDate instanceof Carbon ? $endDate->toDateString() : $endDate;
+
+        return $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+    }
+
+    /**
+     * Scope: Filter transactions by user account
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $userAccountId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByUserAccount($query, $userAccountId)
+    {
+        return $query->where(TransactionColumns::USER_ACCOUNT_ID, $userAccountId);
+    }
+
+    /**
+     * Scope: Filter transactions by financial account
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $financialAccountId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByFinancialAccount($query, $financialAccountId)
+    {
+        return $query->where(TransactionColumns::FINANCIAL_ACCOUNT_ID, $financialAccountId);
+    }
+
+    /**
+     * Scope: Filter transactions by entry type
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $entryType  'debit' or 'credit'
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByEntryType($query, $entryType)
+    {
+        return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
+    }
 }
