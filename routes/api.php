@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
@@ -38,6 +39,14 @@ Route::prefix('transactions')->group(function () {
     Route::get('/stats/user-account/{userAccountId}', [TransactionController::class, 'getStatsByUserAccount'])
         ->name('api.transactions.stats-by-user-account');
 });
-    Route::prefix('financial-account')->group(function () {
-        Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+
+// Financial Account API Routes
+Route::prefix('financial-account')->group(function () {
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+});
+
+// Reports API Routes
+Route::prefix('reports')->group(function () {
+    Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
+        ->name('api.reports.transactions-per-user-account');
 });
