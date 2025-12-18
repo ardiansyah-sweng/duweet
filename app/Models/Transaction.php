@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use App\Constants\TransactionColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\UserAccount;
 use App\Models\FinancialAccount;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Constants\TransactionColumns;
+use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
 {
@@ -35,6 +38,15 @@ class Transaction extends Model
     {
         $this->fillable = TransactionColumns::getFillable();
         parent::__construct($attributes);
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
+                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
+            }
+        });
     }
 
     /**
@@ -149,5 +161,36 @@ class Transaction extends Model
     public function getTransactionDateAttribute()
     {
         return $this->created_at ? $this->created_at->format('Y-m-d') : null;
+    }
+
+    /**
+     * Ambil detail transaksi lengkap via JOIN
+     */
+    public static function getDetailById($id)
+    {
+        return self::query()
+        ->from('transactions as t')
+        ->join('user_accounts as ua', 'ua.id', '=', 't.user_account_id')
+        ->join('users as u', 'u.id', '=', 'ua.id_user')
+        ->join('financial_accounts as fa', 'fa.id', '=', 't.financial_account_id')
+        ->select(
+            't.id as transaction_id',
+            't.transaction_group_id',
+            't.amount',
+            't.entry_type',
+            't.balance_effect',
+            't.is_balance',
+            't.description',
+            't.created_at as transaction_date',
+            'ua.id as user_account_id',
+            'ua.username as user_account_username',
+            'ua.email as user_account_email',
+            'u.id as id_user',
+            'u.name as user_name',
+            'fa.id as financial_account_id',
+            'fa.name as financial_account_name'
+        )
+        ->where('t.id', $id)
+        ->first();
     }
 }
