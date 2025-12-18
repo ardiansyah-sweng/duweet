@@ -2,99 +2,113 @@
 
 namespace Database\Factories;
 
-use App\Constants\TransactionColumns;
+use App\Models\Transaction;
 use App\Models\UserAccount;
+use App\Constants\TransactionColumns;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Transaction>
+ * Transaction Factory
+ *
+ * Creates balanced transaction pairs following double-entry bookkeeping principles.
+ * Each transaction has a debit and credit entry with the same transaction_group_id.
  */
 class TransactionFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = Transaction::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [
-            TransactionColumns::TRANSACTION_GROUP_ID => (string) Str::uuid(),
-            TransactionColumns::USER_ACCOUNT_ID => null, // Will be set in seeder
-            TransactionColumns::FINANCIAL_ACCOUNT_ID => null, // Will be set in seeder
-            TransactionColumns::ENTRY_TYPE => null, // Will be set via debit()/credit()
-            TransactionColumns::AMOUNT => null, // Will be set in seeder/test
-            TransactionColumns::BALANCE_EFFECT => null, // Will be set via increase()/decrease()
-            TransactionColumns::DESCRIPTION => $this->faker->sentence(6), // Can be overridden
-            TransactionColumns::IS_BALANCE => null, // Will be set via balanced()
-            TransactionColumns::CREATED_AT => null, // Will be set via onDate()
-            TransactionColumns::UPDATED_AT => now(),
+            TransactionColumns::TRANSACTION_GROUP_ID => Str::uuid()->toString(),
+            TransactionColumns::USER_ACCOUNT_ID => UserAccount::factory(),
+            TransactionColumns::FINANCIAL_ACCOUNT_ID => 1,
+            TransactionColumns::ENTRY_TYPE => 'debit',
+            TransactionColumns::AMOUNT => fake()->numberBetween(10000, 5000000),
+            TransactionColumns::BALANCE_EFFECT => 'increase',
+            TransactionColumns::DESCRIPTION => fake()->sentence(),
+            TransactionColumns::IS_BALANCE => true,
         ];
     }
 
     /**
-     * Set transaction group ID for paired debit-credit transactions
+     * Create a balanced transaction pair (debit + credit) following double-entry bookkeeping.
+     * 
+     * Balance effect is determined by account type and entry type:
+     * - Asset/Expense (AS/EX): Debit increases, Credit decreases
+     * - Income/Liability (IN/LI): Debit decreases, Credit increases
+     * - Spending (SP): Debit increases, Credit decreases
+     *
+     * @param int $userAccountId User account ID
+     * @param int $debitAccountId Financial account for debit entry
+     * @param int $creditAccountId Financial account for credit entry
+     * @param int $amount Transaction amount
+     * @param string $description Transaction description
+     * @return array Array containing [debit_transaction, credit_transaction]
      */
-    public function withGroupId(string $groupId): self
-    {
-        return $this->state(fn (array $attributes) => [
+    public function balancedPair(
+        int $userAccountId,
+        int $debitAccountId,
+        int $creditAccountId,
+        int $amount,
+        string $description
+    ): array {
+        $groupId = Str::uuid()->toString();
+        $timestamp = fake()->dateTimeBetween('-30 days', 'now');
+
+        // Get account types to determine balance effect
+        $debitAccount = DB::table(config('db_tables.financial_account'))->find($debitAccountId);
+        $creditAccount = DB::table(config('db_tables.financial_account'))->find($creditAccountId);
+
+        // Determine balance effect based on account type and entry type
+        // Asset (AS), Expense (EX), Spending (SP): Debit increases, Credit decreases
+        // Income (IN), Liability (LI): Debit decreases, Credit increases
+        $debitIncreaseTypes = ['AS', 'EX', 'SP'];
+        $creditIncreaseTypes = ['IN', 'LI'];
+
+        $debitBalanceEffect = in_array($debitAccount->type, $debitIncreaseTypes) ? 'increase' : 'decrease';
+        $creditBalanceEffect = in_array($creditAccount->type, $creditIncreaseTypes) ? 'increase' : 'decrease';
+
+        // Debit entry
+        $debit = [
             TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
-        ]);
-    }
-
-    /**
-     * Create a debit transaction
-     */
-    public function debit(): self
-    {
-        return $this->state(fn (array $attributes) => [
+            TransactionColumns::USER_ACCOUNT_ID => $userAccountId,
+            TransactionColumns::FINANCIAL_ACCOUNT_ID => $debitAccountId,
             TransactionColumns::ENTRY_TYPE => 'debit',
-        ]);
-    }
-
-    /**
-     * Create a credit transaction
-     */
-    public function credit(): self
-    {
-        return $this->state(fn (array $attributes) => [
-            TransactionColumns::ENTRY_TYPE => 'credit',
-        ]);
-    }
-
-    /**
-     * Set balance effect to increase
-     */
-    public function increase(): self
-    {
-        return $this->state(fn (array $attributes) => [
-            TransactionColumns::BALANCE_EFFECT => 'increase',
-        ]);
-    }
-
-    /**
-     * Set balance effect to decrease
-     */
-    public function decrease(): self
-    {
-        return $this->state(fn (array $attributes) => [
-            TransactionColumns::BALANCE_EFFECT => 'decrease',
-        ]);
-    }
-
-    /**
-     * Mark as balanced transaction
-     */
-    public function balanced(): self
-    {
-        return $this->state(fn (array $attributes) => [
+            TransactionColumns::AMOUNT => $amount,
+            TransactionColumns::BALANCE_EFFECT => $debitBalanceEffect,
+            TransactionColumns::DESCRIPTION => $description,
             TransactionColumns::IS_BALANCE => true,
-        ]);
-    }
+            TransactionColumns::CREATED_AT => $timestamp,
+            TransactionColumns::UPDATED_AT => $timestamp,
+        ];
 
-    /**
-     * Set specific date for the transaction
-     */
-    public function onDate($date): self
-    {
-        return $this->state(fn (array $attributes) => [
-            TransactionColumns::CREATED_AT => $date,
-        ]);
+        // Credit entry
+        $credit = [
+            TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
+            TransactionColumns::USER_ACCOUNT_ID => $userAccountId,
+            TransactionColumns::FINANCIAL_ACCOUNT_ID => $creditAccountId,
+            TransactionColumns::ENTRY_TYPE => 'credit',
+            TransactionColumns::AMOUNT => $amount,
+            TransactionColumns::BALANCE_EFFECT => $creditBalanceEffect,
+            TransactionColumns::DESCRIPTION => $description,
+            TransactionColumns::IS_BALANCE => true,
+            TransactionColumns::CREATED_AT => $timestamp,
+            TransactionColumns::UPDATED_AT => $timestamp,
+        ];
+
+        return [$debit, $credit];
     }
 }
