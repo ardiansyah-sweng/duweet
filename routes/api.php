@@ -3,19 +3,21 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MonthlyExpenseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
 // Monthly expenses
 Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
+
 // Transaction detail
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
-// tambahkan route UserAccount sesuai kebutuhan, contoh:
 Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
+
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
@@ -25,6 +27,13 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
+// Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+});
+
+// Reports API Routes
+Route::prefix('reports')->group(function () {
+    Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
+        ->name('api.reports.transactions-per-user-account');
 });
