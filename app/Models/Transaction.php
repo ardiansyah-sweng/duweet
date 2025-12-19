@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
+use App\Constants\UserAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
@@ -86,5 +88,122 @@ class Transaction extends Model
         ]);
 
         return collect($rows);
+    }
+
+    /**
+     * Get total transactions per user account using raw SQL query.
+     *
+     * Returns transaction summary per user account:
+     * - user_account_id: User account ID
+     * - user_account_email: User account email
+     * - transaction_count: Count of unique transaction groups (DISTINCT transaction_group_id)
+     *
+     * Usage: \App\Models\Transaction::getTotalTransactionsPerUserAccount();
+     * Optional parameter: $userAccountId (filter by user account ID)
+     *
+     * @param  int|null  $userAccountId  Filter by specific user account ID
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getTotalTransactionsPerUserAccount(?int $userAccountId = null)
+    {
+        // Get table names from config
+        $transactionTable = config('db_tables.transaction');
+        $userAccountTable = config('db_tables.user_account');
+
+        // Get column names from constants
+        $userAccountIdCol = TransactionColumns::USER_ACCOUNT_ID;
+        $transactionGroupIdCol = TransactionColumns::TRANSACTION_GROUP_ID;
+
+        // Build WHERE clause for filtering
+        $whereClause = '';
+        $bindings = [];
+        
+        if ($userAccountId !== null) {
+            $whereClause = "WHERE user_accounts.id = ?";
+            $bindings[] = $userAccountId;
+        }
+
+        // Raw SQL query - full version without abbreviations
+        $sql = "
+            SELECT 
+                user_accounts.id AS user_account_id,
+                user_accounts.email AS user_account_email,
+                COUNT(DISTINCT transactions.{$transactionGroupIdCol}) AS transaction_count
+            FROM {$userAccountTable} AS user_accounts
+            LEFT JOIN {$transactionTable} AS transactions 
+                ON user_accounts.id = transactions.{$userAccountIdCol}
+            {$whereClause}
+            GROUP BY user_accounts.id, user_accounts.email
+            ORDER BY transaction_count DESC, user_accounts.id ASC
+        ";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        // Convert to collection
+        return collect($results);
+    }
+
+    protected $fillable = [];
+
+    protected $casts = [
+        TransactionColumns::AMOUNT => 'integer',
+        TransactionColumns::IS_BALANCE => 'boolean',
+    ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->fillable = TransactionColumns::getFillable();
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
+                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function userAccount()
+    {
+        return $this->belongsTo(UserAccount::class, TransactionColumns::USER_ACCOUNT_ID);
+    }
+
+    public function financialAccount()
+    {
+        return $this->belongsTo(FinancialAccount::class, TransactionColumns::FINANCIAL_ACCOUNT_ID);
+    }
+
+    /**
+     * Ambil detail transaksi lengkap via JOIN
+     */
+    public static function getDetailById($id)
+    {
+        return self::query()
+        ->from('transactions as t')
+        ->join('user_accounts as ua', 'ua.id', '=', 't.user_account_id')
+        ->join('users as u', 'u.id', '=', 'ua.id_user')
+        ->join('financial_accounts as fa', 'fa.id', '=', 't.financial_account_id')
+        ->select(
+            't.id as transaction_id',
+            't.transaction_group_id',
+            't.amount',
+            't.entry_type',
+            't.balance_effect',
+            't.is_balance',
+            't.description',
+            't.created_at as transaction_date',
+            'ua.id as user_account_id',
+            'ua.username as user_account_username',
+            'ua.email as user_account_email',
+            'u.id as id_user',
+            'u.name as user_name',
+            'fa.id as financial_account_id',
+            'fa.name as financial_account_name'
+        )
+        ->where('t.id', $id)
+        ->first();
     }
 }
