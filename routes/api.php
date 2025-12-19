@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
 // User API Routes (untuk registrasi dan pencarian berdasarkan nama/email/alamat)
@@ -14,6 +15,9 @@ Route::prefix('user')->group(function () {
     Route::put('/{id}', [UserController::class, 'update'])->name('api.user.update');
     Route::delete('/{id}', [UserController::class, 'destroy'])->name('api.user.destroy');
 });
+
+// Transaction API Routes
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
