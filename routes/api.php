@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SpendingReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
@@ -28,3 +29,10 @@ Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
 });
+
+// Admin Reports API Routes
+Route::prefix('admin')->group(function () {
+    Route::get('/spending', [SpendingReportController::class, 'index']
+    )->name('api.admin.spending');
+});
+
