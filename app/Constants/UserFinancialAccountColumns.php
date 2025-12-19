@@ -9,9 +9,7 @@ class UserFinancialAccountColumns
     // Primary & Foreign Keys sesuai PRD
     public const ID = 'id';
     public const ID_USER = 'user_id';
-    public const USER_ACCOUNT_ID = 'user_account_id';
     public const ID_FINANCIAL_ACCOUNT = 'financial_account_id';
-    public const FINANCIAL_ACCOUNT_ID = 'financial_account_id';
 
     // Kolom keuangan sesuai PRD
     public const BALANCE = 'balance';

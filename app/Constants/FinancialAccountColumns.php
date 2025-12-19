@@ -1,118 +1,41 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Constants;
 
-use App\Models\FinancialAccount;
-use Illuminate\Http\Request;
-
-class FinancialAccountColumns extends Controller
+class FinancialAccountColumns
 {
-    private function rupiah(int|float $n): string
-    {
-        return 'Rp ' . number_format((float) $n, 0, ',', '.');
-    }
+    public const ID                = 'id';              // Primary Key
+    public const PARENT_ID         = 'parent_id';       // Foreign key to accounts.id
+    public const NAME              = 'name';            // Nama account (e.g., "Bank")
+    public const TYPE              = 'type';            // Jenis account (IN/EX/SP/LI/AS)
+    public const BALANCE           = 'balance';         // Saldo saat ini
+    public const INITIAL_BALANCE   = 'initial_balance'; // Saldo awal
+    public const IS_GROUP          = 'is_group';        // Boolean, apakah account ini group?
+    public const DESCRIPTION       = 'description';     // Deskripsi account (nullable)
+    public const IS_ACTIVE         = 'is_active';       // Status aktif/nonaktif
+    public const SORT_ORDER        = 'sort_order';      // Urutan tampilan
+    public const LEVEL             = 'level';           // Level kedalaman
+    public const CREATED_AT        = 'created_at';
+    public const UPDATED_AT        = 'updated_at';
 
     /**
-     * GET /api/financial-account/{id}
-     * 
-     * Get financial account detail
+     * Get fillable columns (exclude id, created_at, updated_at)
+     *
+     * @return array
      */
-    public function show(int $id)
+    public static function getFillable(): array
     {
-        try {
-            $account = FinancialAccount::getById($id);
-
-            if (!$account) {
-                return response()->json([
-                    'status' => 'not_found',
-                    'message' => 'Financial account tidak ditemukan',
-                ], 404);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'data' => $account,
-            ], 200);
-
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * PUT /api/financial-account/{id}/balance
-     * 
-     * Update balance financial account
-     */
-    public function updateBalance(Request $request, int $id)
-    {
-        try {
-            // Cek apakah account ada
-            $account = FinancialAccount::getById($id);
-            
-            if (!$account) {
-                return response()->json([
-                    'status' => 'not_found',
-                    'message' => 'Financial account tidak ditemukan',
-                ], 404);
-            }
-
-            // Validasi input
-            $validated = $request->validate([
-                'balance' => 'required|numeric|min:0',
-                'initial_balance' => 'sometimes|numeric|min:0',
-            ]);
-
-            $oldBalance = $account->balance;
-            $oldInitialBalance = $account->initial_balance;
-
-            // Update
-            $updated = FinancialAccount::updateBalance(
-                $id, 
-                (int)$validated['balance'],
-                isset($validated['initial_balance']) ? (int)$validated['initial_balance'] : null
-            );
-
-            if (!$updated) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Gagal update balance',
-                ], 500);
-            }
-
-            // Get updated data
-            $updatedAccount = FinancialAccount::getById($id);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Balance berhasil diupdate',
-                'data' => [
-                    'id' => $id,
-                    'name' => $updatedAccount->name,
-                    'old_balance' => $oldBalance,
-                    'new_balance' => $updatedAccount->balance,
-                    'old_initial_balance' => $oldInitialBalance,
-                    'new_initial_balance' => $updatedAccount->initial_balance,
-                    'formatted_old_balance' => $this->rupiah($oldBalance),
-                    'formatted_new_balance' => $this->rupiah($updatedAccount->balance),
-                ],
-                'updated_at' => now()->toIso8601String(),
-            ], 200);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'status' => 'validation_error',
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        return [
+            self::PARENT_ID,
+            self::NAME,
+            self::TYPE,
+            self::BALANCE,
+            self::INITIAL_BALANCE,
+            self::IS_GROUP,
+            self::DESCRIPTION,
+            self::IS_ACTIVE,
+            self::SORT_ORDER,
+            self::LEVEL,
+        ];
     }
 }
