@@ -11,9 +11,19 @@ class UserFinancialAccountSeeder extends Seeder
     public function run(): void
     {
         // Disable FK checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if (config('database.default') === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
+        
         DB::table(config('db_tables.user_financial_account'))->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        
+        if (config('database.default') === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         // Ambil ID dari tabel user_accounts (bukan users!)
         $userAccountIds = DB::table(config('db_tables.user_account'))->pluck('id');
