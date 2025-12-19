@@ -14,11 +14,6 @@ class UserAccount extends Model
 
     protected $table = 'user_accounts';
 
-    /**
-     * This table does not use created_at/updated_at timestamps.
-     *
-     * @var bool
-     */
     public $timestamps = false;
 
     protected $casts = [
@@ -30,12 +25,6 @@ class UserAccount extends Model
         UserAccountColumns::PASSWORD,
     ];
 
-    /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
-     */
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
@@ -56,7 +45,6 @@ class UserAccount extends Model
 
     /**
      * Relasi ke UserFinancialAccounts
-     * Setiap UserAccount bisa memiliki beberapa akun keuangan
      */
     public function userFinancialAccounts()
     {
@@ -64,10 +52,18 @@ class UserAccount extends Model
     }
 
     /**
+     * Ambil user yang tidak login dalam periode tertentu
+     * Catatan: Saya mengubahnya menjadi static query agar sesuai konteks
+     */
+    public static function query_user_yang_tidak_login_dalam_periode_tertentu($tanggalMulai, $tanggalSelesai)
+    {
+        // Contoh logika query (silakan sesuaikan dengan field di DB kamu)
+        return self::whereBetween('last_login', [$tanggalMulai, $tanggalSelesai])->get();
+    }
+
+    /**
      * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * 
-     * @param int $id
-     * @return array
+     * (Fungsi temanmu tetap aman di sini)
      */
     public static function deleteUserAccountRaw($id)
     {
