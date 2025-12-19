@@ -39,6 +39,11 @@ class User extends Authenticatable
                 [$data['email']]
             );
 
+            if ($existingUser) {
+                DB::rollBack();
+                return 'Email sudah digunakan.';
+            }
+
             // Menghitung usia
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
                 $carbonDate = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR]);
