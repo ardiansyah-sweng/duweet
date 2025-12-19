@@ -92,6 +92,18 @@ class FinancialAccount extends Model
         });
     }
 
+    public function getActiveAccounts()
+    {
+        // Mengambil nama kolom dari Constant agar aman
+        $columnIsActive = FinancialAccountColumns::IS_ACTIVE;
+
+        // Query SQL biasa
+        $sql = "SELECT * FROM {$this->table} WHERE {$columnIsActive} = ?";
+
+        // DB::select mengembalikan array of objects
+        return DB::select($sql, [1]); // 1 mewakili true
+    }
+
     public function getById($id){
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
