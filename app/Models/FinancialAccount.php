@@ -12,10 +12,15 @@ class FinancialAccount extends Model
 {
     use HasFactory; // Diletakkan di awal body class
 
-    protected $table = 'financial_accounts';
+    /**
+     * Nama tabel diambil dari config/db_tables.php
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = config('db_tables.financial_account', 'financial_accounts');
+    }
 
-    // Disusun Ulang: Daftar Fillable disesuaikan dan diperluas
-    // (Mengambil referensi dari FinancialAccountColumns yang biasa diisi)
     protected $fillable = [
         FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::NAME,
@@ -39,6 +44,7 @@ class FinancialAccount extends Model
 
     /**
      * Relasi ke Parent Account
+     * Relasi ke parent account
      */
     public function parent()
     {
@@ -46,42 +52,46 @@ class FinancialAccount extends Model
     }
 
     /**
-     * Scope Eloquent untuk memfilter akun yang aktif.
+     * Relasi ke child accounts
      */
-    public function scopeActive($query)
+    public function children()
     {
-        return $query->where(FinancialAccountColumns::IS_ACTIVE, true);
+        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
     /**
-     * TUGAS: Mengambil FinancialAccounts yang is_active = true menggunakan raw SQL.
-     * Mengganti getActiveAccounts() yang ada dengan prepared statement.
+     * Relasi ke transaksi (leaf accounts)
      */
-    public static function getActiveAccounts()
+    public function transactions()
     {
-        // Mendapatkan nama tabel dari instance Model (mempertimbangkan config/construct)
-        $modelInstance = new self();
-        $tableName = $modelInstance->getTable();
-        
-        // Menggunakan prepared statement untuk keamanan (PRACTICE TERBAIK)
-        $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
-        
-        // true akan dikonversi menjadi 1 oleh DB
-        return DB::select($sql, [true]); 
+        return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
     }
 
-    /**
-     * Konstruktor: Digunakan untuk mengambil nama tabel dari konfigurasi.
-     */
-    public function __construct(array $attributes = [])
+    // Relasi ke UserFinancialAccount
+    public function userFinancialAccounts()
     {
-        parent::__construct($attributes);
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
+        return $this->hasMany(UserFinancialAccount::class);
     }
 
+
     /**
-     * Method kustom untuk mendapatkan Financial Account berdasarkan ID menggunakan raw SQL.
+     * Aturan dasar sebelum delete (mencegah kehilangan data penting)
      */
+    protected static function booted()
+    {
+        static::deleting(function ($account) {
+            // Tidak boleh menghapus akun grup jika masih punya anak
+            if ($account->{AccountColumns::IS_GROUP} && $account->children()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
+            }
+
+            // Tidak boleh menghapus akun leaf yang masih punya transaksi
+            if (!$account->{AccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
+            }
+        });
+    }
+
     public function getById($id){
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
