@@ -9,20 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccountController extends Controller
 {
-public function getActiveFinancialAccounts(Request $request) // Nama method yang dipanggil route
-    {
-        // 1. Panggil method Raw SQL di Model
-        $activeAccounts = FinancialAccount::getActiveAccounts();
+public function getActiveAccounts(Request $request)
+{
+    // Buat objek
+    $model = new FinancialAccount(); 
+    
+    $activeAccounts = $model->getActiveAccounts(); 
 
-        // 2. Perbaikan: Gunakan fungsi count() PHP karena hasilnya adalah array
-        $count = count($activeAccounts); 
-
-        return response()->json([
-            'message' => 'Daftar Akun Keuangan yang Aktif: ',
-            'count' => $count, // Menggunakan variabel $count yang sudah benar
-            'data' => $activeAccounts
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'message' => 'Daftar Akun Keuangan yang Aktif',
+        'count' => count($activeAccounts),
+        'data' => $activeAccounts
+    ]);
+}
         public function show($id)
     {
         try {
