@@ -10,8 +10,10 @@ class UserFinancialAccountSeeder extends Seeder
 {
     public function run(): void
     {
-        // Disable FK checks
-        if (config('database.default') === 'sqlite') {
+        // Disable FK checks (compatible with SQLite and MySQL)
+        $driver = DB::connection()->getDriverName();
+        
+        if ($driver === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = OFF;');
         } else {
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -19,7 +21,7 @@ class UserFinancialAccountSeeder extends Seeder
         
         DB::table(config('db_tables.user_financial_account'))->truncate();
         
-        if (config('database.default') === 'sqlite') {
+        if ($driver === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = ON;');
         } else {
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
