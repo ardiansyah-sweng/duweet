@@ -26,7 +26,9 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             UserAccountSeeder::class,
             FinancialAccountSeeder::class,
+            UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
+            //AccountSeeder::class,
         ]);
 
         // Calculate and display liquid assets for admin
