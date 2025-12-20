@@ -1,26 +1,22 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ReportController; // PENTING: Import Controller
+use App\Http\Controllers\UserNestedController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
-// Route Dasar Laravel
+// Route dasar
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/nested');
 });
 
-// Route GET yang Benar untuk endpoint incomeSummary
-// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
-Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
+// Nested account view
+Route::get('/nested', [UserNestedController::class, 'index']);
 
-// Tambahkan route lain di sini jika ada...
+// Report income summary
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
