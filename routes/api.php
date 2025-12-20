@@ -1,37 +1,40 @@
 <?php
 
-<<<<<<< HEAD
-use App\Http\Controllers\AccountController;
-
-Route::get('/accounts/nested', [AccountController::class, 'index']);
-Route::get('/accounts/nested/{id}', [AccountController::class, 'show']);
-=======
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
+// Account Nested
+Route::get('/accounts/nested', [AccountController::class, 'index']);
+Route::get('/accounts/nested/{id}', [AccountController::class, 'show']);
+
+// Transaction
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
-// UserAccount API Routes (no CSRF protection needed)
+// UserAccount API
 Route::prefix('user-account')->group(function () {
-    Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
-    Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
-    Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
-    Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
-    Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
-    Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+    Route::get('/', [UserAccountController::class, 'index']);
+    Route::get('/{id}', [UserAccountController::class, 'show']);
+    Route::post('/', [UserAccountController::class, 'store']);
+    Route::put('/{id}', [UserAccountController::class, 'update']);
+    Route::delete('/{id}', [UserAccountController::class, 'destroy']);
+    Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw']);
 });
 
-// Financial Account API Routes
-Route::prefix('financial-account')->group(function () {
-    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
-});
+// Financial Account
+Route::get('/financial-account/{id}', [FinancialAccountController::class, 'show']);
 
-// Reports API Routes
-Route::prefix('reports')->group(function () {
-    Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
-        ->name('api.reports.transactions-per-user-account');
-});
->>>>>>> b38c826a09b03375aec23465b6c822809a669a85
+// Reports
+Route::get('/reports/transactions-per-user-account', 
+    [ReportController::class, 'getTotalTransactionsPerUserAccount']
+);

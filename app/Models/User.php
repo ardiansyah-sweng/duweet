@@ -75,12 +75,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
-
-public function userFinancialAccounts()
-{
-    return $this->hasMany(\App\Models\UserFinancialAccount::class, 'user_id');
-}
-
-
-
 }

@@ -12,10 +12,9 @@ class AccountController extends Controller
      */
     public function index()
     {
-        // Ambil akun root (tidak punya parent)
         $accounts = Account::with('childrenRecursive')
             ->whereNull('parent_id')
-            ->orderBy('code')
+            ->orderBy('sort_order', 'asc') // ✅ GANTI INI
             ->get();
 
         return response()->json([

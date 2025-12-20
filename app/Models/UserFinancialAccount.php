@@ -9,29 +9,27 @@ class UserFinancialAccount extends Model
 {
     use HasFactory;
 
-    protected $table = 'user_financial_accounts';
+    protected $table = 'user_financial_account';
 
     protected $fillable = [
         'user_id',
-        'financial_account_id',
+        'account_number',
         'balance',
-        'initial_balance',
-        'is_active',
+        'parent_account_id',
     ];
 
-    /**
-     * Relasi ke User
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Relasi ke FinancialAccount
-     */
-    public function financialAccount()
+    public function parent()
     {
-        return $this->belongsTo(FinancialAccount::class);
+        return $this->belongsTo(UserFinancialAccount::class, 'parent_account_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'parent_account_id');
     }
 }
