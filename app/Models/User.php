@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserAccount;
 
 class User extends Authenticatable
 {
@@ -17,10 +18,27 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    /**
+     * Disable automatic timestamps because users table does not have created_at/updated_at
+     *
+     * @var bool
+     */
+    public $timestamps = false;
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'email',
-        'password',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
     ];
 
     /**
@@ -34,16 +52,28 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
+    /**
+     * One user can have many user accounts (credentials)
+     */
+    public function userAccounts()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    /**
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 
 public function userFinancialAccounts()
