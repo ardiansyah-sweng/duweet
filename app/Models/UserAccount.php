@@ -53,7 +53,6 @@ class UserAccount extends Model
 
     /**
      * Ambil user yang tidak login dalam periode tertentu
-     * Catatan: Saya mengubahnya menjadi static query agar sesuai konteks
      */
     public static function query_user_yang_tidak_login_dalam_periode_tertentu($tanggalMulai, $tanggalSelesai)
     {
@@ -63,7 +62,6 @@ class UserAccount extends Model
 
     /**
      * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * (Fungsi temanmu tetap aman di sini)
      */
     public static function deleteUserAccountRaw($id)
     {
