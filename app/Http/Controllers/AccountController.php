@@ -24,3 +24,4 @@ class AccountController extends Controller
         return view('totals', ['results' => $results]);
     }
 }
+

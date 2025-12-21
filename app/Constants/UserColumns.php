@@ -25,6 +25,7 @@ class UserColumns
     public const TAHUN_LAHIR    = 'tahun_lahir';      // Tahun lahir (integer)
     public const USIA           = 'usia';             // Umur user (integer)
 
+    
     public const ACCOUNTS_COUNT = 'accounts_count';
     public static function getFillable(): array
     {
