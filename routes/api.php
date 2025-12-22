@@ -46,9 +46,13 @@ Route::prefix('user-account')->group(function () {
         ->name('api.user-account.destroy-raw');
 });
 
-// =============================================================
-// 2. FINANCIAL ACCOUNT
-// =============================================================
+// Transaction API Routes
+Route::prefix('transactions')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+});
+
+// Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
