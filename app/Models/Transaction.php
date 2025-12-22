@@ -4,18 +4,145 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
-use Carbon\Carbon;
+use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
 {
     use HasFactory;
 
+    // Nama tabel yang sesuai dengan konfigurasi
     protected $table = 'transactions';
+
+    /**
+     * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
+     * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
+     *
+     * DML SQL (MySQL/MariaDB):
+     * -----------------------------------------------------------
+     * SELECT 
+     *     DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
+     *     COALESCE(SUM(t.amount), 0) AS total_income
+     * FROM transactions t
+     * INNER JOIN financial_accounts fa ON t.financial_account_id = fa.id
+     * WHERE t.user_account_id = ?
+     *   AND fa.type = 'IN'
+     *   AND t.balance_effect = 'increase'
+     *   AND fa.is_group = 0
+     *   AND t.created_at BETWEEN ? AND ?
+     * GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
+     * ORDER BY periode ASC;
+     * -----------------------------------------------------------
+     *
+     * @param int $userAccountId
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // Tentukan fungsi format tanggal berdasarkan driver database
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        // Susun DML SQL murni (alias tabel: t, fa)
+        $sql = "
+            SELECT 
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_income
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE 
+                t.user_account_id = ?
+                AND fa.type = 'IN'
+                AND t.balance_effect = 'increase'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        // Eksekusi raw SQL dengan parameter binding
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+
+    /**
+     * Get total transactions per user account using raw SQL query.
+     *
+     * Returns transaction summary per user account:
+     * - user_account_id: User account ID
+     * - user_account_email: User account email
+     * - transaction_count: Count of unique transaction groups (DISTINCT transaction_group_id)
+     *
+     * Usage: \App\Models\Transaction::getTotalTransactionsPerUserAccount();
+     * Optional parameter: $userAccountId (filter by user account ID)
+     *
+     * @param  int|null  $userAccountId  Filter by specific user account ID
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getTotalTransactionsPerUserAccount(?int $userAccountId = null)
+    {
+        // Get table names from config
+        $transactionTable = config('db_tables.transaction');
+        $userAccountTable = config('db_tables.user_account');
+
+        // Get column names from constants
+        $userAccountIdCol = TransactionColumns::USER_ACCOUNT_ID;
+        $transactionGroupIdCol = TransactionColumns::TRANSACTION_GROUP_ID;
+
+        // Build WHERE clause for filtering
+        $whereClause = '';
+        $bindings = [];
+        
+        if ($userAccountId !== null) {
+            $whereClause = "WHERE user_accounts.id = ?";
+            $bindings[] = $userAccountId;
+        }
+
+        // Raw SQL query - full version without abbreviations
+        $sql = "
+            SELECT 
+                user_accounts.id AS user_account_id,
+                user_accounts.email AS user_account_email,
+                COUNT(DISTINCT transactions.{$transactionGroupIdCol}) AS transaction_count
+            FROM {$userAccountTable} AS user_accounts
+            LEFT JOIN {$transactionTable} AS transactions 
+                ON user_accounts.id = transactions.{$userAccountIdCol}
+            {$whereClause}
+            GROUP BY user_accounts.id, user_accounts.email
+            ORDER BY transaction_count DESC, user_accounts.id ASC
+        ";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        // Convert to collection
+        return collect($results);
+    }
 
     protected $fillable = [];
 
@@ -47,12 +174,6 @@ class Transaction extends Model
     public function financialAccount()
     {
         return $this->belongsTo(FinancialAccount::class, TransactionColumns::FINANCIAL_ACCOUNT_ID);
-    }
-
-    // Alias untuk kompatibilitas kode lama
-    public function account(): BelongsTo
-    {
-        return $this->financialAccount();
     }
 
     /**
@@ -87,104 +208,14 @@ class Transaction extends Model
     }
 
     /**
-     * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
-     * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
-     *
-     * @param int $userAccountId
-     * @param \Carbon\Carbon $startDate
-     * @param \Carbon\Carbon $endDate
-     * @return \Illuminate\Support\Collection
-     */
-    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
-    {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
-
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
-        } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
-        }
-
-        $sql = "
-            SELECT 
-                {$periodeExpr} AS periode,
-                COALESCE(SUM(t.amount), 0) AS total_income
-            FROM {$transactionsTable} t
-            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
-            WHERE 
-                t.user_account_id = ?
-                AND fa.type = 'IN'
-                AND t.balance_effect = 'increase'
-                AND fa.is_group = 0
-                AND t.created_at BETWEEN ? AND ?
-            GROUP BY {$periodeExpr}
-            ORDER BY periode ASC
-        ";
-
-        $rows = DB::select($sql, [
-            $userAccountId,
-            $startDate->toDateTimeString(),
-            $endDate->toDateTimeString(),
-        ]);
-
-        return collect($rows);
-    }
-
-    /**
-     * Get total transactions per user account using raw SQL query.
-     *
-     * @param  int|null  $userAccountId  Filter by specific user account ID
-     * @return \Illuminate\Support\Collection
-     */
-    public static function getTotalTransactionsPerUserAccount(?int $userAccountId = null)
-    {
-        $transactionTable = config('db_tables.transaction');
-        $userAccountTable = config('db_tables.user_account');
-        $userAccountIdCol = TransactionColumns::USER_ACCOUNT_ID;
-        $transactionGroupIdCol = TransactionColumns::TRANSACTION_GROUP_ID;
-
-        $whereClause = '';
-        $bindings = [];
-        
-        if ($userAccountId !== null) {
-            $whereClause = "WHERE user_accounts.id = ?";
-            $bindings[] = $userAccountId;
-        }
-
-        $sql = "
-            SELECT 
-                user_accounts.id AS user_account_id,
-                user_accounts.email AS user_account_email,
-                COUNT(DISTINCT transactions.{$transactionGroupIdCol}) AS transaction_count
-            FROM {$userAccountTable} AS user_accounts
-            LEFT JOIN {$transactionTable} AS transactions 
-                ON user_accounts.id = transactions.{$userAccountIdCol}
-            {$whereClause}
-            GROUP BY user_accounts.id, user_accounts.email
-            ORDER BY transaction_count DESC, user_accounts.id ASC
-        ";
-
-        $results = DB::select($sql, $bindings);
-        return collect($results);
-    }
-
-     /* Scope: Filter transactions by date range (period)
+     * Scope: Filter transactions by date range (period)
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string|Carbon  $startDate
      * @param  string|Carbon  $endDate
      * @return \Illuminate\Database\Eloquent\Builder
      */
-public function scopeByPeriod($query, $startDate, $endDate)
+    public function scopeByPeriod($query, $startDate, $endDate)
     {
         $startDate = $startDate instanceof Carbon ? $startDate->toDateString() : $startDate;
         $endDate = $endDate instanceof Carbon ? $endDate->toDateString() : $endDate;
