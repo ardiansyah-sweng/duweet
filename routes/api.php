@@ -22,6 +22,7 @@ Route::prefix('user-account')->group(function () {
 Route::prefix('transactions')->group(function () {
     // Main CRUD routes
     Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::get('/{id}', [TransactionController::class, 'show'])->name('api.transactions.show');
     Route::post('/', [TransactionController::class, 'store'])->name('api.transactions.store');
     Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');

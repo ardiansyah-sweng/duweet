@@ -81,6 +81,51 @@ class TransactionController extends Controller
     }
 
     /**
+     * Filter transactions by date range (period) using raw SQL
+     */
+    public function filterByPeriod(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'start_date' => 'required|date|date_format:Y-m-d',
+                'end_date' => 'required|date|date_format:Y-m-d|after_or_equal:start_date',
+                'user_account_id' => 'nullable|integer',
+                'financial_account_id' => 'nullable|integer',
+                'entry_type' => 'nullable|in:debit,credit'
+            ]);
+
+            $transactions = Transaction::filterTransactionsByPeriod(
+                $request->start_date,
+                $request->end_date,
+                $request->input('user_account_id'),
+                $request->input('financial_account_id'),
+                $request->input('entry_type')
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $transactions,
+                'count' => $transactions->count(),
+                'period' => [
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date
+                ]
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal filter transaksi berdasarkan periode: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Display a specific transaction
      */
     public function show($id): JsonResponse
