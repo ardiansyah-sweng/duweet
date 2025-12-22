@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
@@ -352,5 +353,64 @@ class Transaction extends Model
     public function scopeByEntryType($query, $entryType)
     {
         return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
+    }
+
+    /**
+     * Hard delete semua transaksi dalam satu transaction_group_id dan
+     * sesuaikan saldo di tabel `user_financial_accounts`.
+     *
+     * @param string $groupId
+     * @return array{success:bool,message:string,deleted_count:int}
+     */
+    public static function hardDeleteByGroupId(string $groupId): array
+    {
+        try {
+            $deletedCount = 0;
+
+            DB::transaction(function () use ($groupId, &$deletedCount) {
+                $transactions = DB::select("SELECT * FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::TRANSACTION_GROUP_ID . " = ?", [$groupId]);
+
+                if (empty($transactions)) {
+                    throw new \Exception('No transactions found for group: ' . $groupId);
+                }
+
+                foreach ($transactions as $t) {
+                    $userAccountId = $t->{TransactionColumns::USER_ACCOUNT_ID};
+                    $financialAccountId = $t->{TransactionColumns::FINANCIAL_ACCOUNT_ID};
+
+                    // Ambil dan lock baris user_financial_accounts dengan FOR UPDATE
+                    $ufaRows = DB::select(
+                        "SELECT * FROM " . UserFinancialAccountColumns::TABLE . " WHERE " . UserFinancialAccountColumns::USER_ACCOUNT_ID . " = ? AND " . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . " = ? FOR UPDATE",
+                        [$userAccountId, $financialAccountId]
+                    );
+
+                    $ufa = $ufaRows[0] ?? null;
+
+                    if ($ufa) {
+                        $current = $ufa->{UserFinancialAccountColumns::BALANCE};
+
+                        if ($t->{TransactionColumns::BALANCE_EFFECT} === 'increase') {
+                            $new = $current - $t->{TransactionColumns::AMOUNT};
+                        } else {
+                            $new = $current + $t->{TransactionColumns::AMOUNT};
+                        }
+
+                        DB::update(
+                            "UPDATE " . UserFinancialAccountColumns::TABLE . " SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . UserFinancialAccountColumns::ID . " = ?",
+                            [$new, $ufa->{UserFinancialAccountColumns::ID}]
+                        );
+                    }
+
+                    // Hapus baris transaksi (hard delete)
+                    DB::delete("DELETE FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::ID . " = ?", [$t->{TransactionColumns::ID}]);
+
+                    $deletedCount++;
+                }
+            });
+
+            return ['success' => true, 'message' => 'Transactions deleted', 'deleted_count' => $deletedCount];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Failed: ' . $e->getMessage(), 'deleted_count' => 0];
+        }
     }
 }
