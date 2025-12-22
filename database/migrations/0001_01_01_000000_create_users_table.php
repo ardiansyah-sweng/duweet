@@ -11,11 +11,12 @@ return new class extends Migration
 
     public function __construct()
     {
-        $this->table = config('db_tables.user');
+        // sesuai PRD → tabel utama untuk pengguna
+        $this->table = config('db_tables.user', 'users');
     }
 
     /**
-     * Run the migrations.
+     * Jalankan migration.
      */
     public function up(): void
     {
@@ -28,26 +29,34 @@ return new class extends Migration
             $table->string(UserColumns::EMAIL)->unique();
             
             // Address data
-            $table->string(UserColumns::PROVINSI);
-            $table->string(UserColumns::KABUPATEN);
-            $table->string(UserColumns::KECAMATAN);
-            $table->string(UserColumns::JALAN);
-            $table->string(UserColumns::KODE_POS);
+            $table->string('provinsi')->nullable();
+            $table->string('kabupaten')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('jalan')->nullable();
+            $table->string('kode_pos')->nullable();
             
             // Birth data
-            $table->integer(UserColumns::TANGGAL_LAHIR);
-            $table->integer(UserColumns::BULAN_LAHIR);
-            $table->integer(UserColumns::TAHUN_LAHIR);
-            $table->integer(UserColumns::USIA);
-        });
+            $table->integer(UserColumns::TANGGAL_LAHIR)->nullable();
+            $table->integer(UserColumns::BULAN_LAHIR)->nullable();
+            $table->integer(UserColumns::TAHUN_LAHIR)->nullable();
+            $table->integer(UserColumns::USIA)->nullable();
 
+            // Tambahan umum Laravel
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
+
+            // Index tambahan (opsional)
+            $table->index(['last_name', 'first_name']);
+        });
     }
 
     /**
-     * Reverse the migrations.
+     * Rollback migration.
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists($this->table);
     }
 };
