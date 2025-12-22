@@ -65,17 +65,18 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class);
     }
 
-    // Relasi ke UserFinancialAccount
-    public function userFinancialAccounts()
-    {
-        return $this->hasMany(UserFinancialAccount::class);
-    }
-
     /**
      * Opsional: method bantu untuk mendapatkan nama lengkap secara dinamis
      */
     public function getFullNameAttribute()
     {
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+    /**
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 }

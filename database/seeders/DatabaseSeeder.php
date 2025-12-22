@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
+            //AccountSeeder::class,
         ]);
     }
 }
