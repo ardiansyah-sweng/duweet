@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class FinancialAccount extends Model
 {
     use HasFactory;
+
+    protected $table;
 
     protected $fillable = [
         FinancialAccountColumns::NAME,
@@ -32,6 +35,9 @@ class FinancialAccount extends Model
         FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
+    /**
+     * Nama tabel diambil dari config/db_tables.php
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -60,5 +66,38 @@ class FinancialAccount extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class, 'financial_account_id');
+    }
+
+    /**
+     * Relasi ke UserFinancialAccount
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class);
+    }
+
+    /**
+     * Aturan dasar sebelum delete (mencegah kehilangan data penting)
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($account) {
+            // Tidak boleh menghapus akun grup jika masih punya anak
+            if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
+            }
+
+            // Tidak boleh menghapus akun leaf yang masih punya transaksi
+            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
+            }
+        });
+    }
+
+    public function getById($id)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
+        $result = DB::select($sql, [$id]);
+        return !empty($result) ? $result[0] : null;
     }
 }
