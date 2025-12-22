@@ -87,6 +87,7 @@ class Transaction extends Model
     }
 
     /**
+<<<<<<< HEAD
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
      * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
      *
@@ -175,5 +176,151 @@ class Transaction extends Model
 
         $results = DB::select($sql, $bindings);
         return collect($results);
+    }
+
+     /* Scope: Filter transactions by date range (period)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string|Carbon  $startDate
+     * @param  string|Carbon  $endDate
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByPeriod($query, $startDate, $endDate)
+    {
+        $startDate = $startDate instanceof Carbon ? $startDate->toDateString() : $startDate;
+        $endDate = $endDate instanceof Carbon ? $endDate->toDateString() : $endDate;
+
+        return $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+    }
+
+    /**
+     * Scope: Filter transactions by user account
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $userAccountId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByUserAccount($query, $userAccountId)
+    {
+        return $query->where(TransactionColumns::USER_ACCOUNT_ID, $userAccountId);
+    }
+
+    /**
+     * Scope: Filter transactions by financial account
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $financialAccountId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByFinancialAccount($query, $financialAccountId)
+    {
+        return $query->where(TransactionColumns::FINANCIAL_ACCOUNT_ID, $financialAccountId);
+    }
+
+    /**
+     * Get all transactions with optional filters using raw SQL
+     * 
+     * @param  int|null  $userAccountId
+     * @param  int|null  $financialAccountId
+     * @param  string|null  $entryType
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getAllTransactions(
+        ?int $userAccountId = null,
+        ?int $financialAccountId = null,
+        ?string $entryType = null
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction', 'transactions');
+
+        // Start with base SQL
+        $sql = "SELECT * FROM {$transactionTable} WHERE 1=1";
+        $bindings = [];
+
+        // Add optional filters
+        if ($userAccountId !== null) {
+            $sql .= " AND " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
+            $bindings[] = $userAccountId;
+        }
+
+        if ($financialAccountId !== null) {
+            $sql .= " AND " . TransactionColumns::FINANCIAL_ACCOUNT_ID . " = ?";
+            $bindings[] = $financialAccountId;
+        }
+
+        if ($entryType !== null) {
+            $sql .= " AND " . TransactionColumns::ENTRY_TYPE . " = ?";
+            $bindings[] = $entryType;
+        }
+
+        // Order by created_at descending
+        $sql .= " ORDER BY created_at DESC";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        return collect($results);
+    }
+
+    /**
+     * Filter transactions by period using raw SQL
+     * 
+     * @param  string  $startDate  Date in format Y-m-d
+     * @param  string  $endDate  Date in format Y-m-d
+     * @param  int|null  $userAccountId  Optional filter by user account
+     * @param  int|null  $financialAccountId  Optional filter by financial account
+     * @param  string|null  $entryType  Optional filter by entry type (debit/credit)
+     * @return \Illuminate\Support\Collection
+     */
+    public static function filterTransactionsByPeriod(
+        string $startDate,
+        string $endDate,
+        ?int $userAccountId = null,
+        ?int $financialAccountId = null,
+        ?string $entryType = null
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction', 'transactions');
+
+        // Start with base SQL
+        $sql = "SELECT * FROM {$transactionTable} WHERE created_at BETWEEN ? AND ?";
+        $bindings = [
+            $startDate . ' 00:00:00',
+            $endDate . ' 23:59:59'
+        ];
+
+        // Add optional filters
+        if ($userAccountId !== null) {
+            $sql .= " AND " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
+            $bindings[] = $userAccountId;
+        }
+
+        if ($financialAccountId !== null) {
+            $sql .= " AND " . TransactionColumns::FINANCIAL_ACCOUNT_ID . " = ?";
+            $bindings[] = $financialAccountId;
+        }
+
+        if ($entryType !== null) {
+            $sql .= " AND " . TransactionColumns::ENTRY_TYPE . " = ?";
+            $bindings[] = $entryType;
+        }
+
+        // Order by created_at descending
+        $sql .= " ORDER BY created_at DESC";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        return collect($results);
+    }
+
+    /**
+     * Scope: Filter transactions by entry type
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $entryType  'debit' or 'credit'
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByEntryType($query, $entryType)
+    {
+        return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
     }
 }
