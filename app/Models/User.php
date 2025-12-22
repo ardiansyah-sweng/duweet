@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\FinancialAccount;
+use App\Constants\FinancialAccountColumns;
 
 class User extends Authenticatable
 {
@@ -44,5 +46,26 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get user's financial accounts (if `user_id` exists on financial_accounts).
+     */
+    public function financialAccounts()
+    {
+        return $this->hasMany(FinancialAccount::class, 'user_id');
+    }
+
+    /**
+     * Get total balance for the user by summing account balances.
+     * Returns int (0 if no accounts or column missing).
+     */
+    public function totalBalance(): int
+    {
+        try {
+            return (int) $this->financialAccounts()->sum(FinancialAccountColumns::BALANCE);
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 }
