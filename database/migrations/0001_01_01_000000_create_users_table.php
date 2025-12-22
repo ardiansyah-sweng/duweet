@@ -15,7 +15,7 @@ return new class extends Migration
     }
 
     /**
-     * Jalankan migrasi.
+     * Run the migrations.
      */
     public function up(): void
     {
@@ -44,10 +44,10 @@ return new class extends Migration
     }
 
     /**
-     * Batalkan migrasi.
+     * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists($this->table);
+        Schema::dropIfExists('users');
     }
 };
