@@ -18,6 +18,12 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
+// Transaction API Routes
+Route::prefix('transactions')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+});
+
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
