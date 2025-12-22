@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
 
         // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
-            UserSeeder::class,
+            UserSeeder::class,  
             UserAccountSeeder::class,
             FinancialAccountSeeder::class,
             TransactionSeeder::class,
