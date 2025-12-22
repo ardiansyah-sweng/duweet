@@ -87,7 +87,6 @@ class Transaction extends Model
     }
 
     /**
-<<<<<<< HEAD
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
      * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
      *
@@ -185,7 +184,7 @@ class Transaction extends Model
      * @param  string|Carbon  $endDate
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeByPeriod($query, $startDate, $endDate)
+public function scopeByPeriod($query, $startDate, $endDate)
     {
         $startDate = $startDate instanceof Carbon ? $startDate->toDateString() : $startDate;
         $endDate = $endDate instanceof Carbon ? $endDate->toDateString() : $endDate;

@@ -74,40 +74,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
-    public function accounts(): HasMany
-    {
-        return $this->hasMany(UserAccount::class);
-    }
-
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
-
-    public function financialAccounts()
-    {
-        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
-                    ->withPivot(['initial_balance', 'balance', 'is_active'])
-                    ->withTimestamps();
-    }
-
-    public function totalLiquidAsset(): int
-    {
-        return $this->financialAccounts()
-            ->whereIn('type', ['AS', 'LI'])
-            ->sum('user_financial_accounts.balance');
-    }
-
-    public function scopeWithTotalLiquidAsset($query)
-    {
-        return $query->addSelect([
-            'total_liquid_asset' => DB::table('user_financial_accounts as ufa')
-                ->join('financial_accounts as fa', 'fa.id', '=', 'ufa.financial_account_id')
-                ->whereColumn('ufa.user_id', 'users.id')
-                ->whereIn('fa.type', ['AS','LI'])
-                ->selectRaw('COALESCE(SUM(ufa.balance),0)')
-        ]);
-    }
+   
 
     public function userFinancialAccounts()
     {

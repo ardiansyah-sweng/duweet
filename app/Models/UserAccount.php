@@ -1,42 +1,54 @@
 <?php
+
 namespace App\Models;
 
+use App\Constants\UserAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
-use App\Constants\UserAccountColumns;
 
 class UserAccount extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
-
     protected $table = 'user_accounts';
 
-    protected $fillable = [
-        'id_user',
-        'username',
-        'email',
-        'password',
-        'verified_at',
-        'is_active',
+    /**
+     * This table does not use created_at/updated_at timestamps.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    protected $casts = [
+        UserAccountColumns::IS_ACTIVE => 'boolean',
+        UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
     protected $hidden = [
-        'password',
+        UserAccountColumns::PASSWORD,
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function user(): BelongsTo
-    // Relasi ke User
+    /**
+     * Get the fillable attributes for the model.
+     * Uses centralized definition from UserAccountColumns constant class.
+     *
+     * @return array<string>
+     */
+    public function getFillable()
     {
-        return $this->belongsTo(User::class, 'id_user');
+        return UserAccountColumns::getFillable();
     }
+
+    /**
+     * Relasi ke User
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
+    }
+
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'user_account_id');
@@ -48,12 +60,12 @@ class UserAccount extends Model
      */
     public function userFinancialAccounts()
     {
-        return $this->hasMany(UserFinancialAccount::class, 'user_id', 'id_user');
+        return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
     }
 
     /**
      * Hapus satu UserAccount berdasarkan ID dengan raw query
-     *
+     * 
      * @param int $id
      * @return array
      */

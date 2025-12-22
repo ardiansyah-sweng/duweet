@@ -45,9 +45,6 @@ class MonthlyExpenseController extends Controller
                 'start_date'  => $start->toDateString(),
                 'end_date'    => $end->copy()->subDay()->toDateString(),
             ],
-            'filter' => [
-                'user_id' => $userId !== null && $userId !== '' ? (int)$userId : null,
-            ],
             'data' => $rows,
         ]);
     }
