@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Transaction extends Model
@@ -121,5 +122,37 @@ class Transaction extends Model
         ]);
 
         return collect($rows);
+    }
+
+    /**
+     * Hard delete semua transaksi berdasarkan kumpulan user_account_id
+     *
+     * @param \Illuminate\Support\Collection|array $userAccountIds
+     * @return int jumlah row terhapus
+     */
+    public static function deleteByUserAccountIds($userAccountIds): int
+    {
+        if (empty($userAccountIds) || count($userAccountIds) === 0) {
+            return 0;
+        }
+
+        return DB::table((new self)->getTable())
+            ->whereIn('user_account_id', $userAccountIds)
+            ->delete();
+    }
+
+    /**
+     * Hard delete semua transaksi milik user (berdasarkan user_id)
+     *
+     * @param int $userId
+     * @return int
+     */
+    public static function deleteByUserId(int $userId): int
+    {
+        $userAccountIds = DB::table('user_accounts')
+            ->where('id_user', $userId)
+            ->pluck('id');
+
+        return self::deleteByUserAccountIds($userAccountIds);
     }
 }

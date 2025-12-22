@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Transaction;
+
 // Import constants
 use App\Constants\UserColumns;
 use App\Constants\UserAccountColumns;
@@ -14,10 +16,6 @@ use App\Constants\TransactionColumns;
 
 class UserController extends Controller
 {
-    /**
-     * Menghapus user (hard delete) dan semua data terkait:
-     * user_accounts, user_telephones, user_financial_accounts, dan transactions.
-     */
     public function destroy($id)
     {
         $user = DB::table('users')
@@ -31,34 +29,49 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            // 1️⃣ Ambil semua user_account milik user
+            /**
+             * 1️⃣ Ambil semua user_account ID
+             * Controller tahu relasi via constant,
+             * tapi tidak tahu detail DML transaksi
+             */
             $userAccountIds = DB::table('user_accounts')
                 ->where(UserAccountColumns::ID_USER, $id)
                 ->pluck(UserAccountColumns::ID);
 
-            // 2️⃣ Hapus semua transaksi yang terkait user_account
+            /**
+             * 2️⃣ Hapus transaksi
+             * Kolom relasi tetap didefinisikan oleh TransactionColumns
+             */
             if ($userAccountIds->isNotEmpty()) {
-                DB::table('transactions')
-                    ->whereIn(TransactionColumns::USER_ACCOUNT_ID, $userAccountIds)
-                    ->delete();
+                Transaction::deleteByUserAccountIds(
+                    $userAccountIds,
+                    TransactionColumns::USER_ACCOUNT_ID
+                );
             }
 
-            // 3️⃣ Hapus semua user_financial_accounts milik user
+            // 3️⃣ Hapus user_financial_accounts
             DB::table('user_financial_accounts')
-                ->where(UserFinancialAccountColumns::USER_ACCOUNT_ID, $id)
+                ->where(
+                    UserFinancialAccountColumns::USER_ACCOUNT_ID,
+                    $id
+                )
                 ->delete();
 
-            // 4️⃣ Hapus semua nomor telepon milik user
+            // 4️⃣ Hapus user_telephones
             DB::table('user_telephones')
-                ->where(UserTelephoneColumns::ID_USER, $id)
+                ->where(
+                    UserTelephoneColumns::ID_USER,
+                    $id
+                )
                 ->delete();
 
-            // 5️⃣ Hapus semua akun login milik user (user_accounts)
-            if ($userAccountIds->isNotEmpty()) {
-                DB::table('user_accounts')
-                    ->whereIn(UserAccountColumns::ID, $userAccountIds)
-                    ->delete();
-            }
+            // 5️⃣ Hapus user_accounts
+            DB::table('user_accounts')
+                ->whereIn(
+                    UserAccountColumns::ID,
+                    $userAccountIds
+                )
+                ->delete();
 
             // 6️⃣ Hapus user utama
             DB::table('users')
@@ -68,14 +81,14 @@ class UserController extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'User dan semua data terkait (accounts, telephones, financials, transactions) berhasil dihapus permanen.'
+                'message' => 'User dan seluruh data terkait berhasil dihapus permanen.'
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
             return response()->json([
                 'message' => 'Terjadi kesalahan saat menghapus data.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
