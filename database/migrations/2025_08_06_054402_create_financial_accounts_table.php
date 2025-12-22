@@ -42,13 +42,10 @@ return new class extends Migration
 
             // Indexes for performance
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
-
             $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
         });
     }
-
-    
 
     /**
      * Reverse the migrations.
