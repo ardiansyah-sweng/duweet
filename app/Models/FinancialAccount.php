@@ -4,14 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Constants\FinancialAccountColumns;
+use App\Constants\FinancialAccountColumns; // Constant yang Anda berikan
 use Illuminate\Support\Facades\DB;
 
 
 class FinancialAccount extends Model
 {
-    protected $table;
-    use HasFactory;
+    use HasFactory; // Diletakkan di awal body class
 
     /**
      * Nama tabel diambil dari config/db_tables.php
@@ -23,19 +22,20 @@ class FinancialAccount extends Model
     }
 
     protected $fillable = [
-        FinancialAccountColumns::NAME,
         FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::NAME,
         FinancialAccountColumns::TYPE,
         FinancialAccountColumns::BALANCE,
-        FinancialAccountColumns::INITIAL_BALANCE,
-        FinancialAccountColumns::DESCRIPTION,
-        FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::DESCRIPTION,
         FinancialAccountColumns::SORT_ORDER,
         FinancialAccountColumns::LEVEL,
     ];
 
     protected $casts = [
+        // Menggunakan Constant untuk 'is_active' dan menambahkan casts yang umum (misal: balance)
         FinancialAccountColumns::BALANCE => 'integer',
         FinancialAccountColumns::INITIAL_BALANCE => 'integer',
         FinancialAccountColumns::IS_GROUP => 'boolean',
@@ -43,6 +43,7 @@ class FinancialAccount extends Model
     ];
 
     /**
+     * Relasi ke Parent Account
      * Relasi ke parent account
      */
     public function parent()
@@ -91,10 +92,20 @@ class FinancialAccount extends Model
         });
     }
 
+public static function getActiveAccounts()
+{
+    $instance = new self();
+    $tableName = $instance->getTable();
+    
+    // Gunakan query SQL biasa sesuai tugas Anda
+    $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
+    
+    return DB::select($sql, [1]); 
+}
+
     public function getById($id){
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
         return !empty($result) ? $result[0] : null;
     }
-
 }
