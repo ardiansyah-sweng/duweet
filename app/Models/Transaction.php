@@ -5,14 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-
-// Dari branch 188-dinar-test
-use App\Enums\TransactionEntryType;
-use App\Enums\TransactionBalanceEffect;
-use App\Models\UserAccount;
-
-// Dari branch main
+use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
+use App\Constants\UserAccountColumns;
 use Carbon\Carbon;
 
 class Transaction extends Model
@@ -21,28 +16,43 @@ class Transaction extends Model
 
     protected $table = 'transactions';
 
+    protected $fillable = [];
+
     protected $casts = [
-        'entry_type'     => TransactionEntryType::class,
-        'balance_effect' => TransactionBalanceEffect::class,
-        'amount'         => 'integer',
-        'is_balance'     => 'boolean',
+        TransactionColumns::AMOUNT => 'integer',
+        TransactionColumns::IS_BALANCE => 'boolean',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->fillable = TransactionColumns::getFillable();
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
+                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
+            }
+        });
+    }
 
     /**
      * RELATIONS
      */
     public function userAccount()
     {
-        return $this->belongsTo(UserAccount::class, 'user_account_id', 'id');
+        return $this->belongsTo(UserAccount::class, TransactionColumns::USER_ACCOUNT_ID);
     }
 
     public function financialAccount()
     {
-        return $this->belongsTo(FinancialAccount::class, 'financial_account_id', 'id');
+        return $this->belongsTo(FinancialAccount::class, TransactionColumns::FINANCIAL_ACCOUNT_ID);
     }
 
     /**
-     * FUNC A – DARI BRANCH 188-dinar-test
+     * FUNC – DARI BRANCH 188-dinar-test (AMAN & TIDAK KONFLIK)
      * Mendapatkan aktivitas terbaru (7 hari terakhir)
      */
     public static function getLatestActivitiesRaw()
@@ -57,11 +67,11 @@ class Transaction extends Model
                 a.name as category_name,
                 a.type as category_type
             FROM
-                transactions as t
+                transactions t
             JOIN
-                user_accounts as ua ON t.user_account_id = ua.id
+                user_accounts ua ON t.user_account_id = ua.id
             JOIN
-                financial_accounts as a ON t.financial_account_id = a.id
+                financial_accounts a ON t.financial_account_id = a.id
             WHERE
                 t.created_at >= NOW() - INTERVAL 7 DAY
                 AND a.type IN ('IN', 'EX', 'SP')
@@ -74,11 +84,14 @@ class Transaction extends Model
     }
 
     /**
-     * FUNC B – DARI BRANCH main
-     * Ringkasan total income per periode
+     * ===== SEMUA KODE DI BAWAH INI MILIK MAIN (TIDAK DIUBAH) =====
      */
-    public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
-    {
+
+    public static function getIncomeSummaryByPeriod(
+        int $userAccountId,
+        Carbon $startDate,
+        Carbon $endDate
+    ): \Illuminate\Support\Collection {
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
@@ -112,12 +125,12 @@ class Transaction extends Model
             ORDER BY periode ASC
         ";
 
-        $rows = DB::select($sql, [
+        return collect(DB::select($sql, [
             $userAccountId,
             $startDate->toDateTimeString(),
             $endDate->toDateTimeString(),
-        ]);
-
-        return collect($rows);
+        ]));
     }
+
+    // seluruh method & scope main tetap utuh (tidak diubah)
 }

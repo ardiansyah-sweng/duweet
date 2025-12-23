@@ -2,38 +2,36 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class UserFinancialAccount extends Model
 {
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
+    use HasFactory;
+
     protected $table = 'user_financial_accounts';
 
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = true; // Karena Anda punya 'id' (PK) di migrasi pivot
+    protected $fillable = [
+        'id_user',
+        'financial_account_id',
+        'balance',
+        'initial_balance',
+        'is_active',
+    ];
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * Relasi ke User
      */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Relasi ke FinancialAccount
      */
-    protected $casts = [
-        'balance' => 'integer',
-        'initial_balance' => 'integer',
-        'is_active' => 'boolean',
-    ];  
+    public function financialAccount()
+    {
+        return $this->belongsTo(FinancialAccount::class);
+    }
 }
