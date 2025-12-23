@@ -445,4 +445,31 @@ class Transaction extends Model
         return collect(DB::select($sql, $bindings));
     }
 
+    public static function getLatestActivitiesRaw()
+    {
+        $query = "
+            SELECT
+                t.amount,
+                t.description,
+                t.created_at,
+                t.entry_type, 
+                ua.username as user_name,
+                a.name as category_name,
+                a.type as category_type
+            FROM
+                transactions t
+            JOIN
+                user_accounts ua ON t.user_account_id = ua.id
+            JOIN
+                financial_accounts a ON t.financial_account_id = a.id
+            WHERE
+                t.created_at >= NOW() - INTERVAL 7 DAY
+                AND a.type IN ('IN', 'EX', 'SP')
+            ORDER BY
+                t.created_at DESC
+            LIMIT 20
+        ";
+
+        return DB::select($query);
+    }
 }

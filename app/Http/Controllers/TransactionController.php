@@ -150,6 +150,14 @@ class TransactionController extends Controller
                 'end_date'   => $end->copy()->subDay()->toDateString(),
             ],
             'data' => $rows,
+            ]);
+    }
+    public function getLatestActivities()
+    {
+        $activities = Transaction::getLatestActivitiesRaw();
+        return response()->json([
+            'success' => true,
+            'data' => $activities
         ]);
     }
 }
