@@ -7,8 +7,16 @@ use App\Http\Controllers\MonthlyExpenseController;
 
 Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
 
+use App\Http\Controllers\FinancialAccountController; 
+use App\Http\Controllers\ReportController; // PENTING: Import Controller
 
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Route GET yang Benar untuk endpoint incomeSummary
+// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
+
+Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);

@@ -28,10 +28,13 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
+            FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
             AccountSeeder::class,
             FinancialAccountSeeder::class,
+            // AccountSeeder::class,
+            UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
             DemoDataSeeder::class,

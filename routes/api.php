@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MonthlyExpenseController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\FinancialAccountController;
 Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
 
 // Transaction detail
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -35,6 +37,7 @@ Route::prefix('transactions')->group(function () {
 
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
+    Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
