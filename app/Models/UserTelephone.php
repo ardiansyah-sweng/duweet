@@ -26,7 +26,7 @@ class UserTelephone extends Model
      * Kolom yang bisa diisi secara mass-assignment
      */
     protected $fillable = [
-        Columns::ID_USER,
+        Columns::USER_ID,
         Columns::NUMBER,
     ];
 
@@ -36,14 +36,14 @@ class UserTelephone extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class, Columns::ID_USER);
+        return $this->belongsTo(User::class, Columns::USER_ID);
     }
 
     /**
      * Casting otomatis tipe data (opsional)
      */
     protected $casts = [
-        Columns::ID_USER => 'integer',
+        Columns::USER_ID => 'integer',
         Columns::NUMBER => 'string',
     ];
 }

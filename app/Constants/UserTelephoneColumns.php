@@ -6,13 +6,13 @@ class UserTelephoneColumns
 {
     // Kolom USER_TELEPHONES
     public const ID        = 'id';           // Primary Key (user_telephones)
-    public const ID_USER   = 'id_user';      // Foreign key ke users.id
+    public const USER_ID   = 'id_user';      // Foreign key ke users.id
     public const NUMBER    = 'number';       // Nomor telepon (nullable)
 
     public static function getFillable(): array
     {
         return [
-            self::ID_USER,
+            self::USER_ID,
             self::NUMBER,
         ];
     }

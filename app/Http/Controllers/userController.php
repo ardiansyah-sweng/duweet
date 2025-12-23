@@ -99,7 +99,7 @@ class UserController extends Controller
             // 4️⃣ Hapus user_telephones
             DB::table('user_telephones')
                 ->where(
-                    UserTelephoneColumns::ID_USER,
+                    UserTelephoneColumns::USER_ID,
                     $id
                 )
                 ->delete();
