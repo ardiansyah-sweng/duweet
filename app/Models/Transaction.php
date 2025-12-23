@@ -411,18 +411,6 @@ class Transaction extends Model
     }
 
     /**
-     * Scope: Filter transactions by entry type
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $entryType  'debit' or 'credit'
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeByEntryType($query, $entryType)
-    {
-        return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
-    }
-
-    /**
      * Get monthly expenses summary per user within a period
      *
      * Expenses = financial_accounts.type = 'EX'
