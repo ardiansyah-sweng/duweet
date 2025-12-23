@@ -7,9 +7,6 @@ use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         // Create a test user only if not already exists
@@ -22,8 +19,10 @@ class DatabaseSeeder extends Seeder
 
         // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
+            FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
+            AccountSeeder::class,
             FinancialAccountSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
