@@ -4,48 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-<<<<<<< HEAD
-use App\Models\UserAccount;
-=======
+use Illuminate\Support\Facades\DB;
 use App\Constants\FinancialAccountColumns;
->>>>>>> 1ddf2b86ee702e9d70eeccf8ccd250a7abec4494
 
 class FinancialAccount extends Model
 {
     use HasFactory;
 
-<<<<<<< HEAD
-    protected $table = 'financial_accounts';
-
-    public $timestamps = false;
-
-    protected $fillable = [
-        'name',
-        'description',
-        'account_type',
-        'is_active',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function getAccountTypeAttribute($value)
+    /**
+     * Nama tabel diambil dari config/db_tables.php
+     */
+    public function __construct(array $attributes = [])
     {
-        return $this->attributes['type']; 
+        parent::__construct($attributes);
+        $this->table = config('db_tables.financial_account', 'financial_accounts');
     }
 
-    public function setAccountTypeAttribute($value)
-    {
-        $this->attributes['type'] = $value;
-    }
-
-    public function userAccounts()
-    {
-        return $this->hasMany(UserAccount::class, 'financial_account_id');
-    }
-}
-=======
     protected $fillable = [
         FinancialAccountColumns::NAME,
         FinancialAccountColumns::PARENT_ID,
@@ -66,9 +40,61 @@ class FinancialAccount extends Model
         FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
+    /**
+     * Relasi ke parent account
+     */
     public function parent()
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
+
+    /**
+     * Relasi ke child accounts
+     */
+    public function children()
+    {
+        return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
+    }
+
+    /**
+     * Relasi ke transaksi (leaf accounts)
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
+    }
+
+    /**
+     * Relasi ke UserFinancialAccount
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class);
+    }
+
+    /**
+     * Aturan sebelum delete untuk mencegah kehilangan data
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($account) {
+            if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
+            }
+
+            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+                throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
+            }
+        });
+    }
+
+    /**
+     * Ambil data berdasarkan ID
+     */
+    public function getById($id)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
+        $result = DB::select($sql, [$id]);
+        return !empty($result) ? $result[0] : null;
+    }
 }
->>>>>>> 1ddf2b86ee702e9d70eeccf8ccd250a7abec4494

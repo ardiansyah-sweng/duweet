@@ -9,18 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use App\Models\UserAccount;
 use App\Models\Transaction;
+use App\Models\UserFinancialAccount;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Disable automatic timestamps because users table does not have created_at/updated_at
-     *
-     * @var bool
-     */
     public $timestamps = false;
+
     protected $fillable = [
         'name',
         'first_name',
@@ -38,43 +35,38 @@ class User extends Authenticatable
         'usia',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
-     */
     protected $casts = [];
 
     /**
      * One user can have many user accounts (credentials)
      */
-    public function userAccounts()
+    public function userAccounts(): HasMany
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
 
     /**
      * HasManyThrough relationship to the transactions table.
-     * 
-     * This relationship is used by the ReportController
-     * to calculate the user's Surplus/Deficit.
+     * Used by ReportController to calculate the user's Surplus/Deficit.
      */
     public function transactions(): HasManyThrough
     {
         return $this->hasManyThrough(
             Transaction::class, 
             UserAccount::class,
-            'id_user',         // Foreign key in user_accounts table referencing users.id
-            'user_account_id', // Foreign key in transactions table referencing user_accounts.id
-            'id',              // Local key in users table (primary key)
-            'id'               // Local key in user_accounts table (primary key)
+            'id_user',         // Foreign key in user_accounts referencing users.id
+            'user_account_id', // Foreign key in transactions referencing user_accounts.id
+            'id',              // Local key in users table
+            'id'               // Local key in user_accounts table
         );
+    }
+
+    /**
+     * One user can have many financial accounts (UserFinancialAccount)
+     */
+    public function userFinancialAccounts(): HasMany
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 }
