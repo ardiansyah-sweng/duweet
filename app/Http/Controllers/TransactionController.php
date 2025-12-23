@@ -160,4 +160,15 @@ class TransactionController extends Controller
             'data' => $activities
         ]);
     }
+
+    /**
+     * Hard delete transaksi berdasarkan transaction_group_id.
+     */
+    public function hardDeleteByGroupId($groupId)
+    {
+        $result = Transaction::hardDeleteByGroupId($groupId);
+
+        $status = $result['success'] ? 200 : 400;
+        return response()->json($result, $status);
+    }
 }
