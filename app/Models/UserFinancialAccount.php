@@ -12,12 +12,15 @@ class UserFinancialAccount extends Model
     protected $table = 'user_financial_accounts';
 
     protected $fillable = [
-        'id_user',
+        'user_id',
+        'user_account_id',
         'financial_account_id',
         'balance',
         'initial_balance',
         'is_active',
     ];
+
+    public $timestamps = true;
 
     /**
      * Relasi ke User
