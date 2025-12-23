@@ -2,31 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name'           => 'Test User',
-                'first_name'     => 'Test',
-                'last_name'      => 'User',
-                'provinsi'       => 'DKI Jakarta',
-                'kabupaten'      => 'Jakarta Selatan',
-                'kecamatan'      => 'Kebayoran Baru',
-                'jalan'          => 'Jl. Senopati No. 1',
-                'kode_pos'       => '12190',
-                'tanggal_lahir'  => 15,
-                'bulan_lahir'    => 8,
-                'tahun_lahir'    => 2002,
-                'usia'           => 21,
-            ]
-        );
+        // Create a test user only if not already exists
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::factory()->create([
+                'email' => 'test@example.com',
+                'name' => 'Test User',
+            ]);
+        }
 
+        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
             FinancialAccountSeeder::class,
             UserSeeder::class,
@@ -37,7 +28,6 @@ class DatabaseSeeder extends Seeder
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
-            DemoDataSeeder::class,
             //AccountSeeder::class,
         ]);
     }

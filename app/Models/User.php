@@ -1,13 +1,11 @@
 <?php
 
 namespace App\Models;
+
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-// ...existing code...
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 use App\Models\UserAccount;
 
 class User extends Authenticatable
@@ -15,8 +13,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-     /**
-     /**
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -26,9 +23,7 @@ class User extends Authenticatable
      *
      * @var bool
      */
-
     public $timestamps = false;
-
     protected $fillable = [
         'name',
         'first_name',
@@ -44,9 +39,8 @@ class User extends Authenticatable
         'bulan_lahir',
         'tahun_lahir',
         'usia',
-        'password',
     ];
-    
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -62,7 +56,6 @@ class User extends Authenticatable
      *
      * @var array<string,string>
      */
-
     protected $casts = [
         'password' => 'hashed',
     ];
@@ -74,11 +67,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
-   
 
+    /**
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
     public function userFinancialAccounts()
     {
-        return $this->hasMany(\App\Models\UserFinancialAccount::class, 'user_id');
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
-    
 }

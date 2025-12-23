@@ -27,8 +27,8 @@ class UserFinancialAccountSeeder extends Seeder
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         }
 
-        // Ambil ID dari tabel users (sesuai kolom pivot id_user)
-        $userIds = DB::table(config('db_tables.user'))->pluck('id');
+        // Ambil ID dari tabel user_accounts (bukan users!)
+        $userAccountIds = DB::table(config('db_tables.user_account'))->pluck('id');
 
         // Ambil financial account yg bukan group
         $financialAccountIds = DB::table(config('db_tables.financial_account'))
@@ -37,10 +37,10 @@ class UserFinancialAccountSeeder extends Seeder
 
         $records = [];
 
-        foreach ($userIds as $userId) {
+        foreach ($userAccountIds as $uaId) {
             foreach ($financialAccountIds as $faId) {
                 $records[] = [
-                    UserFinancialAccountColumns::USER_ID => $userId,
+                    UserFinancialAccountColumns::USER_ACCOUNT_ID => $uaId,
                     UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID => $faId,
                     UserFinancialAccountColumns::INITIAL_BALANCE => 1_000_000,
                     UserFinancialAccountColumns::BALANCE => 1_000_000,

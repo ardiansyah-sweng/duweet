@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Constants\UserFinancialAccountColumns;
 
 class UserFinancialAccount extends Model
 {
@@ -12,10 +11,13 @@ class UserFinancialAccount extends Model
 
     protected $table = 'user_financial_accounts';
 
-    public function getFillable()
-    {
-        return UserFinancialAccountColumns::getFillable();
-    }
+    protected $fillable = [
+        'id_user',
+        'financial_account_id',
+        'balance',
+        'initial_balance',
+        'is_active',
+    ];
 
     /**
      * Relasi ke User
