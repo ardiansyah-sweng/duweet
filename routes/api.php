@@ -11,7 +11,25 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+// Simple health check endpoint
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'OK',
+        'message' => 'API is running',
+        'timestamp' => now()->toDateTimeString()
+    ]);
+});
+// jika ingin validasi cari user by email menggunakan POST
+// Route::post('/find-by-email', [UserAccountController::class, 'findByEmail']);
+Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
+
+// GET endpoint to find user by email (safe response, no password)
+Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
+
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
