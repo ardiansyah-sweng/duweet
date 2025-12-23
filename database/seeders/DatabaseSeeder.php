@@ -7,10 +7,6 @@ use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * See
-     * dhe application's database.
-     */
     public function run(): void
     {
         // Create a test user only if not already exists
@@ -28,6 +24,7 @@ class DatabaseSeeder extends Seeder
             AccountSeeder::class,
             FinancialAccountSeeder::class,
             TransaksiSeeder::class,
+            UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
         ]);
     }
