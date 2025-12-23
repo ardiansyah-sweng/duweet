@@ -18,25 +18,25 @@ class UserAccountColumns
     public const IS_ACTIVE       = 'is_active';            // Status akun (aktif/nonaktif)
 
     public static function getFillable(): array
-    {
-        return [
-            self::ID,
-            self::ID_USER,
-            self::USERNAME,
-            self::EMAIL,
-            self::PASSWORD,
-            self::VERIFIED_AT,
-            self::IS_ACTIVE,
-        ];
-    }
+        {
+            return [
+                self::ID,
+                self::ID_USER,
+                self::USERNAME,
+                self::EMAIL,
+                self::PASSWORD,
+                self::VERIFIED_AT,
+                self::IS_ACTIVE,
+            ];
+        }
 
-    public static function getPrimaryKey(): string
-    {
-        return self::ID;
-    }
+        public static function getPrimaryKey(): string
+        {
+            return self::ID;
+        }
 
-    public static function getForeignKey(): string
-    {
-        return self::ID_USER;
+        public static function getForeignKey(): string
+        {
+            return self::ID_USER;
+        }
     }
-}

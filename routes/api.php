@@ -13,6 +13,13 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+// =============================================================
+// 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
+// =============================================================
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
@@ -43,12 +50,33 @@ Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 
 Route::prefix('user-account')->group(function () {
-    Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
-    Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
-    Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
-    Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
-    Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
-    Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+    // List semua user account
+    Route::get('/', [UserAccountController::class, 'index'])
+        ->name('api.user-account.index');
+
+    // Detail by ID
+    Route::get('/{id}', [UserAccountController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.user-account.show');
+
+    // CREATE – cuma 1 endpoint, pakai RAW QUERY BUILDER
+    Route::post('/', [UserAccountController::class, 'storeRaw'])
+        ->name('api.user-account.store');
+
+    // UPDATE
+    Route::put('/{id}', [UserAccountController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.user-account.update');
+
+    // DELETE pakai Eloquent
+    Route::delete('/{id}', [UserAccountController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('api.user-account.destroy');
+
+    // DELETE pakai RAW QUERY (kalau masih mau dipakai tugas raw)
+    Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])
+        ->whereNumber('id')
+        ->name('api.user-account.destroy-raw');
 });
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
@@ -74,11 +102,17 @@ Route::prefix('financial-account')->group(function () {
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
-// Reports API Routes
+// =============================================================
+// 3. REPORTS
+// =============================================================
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
 });
 
+// =============================================================
+// 4. TRANSACTION (Tambahan dari Incoming Change)
+// =============================================================
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
