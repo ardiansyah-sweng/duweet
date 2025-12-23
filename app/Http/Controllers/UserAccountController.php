@@ -147,4 +147,22 @@ class UserAccountController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Get user accounts inactive within a specified period
+     */
+   public function inactiveByPeriod(Request $request)
+{
+    $data = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu(
+         $request->tanggal_mulai ?? null,
+        $request->tanggal_selesai ?? null
+    );
+
+    return response()->json([
+        'success' => true,
+        'data' => $data
+    ]);
+}
+
+
 }

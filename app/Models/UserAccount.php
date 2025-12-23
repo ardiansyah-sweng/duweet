@@ -25,9 +25,12 @@ class UserAccount extends Model
         UserAccountColumns::PASSWORD,
     ];
 
-    public function getFillable()
+    protected $fillable = [];
+
+    public function __construct(array $attributes = [])
     {
-        return UserAccountColumns::getFillable();
+        parent::__construct($attributes);
+        $this->fillable = UserAccountColumns::getFillable();
     }
 
     /**
@@ -54,10 +57,13 @@ class UserAccount extends Model
     /**
      * Ambil user yang tidak login dalam periode tertentu
      */
-    public static function query_user_yang_tidak_login_dalam_periode_tertentu($tanggalMulai, $tanggalSelesai)
+    public static function query_user_yang_tidak_login_dalam_periode_tertentu()
     {
-        // Contoh logika query (silakan sesuaikan dengan field di DB kamu)
-        return self::whereBetween('last_login', [$tanggalMulai, $tanggalSelesai])->get();
+      return DB::select("
+        SELECT *
+        FROM user_accounts
+        WHERE is_active = 0
+    ");
     }
 
     /**
