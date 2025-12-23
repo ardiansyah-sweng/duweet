@@ -3,14 +3,21 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\MonthlyExpenseController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
-use App\Http\Controllers\AccountController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+// Monthly expenses
+Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
+
+
+// Transaction detail
 // Simple health check endpoint
 Route::get('/health', function () {
     return response()->json([
@@ -32,6 +39,9 @@ Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 
 // UserAccount API Routes (no CSRF protection needed)
+Route::get('/user-accounts', [UserAccountController::class, 'index']);
+Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
+
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
