@@ -105,4 +105,13 @@ class TransactionController extends Controller
             'data' => $result,
         ]);
     }
+
+    public function getLatestActivities()
+    {
+        $activities = Transaction::getLatestActivitiesRaw();
+        return response()->json([
+            'success' => true,
+            'data' => $activities
+        ]);
+    }
 }

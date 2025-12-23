@@ -19,10 +19,13 @@ class DatabaseSeeder extends Seeder
 
         // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
+            FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
             AccountSeeder::class,
             FinancialAccountSeeder::class,
+            // AccountSeeder::class,
+            UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
             //AccountSeeder::class,

@@ -13,9 +13,19 @@ use Carbon\Carbon; // Import Carbon untuk type hinting
 class Transaction extends Model
 {
     use HasFactory;
-
+    
     // Nama tabel yang sesuai dengan konfigurasi
     protected $table = 'transactions';
+
+    // protected static function booted()
+    // {
+    //     static::creating(function ($transaction) {
+    //         if (empty($transaction->transaction_group_id)) {
+    //             $transaction->transaction_group_id = (string) Str::uuid();
+    //         }
+    //     });
+    // }
+
 
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
@@ -90,6 +100,37 @@ class Transaction extends Model
         return collect($rows);
     }
 
+    /**
+     * Hard delete semua transaksi berdasarkan kumpulan user_account_id
+     *
+     * @param \Illuminate\Support\Collection|array $userAccountIds
+     * @return int jumlah row terhapus
+     */
+    public static function deleteByUserAccountIds($userAccountIds): int
+    {
+        if (empty($userAccountIds) || count($userAccountIds) === 0) {
+            return 0;
+        }
+
+        return DB::table((new self)->getTable())
+            ->whereIn('user_account_id', $userAccountIds)
+            ->delete();
+    }
+
+    /**
+     * Hard delete semua transaksi milik user (berdasarkan user_id)
+     *
+     * @param int $userId
+     * @return int
+     */ 
+    public static function deleteByUserId(int $userId): int
+    {
+        $userAccountIds = DB::table('user_accounts')
+            ->where('id_user', $userId)
+            ->pluck('id');
+
+        return self::deleteByUserAccountIds($userAccountIds);
+    }
     /**
      * Get total transactions per user account using raw SQL query.
      *
@@ -352,5 +393,35 @@ class Transaction extends Model
     public function scopeByEntryType($query, $entryType)
     {
         return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
+    }
+
+
+
+    public static function getLatestActivitiesRaw()
+    {
+        $query = "
+            SELECT
+                t.amount,
+                t.description,
+                t.created_at,
+                t.entry_type, 
+                ua.username as user_name,
+                a.name as category_name,
+                a.type as category_type
+            FROM
+                transactions t
+            JOIN
+                user_accounts ua ON t.user_account_id = ua.id
+            JOIN
+                financial_accounts a ON t.financial_account_id = a.id
+            WHERE
+                t.created_at >= NOW() - INTERVAL 7 DAY
+                AND a.type IN ('IN', 'EX', 'SP')
+            ORDER BY
+                t.created_at DESC
+            LIMIT 20
+        ";
+
+        return DB::select($query);
     }
 }

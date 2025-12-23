@@ -3,9 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use App\Constants\FinancialAccountColumns as AccountColumns;
 use App\Models\FinancialAccount;
+use App\Constants\FinancialAccountColumns;
 
 class FinancialAccountSeeder extends Seeder
 {
@@ -30,44 +29,80 @@ class FinancialAccountSeeder extends Seeder
 
         DB::table($table)->insert([
             [
-                AccountColumns::NAME             => 'Cash',
-                AccountColumns::TYPE             => 'AS',
-                AccountColumns::BALANCE          => 0,
-                AccountColumns::INITIAL_BALANCE  => 0,
-                AccountColumns::IS_GROUP         => false,
-                AccountColumns::DESCRIPTION      => 'Cash on hand',
-                AccountColumns::IS_ACTIVE        => true,
-                AccountColumns::SORT_ORDER       => 1,
-                AccountColumns::LEVEL            => 0,
-                AccountColumns::PARENT_ID        => null,
+                FinancialAccountColumns::NAME             => 'Cash',
+                FinancialAccountColumns::TYPE             => 'AS',
+                FinancialAccountColumns::BALANCE          => 0,
+                FinancialAccountColumns::INITIAL_BALANCE  => 0,
+                FinancialAccountColumns::IS_GROUP         => false,
+                FinancialAccountColumns::DESCRIPTION      => 'Cash on hand',
+                FinancialAccountColumns::IS_ACTIVE        => true,
+                FinancialAccountColumns::SORT_ORDER       => 1,
+                FinancialAccountColumns::LEVEL            => 0,
+                FinancialAccountColumns::PARENT_ID        => null,
             ],
             [
-                AccountColumns::NAME             => 'Bank BCA',
-                AccountColumns::TYPE             => 'AS',
-                AccountColumns::BALANCE          => 0,
-                AccountColumns::INITIAL_BALANCE  => 0,
-                AccountColumns::IS_GROUP         => false,
-                AccountColumns::DESCRIPTION      => 'Bank account for transactions',
-                AccountColumns::IS_ACTIVE        => true,
-                AccountColumns::SORT_ORDER       => 2,
-                AccountColumns::LEVEL            => 0,
-                AccountColumns::PARENT_ID        => null,
+                FinancialAccountColumns::NAME             => 'Bank BCA',
+                FinancialAccountColumns::TYPE             => 'AS',
+                FinancialAccountColumns::BALANCE          => 0,
+                FinancialAccountColumns::INITIAL_BALANCE  => 0,
+                FinancialAccountColumns::IS_GROUP         => false,
+                FinancialAccountColumns::DESCRIPTION      => 'Bank account for transactions',
+                FinancialAccountColumns::IS_ACTIVE        => true,
+                FinancialAccountColumns::SORT_ORDER       => 2,
+                FinancialAccountColumns::LEVEL            => 0,
+                FinancialAccountColumns::PARENT_ID        => null,
             ],
             [
-                AccountColumns::NAME             => 'Expense: Food & Drinks',
-                AccountColumns::TYPE             => 'EX',
-                AccountColumns::BALANCE          => 0,
-                AccountColumns::INITIAL_BALANCE  => 0,
-                AccountColumns::IS_GROUP         => false,
-                AccountColumns::DESCRIPTION      => 'Daily food & beverage expenses',
-                AccountColumns::IS_ACTIVE        => true,
-                AccountColumns::SORT_ORDER       => 3,
-                AccountColumns::LEVEL            => 0,
-                AccountColumns::PARENT_ID        => null,
+                FinancialAccountColumns::NAME             => 'Expense: Food & Drinks',
+                FinancialAccountColumns::TYPE             => 'EX',
+                FinancialAccountColumns::BALANCE          => 0,
+                FinancialAccountColumns::INITIAL_BALANCE  => 0,
+                FinancialAccountColumns::IS_GROUP         => false,
+                FinancialAccountColumns::DESCRIPTION      => 'Daily food & beverage expenses',
+                FinancialAccountColumns::IS_ACTIVE        => true,
+                FinancialAccountColumns::SORT_ORDER       => 3,
+                FinancialAccountColumns::LEVEL            => 0,
+                FinancialAccountColumns::PARENT_ID        => null,
             ],
         ]);
 
-        // Optionally create additional randomized accounts via factory
-        FinancialAccount::factory()->count(7)->create();
+        FinancialAccount::create([
+            FinancialAccountColumns::PARENT_ID       => null,
+            FinancialAccountColumns::NAME            => 'Bank BNI',
+            FinancialAccountColumns::TYPE            => 'AS',
+            FinancialAccountColumns::BALANCE         => 100000,
+            FinancialAccountColumns::INITIAL_BALANCE => 100000,
+            FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BNI',
+            FinancialAccountColumns::IS_GROUP        => false,
+            FinancialAccountColumns::IS_ACTIVE       => true,
+            FinancialAccountColumns::SORT_ORDER      => 1,
+            FinancialAccountColumns::LEVEL           => 0,
+        ]);
+
+        FinancialAccount::create([
+            FinancialAccountColumns::PARENT_ID       => null,
+            FinancialAccountColumns::NAME            => 'Bank BRI',
+            FinancialAccountColumns::TYPE            => 'AS',
+            FinancialAccountColumns::BALANCE         => 1500000,
+            FinancialAccountColumns::INITIAL_BALANCE => 1500000,
+            FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BRI',
+            FinancialAccountColumns::IS_GROUP        => false,
+            FinancialAccountColumns::IS_ACTIVE       => true,
+            FinancialAccountColumns::SORT_ORDER      => 2,
+            FinancialAccountColumns::LEVEL           => 0,
+        ]);
+
+        FinancialAccount::create([
+            FinancialAccountColumns::PARENT_ID       => null,
+            FinancialAccountColumns::NAME            => 'Bank BCA',
+            FinancialAccountColumns::TYPE            => 'AS',
+            FinancialAccountColumns::BALANCE         => 5000000,
+            FinancialAccountColumns::INITIAL_BALANCE => 5000000,
+            FinancialAccountColumns::DESCRIPTION     => 'Rekening utama BCA',
+            FinancialAccountColumns::IS_GROUP        => false,
+            FinancialAccountColumns::IS_ACTIVE       => false,
+            FinancialAccountColumns::SORT_ORDER      => 2,
+            FinancialAccountColumns::LEVEL           => 0,
+        ]);
     }
 }
