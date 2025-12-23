@@ -35,6 +35,12 @@ Route::get('/financial_accounts', [AccountController::class, 'index']);
 Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
+// Transaction API Routes
+Route::prefix('transactions')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+});
+
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
