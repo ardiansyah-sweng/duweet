@@ -15,6 +15,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Web-only routes (no API routes here). API routes live in routes/api.php.
+
 // Route GET yang Benar untuk endpoint incomeSummary
 // FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
