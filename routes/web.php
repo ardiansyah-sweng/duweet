@@ -1,7 +1,16 @@
 <?php
 
+use App\Http\Controllers\AccountController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController; // PENTING: Import Controller
+
+
+Route::get('/total-per-user', [AccountController::class, 'totalPerUser']);
+// Load API routes (if present) so we can keep API routes in routes/api.php
+if (file_exists(__DIR__ . '/api.php')) {
+    require __DIR__ . '/api.php';
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -15,6 +24,7 @@ use App\Http\Controllers\ReportController; // PENTING: Import Controller
 */
 
 // Route Dasar Laravel
+
 Route::get('/', function () {
     return view('welcome');
 });

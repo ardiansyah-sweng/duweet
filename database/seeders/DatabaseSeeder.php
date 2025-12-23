@@ -3,12 +3,20 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+
+use Database\Seeders\SampleTotalsSeeder;
+
 use App\Models\User;
+
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+
+        // Delegate to the SampleTotalsSeeder which creates 4 users and their accounts
+        $this->call([SampleTotalsSeeder::class]);
+
         // Create a test user only if not already exists
         if (!User::where('email', 'test@example.com')->exists()) {
             User::factory()->create([
@@ -27,5 +35,6 @@ class DatabaseSeeder extends Seeder
             TransactionSeeder::class,
             //AccountSeeder::class,
         ]);
+
     }
 }
