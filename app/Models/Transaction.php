@@ -13,7 +13,6 @@ use Carbon\Carbon;
 class Transaction extends Model
 {
     use HasFactory;
-
     protected $table;
 
     protected $casts = [
@@ -125,6 +124,16 @@ class Transaction extends Model
         return $query->where(TransactionColumns::IS_BALANCE, false);
     }
 
+    // protected static function booted()
+    // {
+    //     static::creating(function ($transaction) {
+    //         if (empty($transaction->transaction_group_id)) {
+    //             $transaction->transaction_group_id = (string) Str::uuid();
+    //         }
+    //     });
+    // }
+
+
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
      * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
@@ -174,6 +183,37 @@ class Transaction extends Model
         return collect($rows);
     }
 
+    /**
+     * Hard delete semua transaksi berdasarkan kumpulan user_account_id
+     *
+     * @param \Illuminate\Support\Collection|array $userAccountIds
+     * @return int jumlah row terhapus
+     */
+    public static function deleteByUserAccountIds($userAccountIds): int
+    {
+        if (empty($userAccountIds) || count($userAccountIds) === 0) {
+            return 0;
+        }
+
+        return DB::table((new self)->getTable())
+            ->whereIn('user_account_id', $userAccountIds)
+            ->delete();
+    }
+
+    /**
+     * Hard delete semua transaksi milik user (berdasarkan user_id)
+     *
+     * @param int $userId
+     * @return int
+     */ 
+    public static function deleteByUserId(int $userId): int
+    {
+        $userAccountIds = DB::table('user_accounts')
+            ->where('id_user', $userId)
+            ->pluck('id');
+
+        return self::deleteByUserAccountIds($userAccountIds);
+    }
     /**
      * Get total transactions per user account using raw SQL query.
      *
