@@ -15,26 +15,27 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     /**
-     * This table does not use created_at/updated_at timestamps.
-     *
-     * @var bool
+     * Model ini tidak menggunakan created_at dan updated_at.
      */
     public $timestamps = false;
 
+    /**
+     * Casting otomatis.
+     */
     protected $casts = [
         UserAccountColumns::IS_ACTIVE => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
+    /**
+     * Hidden fields (password tidak ditampilkan).
+     */
     protected $hidden = [
         UserAccountColumns::PASSWORD,
     ];
 
     /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
+     * Fillable (menggunakan constant class).
      */
     public function getFillable()
     {
@@ -42,7 +43,7 @@ class UserAccount extends Model
     }
 
     /**
-     * Relasi ke User
+     * Relasi ke tabel users.
      */
     public function user(): BelongsTo
     {
@@ -64,10 +65,7 @@ class UserAccount extends Model
     }
 
     /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * 
-     * @param int $id
-     * @return array
+     * RAW DELETE USER ACCOUNT (DML)
      */
     public static function deleteUserAccountRaw($id)
     {
@@ -84,5 +82,33 @@ class UserAccount extends Model
                 'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
             ];
         }
+    }
+    
+
+    /**
+     * DML: Cari user by email menggunakan RAW QUERY
+     */
+    public static function cariUserByEmail($email)
+    {
+        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
+        $result = DB::select($query, [$email]);
+
+        return $result[0] ?? null;
+    }
+
+    /**
+     * DML: Reset password by email (RAW UPDATE)
+     */
+    public static function resetPasswordByEmail($email, $newPassword)
+    {
+        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+
+        $query = "
+            UPDATE user_accounts 
+            SET password = ?
+            WHERE email = ?
+        ";
+
+        return DB::update($query, [$hashed, $email]);
     }
 }

@@ -106,14 +106,12 @@ class TransactionController extends Controller
         ]);
     }
 
-    /**
-     * Hard delete transaksi berdasarkan transaction_group_id.
-     */
-    public function hardDeleteByGroupId($groupId)
+    public function getLatestActivities()
     {
-        $result = Transaction::hardDeleteByGroupId($groupId);
-
-        $status = $result['success'] ? 200 : 400;
-        return response()->json($result, $status);
+        $activities = Transaction::getLatestActivitiesRaw();
+        return response()->json([
+            'success' => true,
+            'data' => $activities
+        ]);
     }
 }

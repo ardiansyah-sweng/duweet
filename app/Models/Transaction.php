@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
-use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
@@ -396,62 +395,33 @@ class Transaction extends Model
         return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
     }
 
-    /**
-     * Hard delete semua transaksi dalam satu transaction_group_id dan
-     * sesuaikan saldo di tabel `user_financial_accounts`.
-     *
-     * @param string $groupId
-     * @return array{success:bool,message:string,deleted_count:int}
-     */
-    public static function hardDeleteByGroupId(string $groupId): array
+
+
+    public static function getLatestActivitiesRaw()
     {
-        try {
-            $deletedCount = 0;
+        $query = "
+            SELECT
+                t.amount,
+                t.description,
+                t.created_at,
+                t.entry_type, 
+                ua.username as user_name,
+                a.name as category_name,
+                a.type as category_type
+            FROM
+                transactions t
+            JOIN
+                user_accounts ua ON t.user_account_id = ua.id
+            JOIN
+                financial_accounts a ON t.financial_account_id = a.id
+            WHERE
+                t.created_at >= NOW() - INTERVAL 7 DAY
+                AND a.type IN ('IN', 'EX', 'SP')
+            ORDER BY
+                t.created_at DESC
+            LIMIT 20
+        ";
 
-            DB::transaction(function () use ($groupId, &$deletedCount) {
-                $transactions = DB::select("SELECT * FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::TRANSACTION_GROUP_ID . " = ?", [$groupId]);
-
-                if (empty($transactions)) {
-                    throw new \Exception('No transactions found for group: ' . $groupId);
-                }
-
-                foreach ($transactions as $t) {
-                    $userAccountId = $t->{TransactionColumns::USER_ACCOUNT_ID};
-                    $financialAccountId = $t->{TransactionColumns::FINANCIAL_ACCOUNT_ID};
-
-                    // Ambil dan lock baris user_financial_accounts dengan FOR UPDATE
-                    $ufaRows = DB::select(
-                        "SELECT * FROM " . UserFinancialAccountColumns::TABLE . " WHERE " . UserFinancialAccountColumns::USER_ACCOUNT_ID . " = ? AND " . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . " = ? FOR UPDATE",
-                        [$userAccountId, $financialAccountId]
-                    );
-
-                    $ufa = $ufaRows[0] ?? null;
-
-                    if ($ufa) {
-                        $current = $ufa->{UserFinancialAccountColumns::BALANCE};
-
-                        if ($t->{TransactionColumns::BALANCE_EFFECT} === 'increase') {
-                            $new = $current - $t->{TransactionColumns::AMOUNT};
-                        } else {
-                            $new = $current + $t->{TransactionColumns::AMOUNT};
-                        }
-
-                        DB::update(
-                            "UPDATE " . UserFinancialAccountColumns::TABLE . " SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . UserFinancialAccountColumns::ID . " = ?",
-                            [$new, $ufa->{UserFinancialAccountColumns::ID}]
-                        );
-                    }
-
-                    // Hapus baris transaksi (hard delete)
-                    DB::delete("DELETE FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::ID . " = ?", [$t->{TransactionColumns::ID}]);
-
-                    $deletedCount++;
-                }
-            });
-
-            return ['success' => true, 'message' => 'Transactions deleted', 'deleted_count' => $deletedCount];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Failed: ' . $e->getMessage(), 'deleted_count' => 0];
-        }
+        return DB::select($query);
     }
 }
