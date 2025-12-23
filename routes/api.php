@@ -1,10 +1,15 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
+use App\Models\FinancialAccount;
+use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
@@ -17,6 +22,11 @@ Route::prefix('user')->group(function () {
     Route::put('/{id}', [UserController::class, 'update'])->name('api.user.update');
     Route::delete('/{id}', [UserController::class, 'destroy'])->name('api.user.destroy');
 });
+// Monthly expenses
+Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
+
+
+// Transaction detail
 // Simple health check endpoint
 Route::get('/health', function () {
     return response()->json([
@@ -38,6 +48,9 @@ Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 
 // UserAccount API Routes (no CSRF protection needed)
+Route::get('/user-accounts', [UserAccountController::class, 'index']);
+Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
+
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
@@ -46,6 +59,17 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
+
+Route::get('/ping', fn () => response()->json(['pong' => true]));
+
+Route::get('/accounts', function () {
+    return response()->json(['ok' => true]);
+});
+
+
+Route::post('/financial_accounts', [AccountController::class, 'store']);
+Route::get('/financial_accounts', [AccountController::class, 'index']);
+Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 // Transaction API Routes
 Route::prefix('transactions')->group(function () {
