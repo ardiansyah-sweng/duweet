@@ -11,9 +11,6 @@ use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
 
@@ -32,8 +29,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
+            AccountSeeder::class,
             FinancialAccountSeeder::class,
+            UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
+            //AccountSeeder::class,
         ]);
 
     }
