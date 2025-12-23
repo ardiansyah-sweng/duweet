@@ -12,7 +12,7 @@ class UserTelephoneColumns
     public static function getFillable(): array
     {
         return [
-            self::USER_ID,
+            self::ID_USER,
             self::NUMBER,
         ];
     }
