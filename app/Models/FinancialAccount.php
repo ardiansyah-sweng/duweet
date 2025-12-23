@@ -23,19 +23,20 @@ class FinancialAccount extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        FinancialAccountColumns::NAME,
         FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::NAME,
         FinancialAccountColumns::TYPE,
         FinancialAccountColumns::BALANCE,
-        FinancialAccountColumns::INITIAL_BALANCE,
-        FinancialAccountColumns::DESCRIPTION,
-        FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::DESCRIPTION,
         FinancialAccountColumns::SORT_ORDER,
         FinancialAccountColumns::LEVEL,
     ];
 
     protected $casts = [
+        // Menggunakan Constant untuk 'is_active' dan menambahkan casts yang umum (misal: balance)
         FinancialAccountColumns::BALANCE => 'integer',
         FinancialAccountColumns::INITIAL_BALANCE => 'integer',
         FinancialAccountColumns::IS_GROUP => 'boolean',
@@ -73,6 +74,16 @@ class FinancialAccount extends Model
                 throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
             }
         });
+    }
+
+    public static function getActiveAccounts()
+    {
+        $instance = new self();
+        $tableName = $instance->getTable();
+
+        $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
+
+        return DB::select($sql, [1]);
     }
 
     public function getById($id)

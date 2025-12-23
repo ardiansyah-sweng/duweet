@@ -43,6 +43,7 @@ Route::prefix('transactions')->group(function () {
 
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
+    Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
