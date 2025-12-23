@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\FinancialAccount;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -30,6 +29,7 @@ return new class extends Migration
             $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
+            $table->boolean(FinancialAccountColumns::LIQUID)->default(false); 
             
             //$table->string('color', 7)->nullable(); // hex color code
             //$table->string('icon', 50)->nullable();
@@ -43,7 +43,6 @@ return new class extends Migration
 
             // Indexes for performance
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
-
             $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
         });
