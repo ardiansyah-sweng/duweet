@@ -15,105 +15,8 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    /**
-     * DML Query SUM untuk menghitung total liquid asset berdasarkan user_account_id.
-     * Query ini menggunakan user_account_id sebagai filter, bukan user_id.
-     * 
-     * Liquid asset = Account dengan tipe AS (Asset) atau LI (Liability) 
-     * yang aktif dan bukan group account.
-     * 
-     * @param int $userAccountId ID dari user_account
-     * @param array $options Filter options (type, include_inactive, min_balance)
-     * @return int Total liquid asset dalam integer
-     */
-    public static function sumLiquidAssetByUserAccount(int $userAccountId, array $options = []): int
-    {
-        $types = $options['type'] ?? ['AS', 'LI'];
-        if (is_string($types)) {
-            $types = [$types];
-        }
-
-        $sql = "SELECT SUM(ufa.balance) AS total \n FROM user_financial_accounts ufa \n JOIN financial_accounts fa ON fa.id = ufa.financial_account_id \n WHERE ufa.user_account_id = ? AND fa.is_group = 0";
-        $bindings = [$userAccountId];
-
-        // Filter type IN (...)
-        if (!empty($types)) {
-            $placeholders = implode(',', array_fill(0, count($types), '?'));
-            $sql .= " AND fa.type IN ($placeholders)";
-            $bindings = array_merge($bindings, $types);
-        }
-
-        // Active filter
-        if (empty($options['include_inactive'])) {
-            $sql .= " AND ufa.is_active = 1";
-        }
-
-        // Min balance
-        if (isset($options['min_balance'])) {
-            $sql .= " AND ufa.balance >= ?";
-            $bindings[] = (int)$options['min_balance'];
-        }
-
-        $row = DB::selectOne($sql, $bindings);
-        return (int)($row->total ?? 0);
-    }
-
-    /**
-     * DML Query SUM untuk menghitung total liquid asset user.
-     * Query ini menggunakan DB facade untuk mendapatkan sum dari balance.
-     * 
-     * Liquid asset = Account dengan tipe AS (Asset) atau LI (Liability) 
-     * yang aktif dan bukan group account.
-     * 
-     * @param int $userId ID user yang akan dihitung liquid asset-nya
-     * @param array $options Filter options (type, include_inactive, min_balance)
-     * @return int Total liquid asset dalam integer
-     */
-    public static function sumLiquidAssetByUser(int $userId, array $options = []): int
-    {
-        $types = $options['type'] ?? ['AS', 'LI'];
-        if (is_string($types)) {
-            $types = [$types];
-        }
-
-        $sql = "SELECT SUM(ufa.balance) AS total \n FROM user_financial_accounts ufa \n JOIN financial_accounts fa ON fa.id = ufa.financial_account_id \n WHERE ufa.user_id = ? AND fa.is_group = 0";
-        $bindings = [$userId];
-
-        // Filter type IN (...)
-        if (!empty($types)) {
-            $placeholders = implode(',', array_fill(0, count($types), '?'));
-            $sql .= " AND fa.type IN ($placeholders)";
-            $bindings = array_merge($bindings, $types);
-        }
-
-        // Active filter
-        if (empty($options['include_inactive'])) {
-            $sql .= " AND ufa.is_active = 1";
-        }
-
-        // Min balance
-        if (isset($options['min_balance'])) {
-            $sql .= " AND ufa.balance >= ?";
-            $bindings[] = (int)$options['min_balance'];
-        }
-
-        $row = DB::selectOne($sql, $bindings);
-        return (int)($row->total ?? 0);
-    }
-
-    
     // Nama tabel yang sesuai dengan konfigurasi
     protected $table = 'transactions';
-
-    // protected static function booted()
-    // {
-    //     static::creating(function ($transaction) {
-    //         if (empty($transaction->transaction_group_id)) {
-    //             $transaction->transaction_group_id = (string) Str::uuid();
-    //         }
-    //     });
-    // }
-
 
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
@@ -188,37 +91,6 @@ class Transaction extends Model
         return collect($rows);
     }
 
-    /**
-     * Hard delete semua transaksi berdasarkan kumpulan user_account_id
-     *
-     * @param \Illuminate\Support\Collection|array $userAccountIds
-     * @return int jumlah row terhapus
-     */
-    public static function deleteByUserAccountIds($userAccountIds): int
-    {
-        if (empty($userAccountIds) || count($userAccountIds) === 0) {
-            return 0;
-        }
-
-        return DB::table((new self)->getTable())
-            ->whereIn('user_account_id', $userAccountIds)
-            ->delete();
-    }
-
-    /**
-     * Hard delete semua transaksi milik user (berdasarkan user_id)
-     *
-     * @param int $userId
-     * @return int
-     */ 
-    public static function deleteByUserId(int $userId): int
-    {
-        $userAccountIds = DB::table('user_accounts')
-            ->where('id_user', $userId)
-            ->pluck('id');
-
-        return self::deleteByUserAccountIds($userAccountIds);
-    }
     /**
      * Get total transactions per user account using raw SQL query.
      *

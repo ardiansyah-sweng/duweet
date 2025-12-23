@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\AccountController;
@@ -12,7 +11,6 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -36,7 +34,6 @@ Route::post('/financial_accounts', [AccountController::class, 'store']);
 Route::get('/financial_accounts', [AccountController::class, 'index']);
 Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
-Route::get('/report/liquid-asset/{id}', [ReportController::class, 'userLiquidAsset']);
 // Transaction API Routes
 Route::prefix('transactions')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
