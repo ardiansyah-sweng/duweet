@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use App\Constants\FinancialAccountColumns;
+use App\Constants\TransactionColumns;
 use Illuminate\Database\Eloquent\Model;
-use App\Constants\FinancialAccountColumns; // Constant yang Anda berikan
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
 
 class FinancialAccount extends Model
 {
     use HasFactory;
-    use HasFactory; // Diletakkan di awal body class
 
     protected $table;
 
@@ -23,6 +24,8 @@ class FinancialAccount extends Model
         parent::__construct($attributes);
         $this->table = config('db_tables.financial_account', 'financial_accounts');
     }
+
+    public $timestamps = true;
 
     protected $fillable = [
         FinancialAccountColumns::PARENT_ID,
@@ -45,53 +48,37 @@ class FinancialAccount extends Model
         FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
 
-    public $timestamps = true;
-
     /**
-     * Relasi ke Parent Account
      * Relasi ke parent account
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
-    /**
-     * Relasi ke child accounts
-     */
-    public function children()
+    public function children(): HasMany
     {
         return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
-    /**
-     * Relasi ke transaksi (leaf accounts)
-     */
-    public function transactions()
+    public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
+        return $this->hasMany(Transaction::class, TransactionColumns::FINANCIAL_ACCOUNT_ID, FinancialAccountColumns::ID);
     }
 
-    // Relasi ke UserFinancialAccount
-    public function userFinancialAccounts()
+    public function userFinancialAccounts(): HasMany
     {
         return $this->hasMany(UserFinancialAccount::class);
     }
 
-
-    /**
-     * Aturan dasar sebelum delete (mencegah kehilangan data penting)
-     */
     protected static function booted()
     {
         static::deleting(function ($account) {
-            // Tidak boleh menghapus akun grup jika masih punya anak
-            if ($account->{AccountColumns::IS_GROUP} && $account->children()->exists()) {
+            if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
             }
 
-            // Tidak boleh menghapus akun leaf yang masih punya transaksi
-            if (!$account->{AccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
             }
         });
@@ -143,18 +130,18 @@ class FinancialAccount extends Model
         return (int) DB::getPdo()->lastInsertId();
     }
 
-public static function getActiveAccounts()
-{
-    $instance = new self();
-    $tableName = $instance->getTable();
-    
-    // Gunakan query SQL biasa sesuai tugas Anda
-    $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
-    
-    return DB::select($sql, [1]); 
-}
+    public static function getActiveAccounts()
+    {
+        $instance = new self();
+        $tableName = $instance->getTable();
 
-    public function getById($id){
+        $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
+
+        return DB::select($sql, [1]);
+    }
+
+    public function getById($id)
+    {
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
         return !empty($result) ? $result[0] : null;
