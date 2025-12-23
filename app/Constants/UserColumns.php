@@ -27,6 +27,7 @@ class UserColumns
 
     
     public const ACCOUNTS_COUNT = 'accounts_count';
+    
     public static function getFillable(): array
     {
         return [
