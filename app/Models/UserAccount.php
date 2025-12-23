@@ -60,7 +60,11 @@ class UserAccount extends Model
      */
     public function userFinancialAccounts()
     {
-        return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
+        return $this->hasMany(
+            UserFinancialAccount::class,
+            'id_user',                    // foreign key di tabel user_financial_accounts
+            UserAccountColumns::ID_USER   // local key di user_accounts (id_user)
+        );
     }
 
     /**
