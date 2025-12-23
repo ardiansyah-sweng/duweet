@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
 
         // Seed accounts with real world data
         $this->call([
+            FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
             //AccountSeeder::class,
