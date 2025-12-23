@@ -23,14 +23,14 @@ class FinancialAccount extends Model
     }
 
     protected $fillable = [
-        FinancialAccountColumns::NAME,
         FinancialAccountColumns::PARENT_ID,
+        FinancialAccountColumns::NAME,
         FinancialAccountColumns::TYPE,
         FinancialAccountColumns::BALANCE,
-        FinancialAccountColumns::INITIAL_BALANCE,
-        FinancialAccountColumns::DESCRIPTION,
-        FinancialAccountColumns::IS_GROUP,
         FinancialAccountColumns::IS_ACTIVE,
+        FinancialAccountColumns::INITIAL_BALANCE,
+        FinancialAccountColumns::IS_GROUP,
+        FinancialAccountColumns::DESCRIPTION,
         FinancialAccountColumns::SORT_ORDER,
         FinancialAccountColumns::LEVEL,
     ];
@@ -80,18 +80,34 @@ class FinancialAccount extends Model
     protected static function booted()
     {
         static::deleting(function ($account) {
-            // Tidak boleh menghapus akun grup jika masih punya anak
             if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
             }
 
-            // Tidak boleh menghapus akun leaf yang masih punya transaksi
-            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+            if (
+                !$account->{FinancialAccountColumns::IS_GROUP} &&
+                $account->transactions()->exists()
+            ) {
                 throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
             }
         });
     }
 
+    /**
+     * DARI MAIN – ambil akun aktif
+     */
+    public static function getActiveAccounts()
+    {
+        $instance = new self();
+        $tableName = $instance->getTable();
+
+        $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
+        return DB::select($sql, [1]);
+    }
+
+    /**
+     * Ambil account by ID (RAW)
+     */
     public function getById($id)
     {
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
