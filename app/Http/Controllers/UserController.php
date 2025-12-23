@@ -2,173 +2,149 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+use App\Models\Transaction;
+use App\Models\User;
+
+// Import constants
+use App\Constants\UserColumns;
+use App\Constants\UserAccountColumns;
+use App\Constants\UserTelephoneColumns;
+use App\Constants\UserFinancialAccountColumns;
+use App\Constants\TransactionColumns;
 
 class UserController extends Controller
 {
     /**
-     * Display a listing of all users
+     * Menampilkan semua user
      */
     public function index()
     {
-        $users = User::all();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $users,
-            'total' => $users->count()
-        ]);
-    }
-
-    /**
-     * Search users berdasarkan nama, email, atau alamat
-     * 
-     * Query Parameters:
-     * - q (required): keyword pencarian
-     * 
-     * Endpoint: GET /api/user/search?q=keyword
-     */
-    public function search(Request $request)
-    {
-        $query = $request->input('q');
-        
-        // Validasi input
-        if (!$query || trim($query) === '') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Parameter pencarian (q) tidak boleh kosong'
-            ], 400);
+        try {
+            $users = User::all();
+            return response()->json(['message' => 'OK', 'data' => $users]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Terjadi kesalahan', 'error' => $e->getMessage()], 500);
         }
-
-        // Pencarian berdasarkan nama, email, dan alamat
-        $users = User::where('name', 'like', "%{$query}%")
-            ->orWhere('email', 'like', "%{$query}%")
-            ->orWhere('first_name', 'like', "%{$query}%")
-            ->orWhere('last_name', 'like', "%{$query}%")
-            ->orWhere('jalan', 'like', "%{$query}%")
-            ->orWhere('kabupaten', 'like', "%{$query}%")
-            ->orWhere('kecamatan', 'like', "%{$query}%")
-            ->orWhere('provinsi', 'like', "%{$query}%")
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $users,
-            'total' => $users->count()
-        ]);
     }
 
     /**
-     * Display a specific user by ID
+     * Menampilkan detail user berdasarkan ID
      */
     public function show($id)
     {
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan'
-            ], 404);
+        try {
+            $user = User::find($id);
+            if (!$user) {
+                return response()->json(['message' => 'User tidak ditemukan'], 404);
+            }
+            return response()->json(['message' => 'OK', 'data' => $user]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Terjadi kesalahan', 'error' => $e->getMessage()], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $user
-        ]);
     }
 
     /**
-     * Store a new user (Registrasi)
+     * Pencarian user berdasarkan nama/email/alamat
      */
-    public function store(Request $request)
+    public function search(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email|max:255',
-            'provinsi' => 'nullable|string|max:255',
-            'kabupaten' => 'nullable|string|max:255',
-            'kecamatan' => 'nullable|string|max:255',
-            'jalan' => 'nullable|string|max:255',
-            'kode_pos' => 'nullable|string|max:10',
-            'tanggal_lahir' => 'nullable|integer|between:1,31',
-            'bulan_lahir' => 'nullable|integer|between:1,12',
-            'tahun_lahir' => 'nullable|integer',
-            'usia' => 'nullable|integer|min:0',
-        ]);
+        try {
+            $q = (string) $request->input('q', '');
+            if ($q === '') {
+                return response()->json(['message' => 'Parameter q wajib diisi', 'data' => []], 400);
+            }
 
-        $user = User::create($validated);
+            $users = User::query()
+                ->where('name', 'like', "%$q%")
+                ->orWhere('email', 'like', "%$q%")
+                ->orWhere('jalan', 'like', "%$q%")
+                ->orWhere('kabupaten', 'like', "%$q%")
+                ->orWhere('provinsi', 'like', "%$q%")
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User berhasil dibuat',
-            'data' => $user
-        ], 201);
-    }
-
-    /**
-     * Update a user
-     */
-    public function update(Request $request, $id)
-    {
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan'
-            ], 404);
+            return response()->json(['message' => 'OK', 'data' => $users]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Terjadi kesalahan', 'error' => $e->getMessage()], 500);
         }
-
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'first_name' => 'nullable|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $id . '|max:255',
-            'provinsi' => 'nullable|string|max:255',
-            'kabupaten' => 'nullable|string|max:255',
-            'kecamatan' => 'nullable|string|max:255',
-            'jalan' => 'nullable|string|max:255',
-            'kode_pos' => 'nullable|string|max:10',
-            'tanggal_lahir' => 'nullable|integer|between:1,31',
-            'bulan_lahir' => 'nullable|integer|between:1,12',
-            'tahun_lahir' => 'nullable|integer',
-            'usia' => 'nullable|integer|min:0',
-        ]);
-
-        $user->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User berhasil diupdate',
-            'data' => $user
-        ]);
     }
 
-    /**
-     * Delete a user
-     */
     public function destroy($id)
     {
-        $user = User::find($id);
+        $user = DB::table('users')
+            ->where(UserColumns::ID, $id)
+            ->first();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan'
-            ], 404);
+            return response()->json(['message' => 'User tidak ditemukan.'], 404);
         }
 
-        $user->delete();
+        DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User berhasil dihapus'
-        ]);
+        try {
+            /**
+             * 1️⃣ Ambil semua user_account ID
+             * Controller tahu relasi via constant,
+             * tapi tidak tahu detail DML transaksi
+             */
+            $userAccountIds = DB::table('user_accounts')
+                ->where(UserAccountColumns::ID_USER, $id)
+                ->pluck(UserAccountColumns::ID);
+
+            /**
+             * 2️⃣ Hapus transaksi
+             * Kolom relasi tetap didefinisikan oleh TransactionColumns
+             */
+            if ($userAccountIds->isNotEmpty()) {
+                Transaction::deleteByUserAccountIds(
+                    $userAccountIds,
+                    TransactionColumns::USER_ACCOUNT_ID
+                );
+            }
+
+            // 3️⃣ Hapus user_financial_accounts
+            DB::table('user_financial_accounts')
+                ->where(
+                    UserFinancialAccountColumns::USER_ACCOUNT_ID,
+                    $id
+                )
+                ->delete();
+
+            // 4️⃣ Hapus user_telephones
+            DB::table('user_telephones')
+                ->where(
+                    UserTelephoneColumns::ID_USER,
+                    $id
+                )
+                ->delete();
+
+            // 5️⃣ Hapus user_accounts
+            DB::table('user_accounts')
+                ->whereIn(
+                    UserAccountColumns::ID,
+                    $userAccountIds
+                )
+                ->delete();
+
+            // 6️⃣ Hapus user utama
+            DB::table('users')
+                ->where(UserColumns::ID, $id)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'User dan seluruh data terkait berhasil dihapus permanen.'
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat menghapus data.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 }
