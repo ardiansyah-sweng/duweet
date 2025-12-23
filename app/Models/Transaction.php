@@ -409,19 +409,34 @@ class Transaction extends Model
             $deletedCount = 0;
 
             DB::transaction(function () use ($groupId, &$deletedCount) {
-                $transactions = DB::select("SELECT * FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::TRANSACTION_GROUP_ID . " = ?", [$groupId]);
+                $table = (new self)->getTable();
+                $ufaTable = UserFinancialAccountColumns::TABLE;
 
-                if (empty($transactions)) {
+                $aggSql = "SELECT " . TransactionColumns::USER_ACCOUNT_ID . " AS user_account_id, "
+                    . TransactionColumns::FINANCIAL_ACCOUNT_ID . " AS financial_account_id, "
+                    . "COALESCE(SUM(CASE WHEN " . TransactionColumns::BALANCE_EFFECT . " = 'increase' THEN " . TransactionColumns::AMOUNT . " ELSE 0 END),0) AS sum_inc, "
+                    . "COALESCE(SUM(CASE WHEN " . TransactionColumns::BALANCE_EFFECT . " = 'decrease' THEN " . TransactionColumns::AMOUNT . " ELSE 0 END),0) AS sum_dec, "
+                    . "COUNT(*) AS cnt "
+                    . "FROM " . $table . " WHERE " . TransactionColumns::TRANSACTION_GROUP_ID . " = ? "
+                    . "GROUP BY " . TransactionColumns::USER_ACCOUNT_ID . ", " . TransactionColumns::FINANCIAL_ACCOUNT_ID;
+
+                $rows = DB::select($aggSql, [$groupId]);
+
+                if (empty($rows)) {
                     throw new \Exception('No transactions found for group: ' . $groupId);
                 }
 
-                foreach ($transactions as $t) {
-                    $userAccountId = $t->{TransactionColumns::USER_ACCOUNT_ID};
-                    $financialAccountId = $t->{TransactionColumns::FINANCIAL_ACCOUNT_ID};
+                foreach ($rows as $r) {
+                    $userAccountId = $r->user_account_id;
+                    $financialAccountId = $r->financial_account_id;
+                    $sumInc = (int) $r->sum_inc;
+                    $sumDec = (int) $r->sum_dec;
+                    $cnt = (int) $r->cnt;
 
-                    // Ambil dan lock baris user_financial_accounts dengan FOR UPDATE
+                    $delta = $sumDec - $sumInc;
+
                     $ufaRows = DB::select(
-                        "SELECT * FROM " . UserFinancialAccountColumns::TABLE . " WHERE " . UserFinancialAccountColumns::USER_ACCOUNT_ID . " = ? AND " . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . " = ? FOR UPDATE",
+                        "SELECT * FROM " . $ufaTable . " WHERE " . UserFinancialAccountColumns::USER_ACCOUNT_ID . " = ? AND " . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . " = ? FOR UPDATE",
                         [$userAccountId, $financialAccountId]
                     );
 
@@ -429,24 +444,18 @@ class Transaction extends Model
 
                     if ($ufa) {
                         $current = $ufa->{UserFinancialAccountColumns::BALANCE};
-
-                        if ($t->{TransactionColumns::BALANCE_EFFECT} === 'increase') {
-                            $new = $current - $t->{TransactionColumns::AMOUNT};
-                        } else {
-                            $new = $current + $t->{TransactionColumns::AMOUNT};
-                        }
+                        $new = $current + $delta;
 
                         DB::update(
-                            "UPDATE " . UserFinancialAccountColumns::TABLE . " SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . UserFinancialAccountColumns::ID . " = ?",
+                            "UPDATE " . $ufaTable . " SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . UserFinancialAccountColumns::ID . " = ?",
                             [$new, $ufa->{UserFinancialAccountColumns::ID}]
                         );
                     }
 
-                    // Hapus baris transaksi (hard delete)
-                    DB::delete("DELETE FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::ID . " = ?", [$t->{TransactionColumns::ID}]);
-
-                    $deletedCount++;
+                    $deletedCount += $cnt;
                 }
+
+                DB::delete("DELETE FROM " . $table . " WHERE " . TransactionColumns::TRANSACTION_GROUP_ID . " = ?", [$groupId]);
             });
 
             return ['success' => true, 'message' => 'Transactions deleted', 'deleted_count' => $deletedCount];
