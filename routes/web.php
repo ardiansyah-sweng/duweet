@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController; // PENTING: Import Controller
+use App\Http\Controllers\TransaksiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,4 +24,5 @@ Route::get('/', function () {
 // FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
-// Tambahkan route lain di sini jika ada...
+// Route untuk update transaksi
+Route::patch('/transactions/{id}', [TransaksiController::class, 'update']);
