@@ -25,6 +25,10 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
+        ,
+        "exclude-from-classmap": [
+            "duweet/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
