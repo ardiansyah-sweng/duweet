@@ -54,22 +54,35 @@ class AccountController extends Controller
                 ], 404);
             }
 
-            // Gunakan method DML yang baru dengan user_account_id
-            $result = \App\Models\FinancialAccount::createForUserAccount(
-                $user_account_id,
-                $validated['name'],
-                $validated['type'],
-                $validated['initial_balance'],
-                $validated['is_group'] ?? false,
-                $validated['is_active'] ?? true
-            );
+            // Insert ke tabel financial_accounts
+            $accountData = [
+                'name' => $validated['name'],
+                'type' => $validated['type'],
+                'initial_balance' => $validated['initial_balance'],
+                'is_group' => $validated['is_group'] ?? false,
+                'is_active' => $validated['is_active'] ?? true,
+            ];
+            $accountId = \App\Models\FinancialAccount::insertFinancialAccount($accountData);
+
+            // Insert ke pivot user_financial_accounts jika bukan group
+            if (!($validated['is_group'] ?? false)) {
+                DB::table('user_financial_accounts')->insert([
+                    'user_account_id' => $user_account_id,
+                    'financial_account_id' => $accountId,
+                    'balance' => $validated['initial_balance'],
+                    'initial_balance' => $validated['initial_balance'],
+                    'is_active' => $validated['is_active'] ?? true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             return response()->json([
                 'status'           => 'success',
                 'message'          => 'Financial account berhasil dibuat',
                 'user_account_id'  => $user_account_id,
                 'account'          => [
-                    'id'              => $result['account_id'],
+                    'id'              => $accountId,
                     'name'            => $validated['name'],
                     'type'            => $validated['type'],
                     'initial_balance' => $validated['initial_balance'],
