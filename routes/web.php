@@ -1,5 +1,6 @@
-<?php
+    <?php
 
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController; // PENTING: Import Controller
 use App\Http\Controllers\TransaksiController;
@@ -25,4 +26,30 @@ Route::get('/', function () {
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
 // Route untuk update transaksi
+=======
+    use Illuminate\Support\Facades\Route;
+    use App\Http\Controllers\ReportController; // PENTING: Import Controller
+use App\Http\Controllers\TransaksiController;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Web Routes
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can register web routes for your application. These
+    | routes are loaded by the RouteServiceProvider and all of them will
+    | be assigned to the "web" middleware group. Make something great!
+    |
+    */
+
+    // Route Dasar Laravel
+    Route::get('/', function () {
+        return view('welcome');
+    });
+
+    // Route GET yang Benar untuk endpoint incomeSummary
+// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
+
+>>>>>>> main
 Route::patch('/transactions/{id}', [TransaksiController::class, 'update']);

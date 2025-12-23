@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password')
         ]);
 
+<<<<<<< HEAD
         // User Account
         $userAccount = UserAccount::create([
             'user_id' => $user->id,
@@ -42,6 +43,16 @@ class DatabaseSeeder extends Seeder
             'amount' => 500000,
             'description' => 'Saldo awal',
             'is_balance' => true
+=======
+        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
+        $this->call([
+            UserSeeder::class,
+            UserAccountSeeder::class,
+            FinancialAccountSeeder::class,
+            TransactionSeeder::class,
+            AccountSeeder::class,
+            TransaksiSeeder::class,
+>>>>>>> main
         ]);
     }
 }
