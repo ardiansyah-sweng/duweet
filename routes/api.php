@@ -10,7 +10,8 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
 // Monthly expenses
-Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
+Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
+
 
 // Transaction detail
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
