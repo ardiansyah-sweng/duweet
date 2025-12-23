@@ -2,11 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
-
 
 // Simple health check endpoint
 Route::get('/health', function () {
@@ -22,6 +22,8 @@ Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 
 // GET endpoint to find user by email (safe response, no password)
 Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
+
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
