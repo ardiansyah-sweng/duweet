@@ -5,8 +5,13 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserAccount;
+use App\Models\UserFinancialAccount;
+use App\Models\FinancialAccount;
+use App\Models\Transaction;
 
 class User extends Authenticatable
 {
@@ -24,6 +29,7 @@ class User extends Authenticatable
             return 'Email harus diisi.';
         }
 
+        // Pindahkan validasi email ke sini
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return 'Format email tidak valid.';
         }
@@ -46,6 +52,7 @@ class User extends Authenticatable
             }
 
             // Menghitung usia
+            $usia = null;
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
                 $carbonDate = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR]);
                 $tanggal = $carbonDate->day;
@@ -59,7 +66,7 @@ class User extends Authenticatable
                 $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
-            // INSERT user
+            // INSERT user - Perbaikan: jumlah placeholder (14) harus sama dengan jumlah value
             DB::insert(
                 "INSERT INTO users (name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -99,6 +106,7 @@ class User extends Authenticatable
             }
 
             DB::commit();
+            return $userId; // Mengembalikan ID user yang berhasil dibuat
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -111,7 +119,24 @@ class User extends Authenticatable
             
             return 'Gagal menyimpan user ke database: ' . $e->getMessage();
         }
-    }    
+    }
+    
+    public function accounts() {
+        return $this->hasMany(\App\Models\UserAccount::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+    
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
+                    ->withPivot(['initial_balance', 'balance', 'is_active'])
+                    ->withTimestamps();
+    }
+
     /**
      * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
      */
@@ -120,5 +145,3 @@ class User extends Authenticatable
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 }
-
-
