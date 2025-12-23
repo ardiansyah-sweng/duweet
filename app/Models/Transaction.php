@@ -205,37 +205,35 @@ class Transaction extends Model
             'fa.name as financial_account_name'
         )
         ->where('t.id', $id)
-        ->first();
-    }
 
-    /**
-     * Scope: Filter transactions by date range (period)
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string|Carbon  $startDate
-     * @param  string|Carbon  $endDate
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeByPeriod($query, $startDate, $endDate)
-    {
-        $startDate = $startDate instanceof Carbon ? $startDate->toDateString() : $startDate;
-        $endDate = $endDate instanceof Carbon ? $endDate->toDateString() : $endDate;
+            public static function getLatestActivitiesRaw()
+            {
+                $query = "
+                    SELECT
+                        t.amount,
+                        t.description,
+                        t.created_at,
+                        t.entry_type, 
+                        ua.username as user_name,
+                        a.name as category_name,
+                        a.type as category_type
+                    FROM
+                        transactions t
+                    JOIN
+                        user_accounts ua ON t.user_account_id = ua.id
+                    JOIN
+                        financial_accounts a ON t.financial_account_id = a.id
+                    WHERE
+                        t.created_at >= NOW() - INTERVAL 7 DAY
+                        AND a.type IN ('IN', 'EX', 'SP')
+                    ORDER BY
+                        t.created_at DESC
+                    LIMIT 20
+                ";
 
-        return $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-    }
-
-    /**
-     * Scope: Filter transactions by user account
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  int  $userAccountId
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeByUserAccount($query, $userAccountId)
-    {
-        return $query->where(TransactionColumns::USER_ACCOUNT_ID, $userAccountId);
-    }
-
+                return DB::select($query);
+            }
+        }
     /**
      * Scope: Filter transactions by financial account
      *
@@ -353,5 +351,33 @@ class Transaction extends Model
     public function scopeByEntryType($query, $entryType)
     {
         return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
+    }
+
+    public static function getLatestActivitiesRaw()
+    {
+        $query = "
+            SELECT
+                t.amount,
+                t.description,
+                t.created_at,
+                t.entry_type, 
+                ua.username as user_name,
+                a.name as category_name,
+                a.type as category_type
+            FROM
+                transactions t
+            JOIN
+                user_accounts ua ON t.user_account_id = ua.id
+            JOIN
+                financial_accounts a ON t.financial_account_id = a.id
+            WHERE
+                t.created_at >= NOW() - INTERVAL 7 DAY
+                AND a.type IN ('IN', 'EX', 'SP')
+            ORDER BY
+                t.created_at DESC
+            LIMIT 20
+        ";
+
+        return DB::select($query);
     }
 }
