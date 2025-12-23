@@ -8,9 +8,11 @@ use App\Models\UserAccount;
 use App\Models\UserTelephone;
 use App\Models\FinancialAccount;
 use App\Models\UserFinancialAccount;
+use App\Constants\UserAccountColumns;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -69,11 +71,16 @@ class User extends Authenticatable
      */
     public function userAccounts()
     {
-        return $this->hasMany(UserAccount::class, 'user_id');
+        return $this->hasMany(UserAccount::class, UserAccountColumns::ID_USER);
     }
+
     /**
-     * Get the login accounts for the user.
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
      */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+    }
 
     /**
      * Get the financial accounts associated with this user.
@@ -82,8 +89,8 @@ class User extends Authenticatable
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts', 'user_id', 'financial_account_id')
-            ->using(UserFinancialAccount::class) // Memberi tahu Laravel untuk menggunakan Pivot Model kustom
-            ->withPivot('balance', 'initial_balance', 'is_active') // Ambil data tambahan dari tabel pivot
+            ->using(UserFinancialAccount::class)
+            ->withPivot('balance', 'initial_balance', 'is_active')
             ->withTimestamps();
     }
 
@@ -96,10 +103,8 @@ class User extends Authenticatable
      */
     public static function sumAllUsersFinancialAccountsByType(): array
     {
-        // define all enum types expected
         $types = ['IN', 'EX', 'SP', 'LI', 'AS'];
 
-        // raw SQL for aggregation (uses bindings to avoid injection)
         $sql = <<<'SQL'
             SELECT fa.type, SUM(ufa.balance) AS total_balance
             FROM user_financial_accounts ufa
@@ -110,15 +115,13 @@ class User extends Authenticatable
             GROUP BY fa.type
         SQL;
 
-        $rows = \DB::select($sql, [0, 1, 1]);
+        $rows = DB::select($sql, [0, 1, 1]);
 
         $result = array_fill_keys($types, 0);
         foreach ($rows as $r) {
-            // $r is stdClass with properties 'type' and 'total_balance'
             $result[$r->type] = (int) $r->total_balance;
         }
 
         return $result;
     }
-
 }
