@@ -13,6 +13,15 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+// User API Routes (untuk registrasi dan pencarian berdasarkan nama/email/alamat)
+Route::prefix('user')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('api.user.index');
+    Route::get('/search', [UserController::class, 'search'])->name('api.user.search');
+    Route::post('/', [UserController::class, 'store'])->name('api.user.store');
+    Route::get('/{id}', [UserController::class, 'show'])->name('api.user.show');
+    Route::put('/{id}', [UserController::class, 'update'])->name('api.user.update');
+    Route::delete('/{id}', [UserController::class, 'destroy'])->name('api.user.destroy');
+});
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
