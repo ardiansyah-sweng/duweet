@@ -25,6 +25,8 @@ class UserColumns
     public const TAHUN_LAHIR    = 'tahun_lahir';      // Tahun lahir (integer)
     public const USIA           = 'usia';             // Umur user (integer)
 
+    
+    public const ACCOUNTS_COUNT = 'accounts_count';
     public static function getFillable(): array
     {
         return [
@@ -45,11 +47,8 @@ class UserColumns
         ];
     }
 
-        public static function getAllColumns(): array
+    public static function getAllColumns(): array
     {
-            return array_merge([self::ID], self::getFillable());
+        return array_merge([self::ID], self::getFillable());
     }
-
-        // Denormalized count of related user accounts
-        public const ACCOUNTS_COUNT = 'accounts_count';
 }

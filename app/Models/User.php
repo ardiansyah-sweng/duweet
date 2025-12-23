@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\UserAccount;
+use App\Models\UserFinancialAccount;
+use App\Models\UserAccountTotal;
 
 class User extends Authenticatable
 {
@@ -66,5 +68,20 @@ class User extends Authenticatable
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
+    }
+    /**
+     * Relationship: user has many user_account_totals
+     */
+    public function accountTotals()
+    {
+        return $this->hasMany(UserAccountTotal::class, 'user_id');
+    }
+
+    /**
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 }
