@@ -37,6 +37,20 @@ class UserAccount extends Model
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_account_id');
+    }
+
+    /**
+     * Relasi ke UserFinancialAccounts
+     * Setiap UserAccount bisa memiliki beberapa akun keuangan
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
+    }
+
     /**
      * Hapus user account dengan raw query
      */

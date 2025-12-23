@@ -1,11 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserAccountController;
-
-Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('api.users.destroy');
-Route::get('/users/{id}/accounts', [UserController::class, 'getAllAccounts'])->name('api.users.accounts');
 
 // UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
