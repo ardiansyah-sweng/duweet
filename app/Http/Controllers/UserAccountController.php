@@ -6,6 +6,7 @@ use App\Constants\UserAccountColumns;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash; // Masih dibutuhkan untuk method update
+use Illuminate\Http\JsonResponse;
 
 class UserAccountController extends Controller
 {
@@ -181,7 +182,6 @@ class UserAccountController extends Controller
 
         return response()->json($result);
     }
-}
 
     /**
      * ======================================================
@@ -231,3 +231,5 @@ class UserAccountController extends Controller
     // }
 
 }
+
+

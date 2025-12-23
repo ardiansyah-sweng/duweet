@@ -139,9 +139,7 @@ class UserAccount extends Model
                 'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
             ];
         }
-    }
-}
-    
+        }
 
     /**
      * DML: Cari user by email menggunakan RAW QUERY
