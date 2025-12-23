@@ -19,6 +19,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+use App\Http\Controllers\UserAccountController;
+Route::get('/user-accounts/tidak-login', [UserAccountController::class, 'tidakLogin']);
 // Route GET yang Benar untuk endpoint incomeSummary
 // FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
