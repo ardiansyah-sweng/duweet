@@ -9,9 +9,21 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccountController extends Controller
 {
-   
+public function getActiveAccounts(Request $request)
+{
+    // Buat objek
+    $model = new FinancialAccount(); 
     
-    public function show($id)
+    $activeAccounts = $model->getActiveAccounts(); 
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Daftar Akun Keuangan yang Aktif',
+        'count' => count($activeAccounts),
+        'data' => $activeAccounts
+    ]);
+}
+        public function show($id)
     {
         try {
             $model = new FinancialAccount();
@@ -35,7 +47,5 @@ class FinancialAccountController extends Controller
             ], 500);
         }
     }
-
-   
-   
 }
+        

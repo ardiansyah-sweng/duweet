@@ -10,6 +10,7 @@ use App\Http\Controllers\FinancialAccountController;
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
 
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -22,8 +23,15 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
+// Transaction API Routes
+Route::prefix('transactions')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+});
+
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
+    Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
