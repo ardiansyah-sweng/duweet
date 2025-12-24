@@ -2,56 +2,43 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Disable timestamps (karena tabel users tidak punya created_at & updated_at)
+     */
+    public $timestamps = false;
+
+    /**
+     * Mass assignable fields
      */
     protected $fillable = [
-        public static function getDataLogin($accountId)
-{
-    return DB::table('users AS u')
-        ->join('user_accounts AS ua', 'ua.user_id', '=', 'u.id')
-        ->leftJoin('user_telephones AS ut', 'ut.user_id', '=', 'u.id')
-        ->select(
-            'u.id AS user_id',
-            'u.name',
-            'u.first_name',
-            'u.middle_name',
-            'u.last_name',
-            'u.email AS user_email',
-            'u.tanggal_lahir',
-            'u.bulan_lahir',
-            'u.tahun_lahir',
-            'u.usia',
-            'ut.number AS telephone_number',
-            'ua.id AS account_id',
-            'ua.username',
-            'ua.email AS login_email',
-            'ua.is_active',
-            'ua.email_verified_at'
-        )
-        ->where('ua.id', $accountId)
-        ->first();
-}
-
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Hidden fields
      */
     protected $hidden = [
         'password',
@@ -59,16 +46,54 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Casts
      */
-    protected function casts(): array
+    protected $casts = [
+        'password' => 'hashed',
+    ];
+
+
+    public function userAccounts()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(UserAccount::class, 'user_id');
+    }
+
+    public function telephone()
+    {
+        return $this->hasOne(UserTelephone::class, 'user_id');
+    }
+
+
+    public static function getDataLogin(): ?object
+    {
+        $account = Auth::user(); // user_accounts (yang login)
+
+        if (!$account) {
+            return null;
+        }
+
+        return DB::table('users as u')
+            ->join('user_accounts as ua', 'ua.user_id', '=', 'u.id')
+            ->leftJoin('user_telephones as ut', 'ut.user_id', '=', 'u.id')
+            ->where('ua.id', $account->id)
+            ->select([
+                'u.id as user_id',
+                'u.name',
+                'u.first_name',
+                'u.middle_name',
+                'u.last_name',
+                'u.email as user_email',
+                'u.tanggal_lahir',
+                'u.bulan_lahir',
+                'u.tahun_lahir',
+                'u.usia',
+                'ut.number as telephone_number',
+                'ua.id as account_id',
+                'ua.username',
+                'ua.email as login_email',
+                'ua.is_active',
+                'ua.email_verified_at',
+            ])
+            ->first();
     }
 }
-
