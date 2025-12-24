@@ -58,11 +58,9 @@ class DatabaseSeeder extends Seeder
             UserAccountSeeder::class,
             AccountSeeder::class,
             FinancialAccountSeeder::class,
-            // AccountSeeder::class,
-            UserTelephoneSeeder::class,
-            UserFinancialAccountSeeder::class,
+            // UserTelephoneSeeder::class, // SQLite tidak support syntax ini
+            // UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
-            //AccountSeeder::class,
         ]);
     }
 }
