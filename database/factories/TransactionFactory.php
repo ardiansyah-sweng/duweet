@@ -66,7 +66,7 @@ class TransactionFactory extends Factory
         string $description
     ): array {
         $groupId = Str::uuid()->toString();
-        $timestamp = fake()->dateTimeBetween('-30 days', 'now');
+        $timestamp = fake()->dateTimeBetween('2025-01-01', '2025-12-31');
 
         // Get account types to determine balance effect
         $debitAccount = DB::table(config('db_tables.financial_account'))->find($debitAccountId);
