@@ -10,7 +10,9 @@ use Illuminate\Http\JsonResponse;
 class UserAccountController extends Controller
 {
     /**
-     * Display a listing of user accounts (Web View)
+     * ============================
+     * WEB LISTING
+     * ============================
      */
     public function indexWeb()
     {
@@ -28,11 +30,14 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Display a listing of user accounts (API)
+     * ============================
+     * API LISTING
+     * ============================
      */
     public function index()
     {
         $userAccounts = UserAccount::with('user')->get();
+
         return response()->json([
             'success' => true,
             'data' => $userAccounts
@@ -40,7 +45,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Display a specific user account
+     * ============================
+     * SHOW SINGLE USER ACCOUNT
+     * ============================
      */
     public function show($id)
     {
@@ -60,7 +67,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Store a new user account
+     * ============================
+     * CREATE USER ACCOUNT
+     * ============================
      */
     public function store(Request $request)
     {
@@ -84,7 +93,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Update a user account
+     * ============================
+     * UPDATE USER ACCOUNT
+     * ============================
      */
     public function update(Request $request, $id)
     {
@@ -118,7 +129,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Delete a user account using Eloquent
+     * ============================
+     * DELETE (ELOQUENT)
+     * ============================
      */
     public function destroy($id)
     {
@@ -140,7 +153,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Delete a user account using raw query
+     * ============================
+     * DELETE WITH RAW QUERY
+     * ============================
      */
     public function destroyRaw($id)
     {
@@ -151,17 +166,5 @@ class UserAccountController extends Controller
         }
 
         return response()->json($result);
-    }
-
-    public function getAllAccountsByUser($userId): JsonResponse
-    {
-        $accounts = UserAccount::with('user')
-            ->where(UserAccountColumns::ID_USER, $userId)
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $accounts
-        ]);
     }
 }

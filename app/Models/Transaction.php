@@ -394,4 +394,82 @@ class Transaction extends Model
     {
         return $query->where(TransactionColumns::ENTRY_TYPE, $entryType);
     }
+
+    /**
+     * Get monthly expenses summary per user within a period
+     *
+     * Expenses = financial_accounts.type = 'EX'
+     *
+     * @param  string  $startDate  Y-m-d H:i:s
+     * @param  string  $endDate    Y-m-d H:i:s
+     * @param  int|null $userId    Optional filter by user ID
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getMonthlyExpensesByUser(
+        string $startDate,
+        string $endDate,
+        ?int $userId = null
+    ): \Illuminate\Support\Collection {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
+        $usersTable = config('db_tables.user', 'users');
+        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        $sql = "
+            SELECT 
+                u.id AS user_id,
+                u.name AS username,
+                COALESCE(SUM(t.amount), 0) AS total_expenses
+            FROM {$transactionsTable} t
+            INNER JOIN {$userAccountsTable} ua ON ua.id = t.user_account_id
+            INNER JOIN {$usersTable} u ON u.id = ua.id_user
+            INNER JOIN {$financialAccountsTable} fa 
+                ON fa.id = t.financial_account_id
+            AND fa.type = 'EX'
+            WHERE t.created_at >= ?
+            AND t.created_at < ?
+        ";
+
+        $bindings = [$startDate, $endDate];
+
+        if ($userId !== null) {
+            $sql .= " AND ua.id_user = ?";
+            $bindings[] = $userId;
+        }
+
+        $sql .= "
+            GROUP BY u.id, u.name
+            ORDER BY total_expenses DESC
+        ";
+
+        return collect(DB::select($sql, $bindings));
+    }
+
+    public static function getLatestActivitiesRaw()
+    {
+        $query = "
+            SELECT
+                t.amount,
+                t.description,
+                t.created_at,
+                t.entry_type, 
+                ua.username as user_name,
+                a.name as category_name,
+                a.type as category_type
+            FROM
+                transactions t
+            JOIN
+                user_accounts ua ON t.user_account_id = ua.id
+            JOIN
+                financial_accounts a ON t.financial_account_id = a.id
+            WHERE
+                t.created_at >= NOW() - INTERVAL 7 DAY
+                AND a.type IN ('IN', 'EX', 'SP')
+            ORDER BY
+                t.created_at DESC
+            LIMIT 20
+        ";
+
+        return DB::select($query);
+    }
 }
