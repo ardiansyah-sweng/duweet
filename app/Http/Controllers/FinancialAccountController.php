@@ -12,8 +12,9 @@ class FinancialAccountController extends Controller
 {
     public function getActiveAccounts(Request $request)
     {
-        $model = new FinancialAccount(); 
-        $activeAccounts = $model->getActiveAccounts(); 
+        // Buat objek
+        $model = new FinancialAccount();
+        $activeAccounts = $model->getActiveAccounts();
         return response()->json([
             'success' => true,
             'message' => 'Daftar Akun Keuangan yang Aktif',
