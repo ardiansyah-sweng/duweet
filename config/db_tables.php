@@ -8,3 +8,4 @@ return [
     'transaction' => 'transactions',
     'user_telephone' => 'user_telephones',
 ];
+

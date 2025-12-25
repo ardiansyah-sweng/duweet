@@ -173,7 +173,6 @@ class UserAccountController extends Controller
      * RESET PASSWORD – (DML VERSION)
      * ======================================================
      */
-
     public function resetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -215,4 +214,20 @@ class UserAccountController extends Controller
     //     ]);
     // }
 
+    /**
+     * ======================================================
+     * GET ALL ACCOUNTS BY USER ID
+     * ======================================================
+     */
+    public function getAccountsByUser($userId)
+    {
+        $accounts = UserAccount::getAccountsByUserRaw($userId);
+
+        return response()->json([
+            'success' => true,
+            'user_id' => $userId,
+            'total_accounts' => $accounts->count(),
+            'data' => $accounts
+        ]);
+    }
 }

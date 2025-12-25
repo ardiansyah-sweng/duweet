@@ -3,11 +3,6 @@
 use App\Http\Controllers\AccountController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MonthlyExpenseController;
-
-
-Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
-
 use App\Http\Controllers\FinancialAccountController; 
 use App\Http\Controllers\ReportController; // PENTING: Import Controller
 
@@ -41,11 +36,6 @@ Route::get('/accounts/{id}', [AccountController::class, 'show']);
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
 Route::get('/', function () {
@@ -54,8 +44,7 @@ Route::get('/', function () {
 
 // Web-only routes (no API routes here). API routes live in routes/api.php.
 
-// Route GET yang Benar untuk endpoint incomeSummary
-// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
+// Route report (punya dosen / sebelumnya)
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
-Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
+// Tambahkan route lain di sini jika ada...

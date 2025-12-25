@@ -82,3 +82,4 @@ Route::prefix('reports')->group(function () {
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
+Route::get('/users/{userId}/accounts', [UserAccountController::class, 'getAccountsByUser']);

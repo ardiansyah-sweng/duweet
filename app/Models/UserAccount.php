@@ -84,7 +84,6 @@ class UserAccount extends Model
         }
     }
     
-
     /**
      * DML: Cari user by email menggunakan RAW QUERY
      */
@@ -111,4 +110,21 @@ class UserAccount extends Model
 
         return DB::update($query, [$hashed, $email]);
     }
+
+        /**
+     * ======================================================
+     * DML: Ambil semua account yang dimiliki user
+     * ======================================================
+     */
+    public static function getAccountsByUserRaw($userId)
+    {
+        $query = "
+            SELECT *
+            FROM user_accounts
+            WHERE user_id = ?
+        ";
+
+        return DB::select($query, [$userId]);
+    }
+
 }
