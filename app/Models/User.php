@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+
 use App\Models\UserAccount;
 
 class User extends Authenticatable
@@ -16,37 +15,33 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    /**
-     * Disable automatic timestamps because users table does not have created_at/updated_at
+     * Disable timestamps (created_at & updated_at)
      *
      * @var bool
      */
     public $timestamps = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'first_name',
         'middle_name',
         'last_name',
         'email',
-        'provinsi',
-        'kabupaten',
-        'kecamatan',
-        'jalan',
-        'kode_pos',
-        'tanggal_lahir',
-        'bulan_lahir',
-        'tahun_lahir',
+        'nomor_telepon',
+        'role',
         'usia',
+        'is_active',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -54,42 +49,32 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string,string>
-     */
-    protected $casts = [
-        'password' => 'hashed',
-    ];
-
-    /**
-     * One user can have many user accounts (credentials)
+     * Relationship:
+     * One user can have many user accounts
      */
     public function userAccounts()
     {
         return $this->hasMany(UserAccount::class, 'id_user');
     }
-    
-    public function accounts() {
-        return $this->hasMany(\App\Models\UserAccount::class);
-    }
-
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
-    public function financialAccounts()
-    {
-        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
-                    ->withPivot(['initial_balance', 'balance', 'is_active'])
-                    ->withTimestamps();
-    }
 
     /**
-     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     * Get all users using raw SQL query
      */
-    public function userFinancialAccounts()
+    public static function getAllUsersRaw()
     {
-        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+        $query = "
+            SELECT
+                id,
+                CONCAT_WS(' ', first_name, middle_name, last_name) AS full_name,
+                email,
+                nomor_telepon,
+                role,
+                is_active,
+                created_at
+            FROM users
+            ORDER BY first_name ASC
+        ";
+
+        return DB::select($query);
     }
 }
