@@ -3,12 +3,16 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Transaction;
+use App\Models\UserAccount;
+use App\Models\UserTelephone;
+use App\Models\FinancialAccount;
+use App\Models\UserFinancialAccount;
+use App\Constants\UserAccountColumns;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
-use App\Models\UserAccount;
 
 class User extends Authenticatable
 {
@@ -67,7 +71,7 @@ class User extends Authenticatable
      */
     public function userAccounts()
     {
-        return $this->hasMany(UserAccount::class, 'id_user');
+        return $this->hasMany(UserAccount::class, UserAccountColumns::ID_USER);
     }
     
     public function accounts() {
