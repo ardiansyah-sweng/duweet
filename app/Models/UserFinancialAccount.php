@@ -43,9 +43,9 @@ class UserFinancialAccount extends Model
      * 
      * @return array
      */
-    public static function getAllUsersLiquidAssetsQuery()
+    public static function getAllUsersLiquidAssetsQuery($user_account_id = null)
     {
-        return \DB::select("
+        $query = "
             SELECT 
                 ufa.user_account_id,
                 SUM(ufa.balance) as total_liquid_assets
@@ -57,10 +57,14 @@ class UserFinancialAccount extends Model
                 fa.is_liquid = 1 
                 AND fa.is_active = 1
                 AND ufa.is_active = 1
-            GROUP BY 
-                ufa.user_account_id
-            ORDER BY 
-                total_liquid_assets DESC
-        ");
+                AND fa.type = 'AS'
+        ";
+        $bindings = [];
+        if ($user_account_id !== null) {
+            $query .= " AND ufa.user_account_id = ? ";
+            $bindings[] = $user_account_id;
+        }
+        $query .= " GROUP BY ufa.user_account_id ORDER BY total_liquid_assets DESC ";
+        return \DB::select($query, $bindings);
     }
 }
