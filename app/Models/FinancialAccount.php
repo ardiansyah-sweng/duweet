@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Constants\FinancialAccountColumns;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class FinancialAccount extends Model
 {
     use HasFactory;
->>>>>>> 2e6795b85b7c600fcd326f22537e737dd96beb55
 
     protected $table;
 
+    /**
+     * Nama tabel diambil dari config/db_tables.php
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -40,6 +42,12 @@ class FinancialAccount extends Model
         FinancialAccountColumns::IS_GROUP => 'boolean',
         FinancialAccountColumns::IS_ACTIVE => 'boolean',
     ];
+
+    public $timestamps = true;
+
+    /**
+     * Relasi ke Parent Account
+     */
     public function parent()
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
@@ -77,13 +85,59 @@ class FinancialAccount extends Model
         });
     }
 
+    /**
+     * DML Query INSERT untuk membuat Financial Account menggunakan Query Builder.
+     * Method ini mendemonstrasikan penggunaan raw DML query insert.
+     * 
+     * @param array $data Data untuk insert financial account
+     * @return int ID dari financial account yang baru dibuat
+     */
+    public static function insertFinancialAccount(array $data): int
+    {
+        // Validasi required fields
+        $required = ['name', 'type', 'initial_balance'];
+        foreach ($required as $field) {
+            if (!array_key_exists($field, $data)) {
+                throw new \InvalidArgumentException("Missing field: {$field}");
+            }
+        }
+
+        // Validasi type
+        $validTypes = ['IN', 'EX', 'SP', 'LI', 'AS'];
+        if (!in_array($data['type'], $validTypes, true)) {
+            throw new \InvalidArgumentException('Invalid account type: ' . $data['type']);
+        }
+
+        $isGroup = (bool)($data['is_group'] ?? false);
+        $balance = $isGroup ? 0 : (int)$data['initial_balance'];
+
+        // DML Query INSERT menggunakan raw SQL
+        $now = now();
+        DB::insert(
+            "INSERT INTO financial_accounts (name, type, balance, initial_balance, is_group, description, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $data['name'],
+                $data['type'],
+                $balance,
+                $balance,
+                $isGroup ? 1 : 0,
+                $data['description'] ?? null,
+                ($data['is_active'] ?? true) ? 1 : 0,
+                $now,
+                $now,
+            ]
+        );
+
+        return (int) DB::getPdo()->lastInsertId();
+    }
+
     public static function getActiveAccounts()
     {
         $instance = new self();
         $tableName = $instance->getTable();
-
+        
         $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
-
+        
         return DB::select($sql, [1]);
     }
 
@@ -93,4 +147,5 @@ class FinancialAccount extends Model
         $result = DB::select($sql, [$id]);
         return !empty($result) ? $result[0] : null;
     }
+
 }

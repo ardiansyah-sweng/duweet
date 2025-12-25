@@ -11,6 +11,7 @@ use App\Models\UserFinancialAccount;
 use App\Constants\UserAccountColumns;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
@@ -72,6 +73,21 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAccount::class, UserAccountColumns::ID_USER);
     }
+    
+    public function accounts() {
+        return $this->hasMany(\App\Models\UserAccount::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
+                    ->withPivot(['initial_balance', 'balance', 'is_active'])
+                    ->withTimestamps();
+    }
 
     /**
      * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
@@ -79,17 +95,5 @@ class User extends Authenticatable
     public function userFinancialAccounts()
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
-    }
-
-    /**
-     * Get the financial accounts associated with this user.
-     * Ini adalah relasi Many-to-Many melalui tabel pivot.
-     */
-    public function financialAccounts()
-    {
-        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts', 'user_id', 'financial_account_id')
-            ->using(UserFinancialAccount::class)
-            ->withPivot('balance', 'initial_balance', 'is_active')
-            ->withTimestamps();
     }
 }

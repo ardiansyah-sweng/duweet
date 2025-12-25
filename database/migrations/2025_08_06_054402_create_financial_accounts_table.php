@@ -29,11 +29,11 @@ return new class extends Migration
             $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
-
-            // Optional UI fields (aktifkan jika dibutuhkan)
-            // $table->string('color', 7)->nullable();
-            // $table->string('icon', 50)->nullable();
-
+            $table->boolean(FinancialAccountColumns::IS_LIQUID)->default(false);
+            
+            //$table->string('color', 7)->nullable(); // hex color code
+            //$table->string('icon', 50)->nullable();
+            
             $table->tinyInteger(FinancialAccountColumns::SORT_ORDER)->default(0);
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0);
             $table->timestamps();

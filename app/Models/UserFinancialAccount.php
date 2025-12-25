@@ -28,6 +28,11 @@ class UserFinancialAccount extends Model
         'is_active' => 'boolean',
     ];
 
+    public $timestamps = true;
+
+    /**
+     * Relasi ke User
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
