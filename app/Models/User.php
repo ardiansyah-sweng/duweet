@@ -41,6 +41,9 @@ class User extends Authenticatable
         'bulan_lahir',
         'tahun_lahir',
         'usia',
+        'photo',
+        'preference',
+
     ];
 
     /**
