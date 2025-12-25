@@ -194,4 +194,52 @@ class ReportController extends Controller
             'data' => $data,
         ]);
     }
+    
+    public function adminSpendingSummary(Request $request)
+{
+    // 1. Ambil periode (query params)
+    $startDate = $request->query('start_date')
+        ? Carbon::parse($request->query('start_date'))->startOfDay()
+        : Carbon::now()->startOfMonth();
+
+    $endDate = $request->query('end_date')
+        ? Carbon::parse($request->query('end_date'))->endOfDay()
+        : Carbon::now()->endOfMonth();
+
+    // 2. Validasi periode
+    if ($startDate->greaterThan($endDate)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+        ], 400);
+    }
+
+    // 3. Panggil Model (ADMIN REPORT)
+    try {
+        $data = Transaction::getTotalSpendingByUserAccountAdmin(
+            $startDate,
+            $endDate
+        );
+
+        return response()->json([
+            'success' => true,
+            'type' => 'ADMIN_SPENDING_REPORT',
+            'period' => [
+                'from' => $startDate->toDateString(),
+                'to'   => $endDate->toDateString(),
+            ],
+            'total_user_accounts' => $data->count(),
+            'data' => $data,
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal mengambil laporan pengeluaran admin',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+    
 }
