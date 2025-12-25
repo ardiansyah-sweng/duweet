@@ -183,5 +183,9 @@ class TransactionSeeder extends Seeder
                 DB::table($transactionsTable)->insert($chunk);
             }
         }
+
+        // Tambahan: Membuat beberapa data transaksi random menggunakan TransactionFactory
+        // untuk variasi data selain transaksi balanced
+        Transaction::factory(30)->create();
     }
 }

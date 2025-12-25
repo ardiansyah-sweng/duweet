@@ -2,9 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Constants\TransactionColumns;
 use App\Models\Transaction;
 use App\Models\UserAccount;
-use App\Constants\TransactionColumns;
+use App\Models\FinancialAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ class TransactionFactory extends Factory
     /**
      * The name of the factory's corresponding model.
      *
-     * @var string
+     * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
     protected $model = Transaction::class;
 
@@ -31,15 +32,21 @@ class TransactionFactory extends Factory
      */
     public function definition(): array
     {
+        // Ambil random UserAccount yang sudah ada
+        $userAccount = UserAccount::inRandomOrder()->first();
+        
+        // Ambil random FinancialAccount yang sudah ada
+        $financialAccount = FinancialAccount::inRandomOrder()->first();
+
         return [
             TransactionColumns::TRANSACTION_GROUP_ID => Str::uuid()->toString(),
-            TransactionColumns::USER_ACCOUNT_ID => UserAccount::factory(),
-            TransactionColumns::FINANCIAL_ACCOUNT_ID => 1,
-            TransactionColumns::ENTRY_TYPE => 'debit',
-            TransactionColumns::AMOUNT => fake()->numberBetween(10000, 5000000),
-            TransactionColumns::BALANCE_EFFECT => 'increase',
-            TransactionColumns::DESCRIPTION => fake()->sentence(),
-            TransactionColumns::IS_BALANCE => true,
+            TransactionColumns::USER_ACCOUNT_ID => $userAccount?->id ?? 1,
+            TransactionColumns::FINANCIAL_ACCOUNT_ID => $financialAccount?->id ?? 1,
+            TransactionColumns::ENTRY_TYPE => $this->faker->randomElement(['debit', 'credit']),
+            TransactionColumns::AMOUNT => $this->faker->numberBetween(10000, 1000000),
+            TransactionColumns::BALANCE_EFFECT => $this->faker->randomElement(['increase', 'decrease']),
+            TransactionColumns::DESCRIPTION => $this->faker->sentence(5),
+            TransactionColumns::IS_BALANCE => $this->faker->boolean(20),
         ];
     }
 
