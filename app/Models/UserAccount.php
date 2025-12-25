@@ -50,6 +50,9 @@ class UserAccount extends Model
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
+    /**
+     * Relasi ke transaksi
+     */
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'user_account_id');
@@ -72,6 +75,7 @@ class UserAccount extends Model
         try {
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
+
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'
@@ -83,32 +87,43 @@ class UserAccount extends Model
             ];
         }
     }
-    
 
     /**
-     * DML: Cari user by email menggunakan RAW QUERY
+     * DML: Cari user berdasarkan username
      */
-    public static function cariUserByEmail($email)
+    public static function findByUsername(string $username)
     {
-        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
-        $result = DB::select($query, [$email]);
+        $result = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+            [$username]
+        );
 
         return $result[0] ?? null;
     }
 
     /**
-     * DML: Reset password by email (RAW UPDATE)
+     * DML: Cari user berdasarkan email
+     */
+    public static function cariUserByEmail($email)
+    {
+        $result = DB::select(
+            "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
+            [$email]
+        );
+
+        return $result[0] ?? null;
+    }
+
+    /**
+     * DML: Reset password berdasarkan email
      */
     public static function resetPasswordByEmail($email, $newPassword)
     {
         $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
 
-        $query = "
-            UPDATE user_accounts 
-            SET password = ?
-            WHERE email = ?
-        ";
-
-        return DB::update($query, [$hashed, $email]);
+        return DB::update(
+            "UPDATE user_accounts SET password = ? WHERE email = ?",
+            [$hashed, $email]
+        );
     }
 }
