@@ -79,3 +79,7 @@ Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
 });
+
+Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
+
+Route::get('/users/{userId}/accounts', [UserAccountController::class, 'getAccountsByUser']);

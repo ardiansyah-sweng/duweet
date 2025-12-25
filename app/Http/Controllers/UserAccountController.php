@@ -167,4 +167,67 @@ class UserAccountController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * ======================================================
+     * RESET PASSWORD – (DML VERSION)
+     * ======================================================
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'new_password' => ['required', 'string', 'min:6'],
+        ]);
+
+        $user = UserAccount::cariUserByEmail($data['email']);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $updated = UserAccount::resetPasswordByEmail($data['email'], $data['new_password']);
+
+        return response()->json([
+            'updated' => $updated,
+            'email' => $user->email,
+            'new_password' => $data['new_password'],
+            'message' => 'Password reset successful'
+        ]);
+    }
+
+    // public function findByEmail(Request $request): JsonResponse
+    // {
+    //     $request->validate([
+    //         'email' => ['required', 'email'],
+    //     ]);
+
+    //     $user = UserAccount::cariUserByEmail($request->email);
+
+    //     if (!$user) {
+    //         return response()->json(['message' => 'User not found'], 404);
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $user
+    //     ]);
+    // }
+
+    /**
+     * ======================================================
+     * GET ALL ACCOUNTS BY USER ID
+     * ======================================================
+     */
+    public function getAccountsByUser($userId)
+    {
+        $accounts = UserAccount::getAccountsByUserRaw($userId);
+
+        return response()->json([
+            'success' => true,
+            'user_id' => $userId,
+            'total_accounts' => $accounts->count(),
+            'data' => $accounts
+        ]);
+    }
 }
