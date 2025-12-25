@@ -73,4 +73,16 @@ class UserAccount extends Model
             ];
         }
     }
+
+     public static function getAllAccountsByUserId($userId)
+    {
+        $query = "
+            SELECT *
+            FROM user_accounts
+            WHERE id_user = ?
+        ";
+
+        return DB::select($query, [$userId]);
+    }
 }
+

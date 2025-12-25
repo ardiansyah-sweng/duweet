@@ -1,13 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
+// UserAccount API Routes (no CSRF protection needed)
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
@@ -25,6 +28,7 @@ Route::prefix('transactions')->group(function () {
 
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
+    Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
@@ -33,3 +37,8 @@ Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
 });
+
+Route::get(
+    '/user/{userId}/accounts',
+    [UserAccountController::class, 'getAllAccountsByUser']
+)->name('api.user.accounts');
