@@ -82,3 +82,11 @@ Route::prefix('reports')->group(function () {
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
+Route::prefix('reports')->group(function () {
+    Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
+        ->name('api.reports.transactions-per-user-account');
+
+    // Tambahkan ini di sini:
+    Route::get('/sum-cash-in', [ReportController::class, 'sumCashInByPeriod'])
+        ->name('api.reports.sum-cash-in');
+});
