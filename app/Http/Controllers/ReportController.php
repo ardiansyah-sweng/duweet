@@ -194,4 +194,78 @@ class ReportController extends Controller
             'data' => $data,
         ]);
     }
+    /**
+     * Sum cashin by period (untuk admin)
+     * Bisa filter per user_account atau lihat semua
+     */
+    public function sumCashInByPeriod(Request $request)
+    {
+        // Validasi input (sederhana)
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after_or_equal:start_date',
+            'user_account_id' => 'nullable|integer|exists:user_accounts,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        // Default periode: seluruh tahun 2025
+        $startDate = $request->start_date 
+            ? Carbon::parse($request->start_date)->startOfDay()
+            : Carbon::create(2025, 1, 1)->startOfDay();
+
+        $endDate = $request->end_date 
+            ? Carbon::parse($request->end_date)->endOfDay()
+            : Carbon::create(2025, 12, 31)->endOfDay();
+
+        // Query dasar sederhana (ini yang diminta tugas!)
+        $query = DB::table('transactions')
+            ->where('balance_effect', 'increase')
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Filter per user_account jika diminta (untuk admin)
+        if ($request->filled('user_account_id')) {
+            $query->where('user_account_id', $request->user_account_id);
+        }
+
+        $totalCashIn = $query->sum('amount');
+
+        // Bonus: breakdown per bulan (biar lebih bagus & berguna)
+        $monthly = DB::table('transactions')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(amount) as total')
+            )
+            ->where('balance_effect', 'increase')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->when($request->filled('user_account_id'), function ($q) use ($request) {
+                return $q->where('user_account_id', $request->user_account_id);
+            })
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        // Response JSON yang rapi
+        return response()->json([
+            'period' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date'   => $endDate->format('Y-m-d'),
+            ],
+            'filter' => [
+                'user_account_id' => $request->user_account_id ?? 'all',
+            ],
+            'total_cash_in' => (float) $totalCashIn,
+            'total_cash_in_formatted' => $this->rupiah($totalCashIn),
+            'monthly_breakdown' => $monthly->map(function ($item) {
+                return [
+                    'month' => $item->month,
+                    'total' => (float) $item->total,
+                    'formatted' => $this->rupiah($item->total),
+                ];
+            }),
+        ]);
+    }
+
 }

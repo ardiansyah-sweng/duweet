@@ -36,7 +36,7 @@ class UserTelephone extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class, Columns::USER_ID);
+        return $this->belongsTo(User::class, Columns::ID_USER);
     }
 
     /**
