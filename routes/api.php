@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
@@ -81,4 +80,11 @@ Route::prefix('reports')->group(function () {
 });
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
+
+// ============================================
+// User Routes
+// ============================================
+Route::get('/users/with-status', [UserController::class, 'getAllWithStatus'])->name('api.users.with-status');
+Route::get('/users/sudah-setup', [UserController::class, 'sudahSetupAccount'])->name('api.users.sudah-setup');
+Route::get('/users/belum-setup', [UserController::class, 'index'])->name('api.users.belum-setup');
 

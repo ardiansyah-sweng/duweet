@@ -65,6 +65,16 @@ class UserAccount extends Model
     }
 
     /**
+     * Query users yang belum setup account
+     * Static method untuk mendapatkan users yang belum punya user_accounts record
+     */
+    public static function usersWithoutAccount()
+    {
+        return User::whereDoesntHave('userAccounts')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
      * RAW DELETE USER ACCOUNT (DML)
      */
     public static function deleteUserAccountRaw($id)
