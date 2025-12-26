@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -103,6 +104,60 @@ class TransactionController extends Controller
         return response()->json([
             'success' => true,
             'data' => $result,
+        ]);
+    }
+
+     public function monthlyExpense(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id' => 'nullable|integer|min:1',
+            'year'    => 'nullable|integer',
+            'month'   => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $year   = (int) ($request->query('year', now()->year));
+        $month  = (int) ($request->query('month', now()->month));
+        $userId = $request->query('user_id');
+
+        // Awal bulan & awal bulan berikutnya
+        $start = Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $end   = (clone $start)->addMonth();
+
+        $periodeBulan = sprintf('%04d-%02d', $year, $month);
+
+        // ✅ RAW SQL dari Model
+        $results = Transaction::getMonthlyExpensesByUser(
+            $start->toDateTimeString(),
+            $end->toDateTimeString(),
+            $userId
+        );
+
+        $rows = collect($results)->map(function ($row) use ($periodeBulan) {
+            return [
+                'user_id'        => (int) $row->user_id,
+                'user_name'      => $row->username,
+                'periode_bulan'  => $periodeBulan,
+                'total_expenses' => (int) $row->total_expenses,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'period' => [
+                'year'       => $year,
+                'month'      => $month,
+                'start_date' => $start->toDateString(),
+                'end_date'   => $end->copy()->subDay()->toDateString(),
+            ],
+            'data' => $rows,
+            ]);
+    }
+    public function getLatestActivities()
+    {
+        $activities = Transaction::getLatestActivitiesRaw();
+        return response()->json([
+            'success' => true,
+            'data' => $activities
         ]);
     }
 }

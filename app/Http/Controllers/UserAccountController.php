@@ -10,7 +10,9 @@ use Illuminate\Http\JsonResponse;
 class UserAccountController extends Controller
 {
     /**
-     * Display a listing of user accounts (Web View)
+     * ============================
+     * WEB LISTING
+     * ============================
      */
     public function indexWeb()
     {
@@ -19,15 +21,23 @@ class UserAccountController extends Controller
         $activeAccounts = $userAccounts->where(UserAccountColumns::IS_ACTIVE, true)->count();
         $verifiedAccounts = $userAccounts->whereNotNull(UserAccountColumns::VERIFIED_AT)->count();
 
-        return view('user-accounts.index', compact('userAccounts', 'totalAccounts', 'activeAccounts', 'verifiedAccounts'));
+        return view('user-accounts.index', compact(
+            'userAccounts',
+            'totalAccounts',
+            'activeAccounts',
+            'verifiedAccounts'
+        ));
     }
 
     /**
-     * Display a listing of user accounts (API)
+     * ============================
+     * API LISTING
+     * ============================
      */
     public function index()
     {
         $userAccounts = UserAccount::with('user')->get();
+
         return response()->json([
             'success' => true,
             'data' => $userAccounts
@@ -35,12 +45,14 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Display a specific user account
+     * ============================
+     * SHOW SINGLE USER ACCOUNT
+     * ============================
      */
     public function show($id)
     {
         $userAccount = UserAccount::with('user')->find($id);
-        
+
         if (!$userAccount) {
             return response()->json([
                 'success' => false,
@@ -55,7 +67,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Store a new user account
+     * ============================
+     * CREATE USER ACCOUNT
+     * ============================
      */
     public function store(Request $request)
     {
@@ -79,7 +93,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Update a user account
+     * ============================
+     * UPDATE USER ACCOUNT
+     * ============================
      */
     public function update(Request $request, $id)
     {
@@ -113,7 +129,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Delete a user account using Eloquent
+     * ============================
+     * DELETE (ELOQUENT)
+     * ============================
      */
     public function destroy($id)
     {
@@ -135,7 +153,9 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Delete a user account using raw query
+     * ============================
+     * DELETE WITH RAW QUERY
+     * ============================
      */
     public function destroyRaw($id)
     {
@@ -151,18 +171,44 @@ class UserAccountController extends Controller
     /**
      * Get user accounts inactive within a specified period
      */
-   public function inactiveByPeriod(Request $request)
-{
-    $data = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu(
-         $request->tanggal_mulai ?? null,
-        $request->tanggal_selesai ?? null
-    );
+    public function inactiveByPeriod(Request $request)
+    {
+        $days = $request->query('hari', 7);
 
-    return response()->json([
-        'success' => true,
-        'data' => $data
-    ]);
-}
+        $data = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu($days);
 
+        return response()->json([
+            'success' => true,
+            'days_threshold' => $days,
+            'data' => $data
+        ]);
+    }
 
+    /**
+     * ======================================================
+     * RESET PASSWORD – (DML VERSION)
+     * ======================================================
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'new_password' => ['required', 'string', 'min:6'],
+        ]);
+
+        $user = UserAccount::cariUserByEmail($data['email']);
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $updated = UserAccount::resetPasswordByEmail($data['email'], $data['new_password']);
+
+        return response()->json([
+            'updated' => $updated,
+            'email' => $user->email,
+            'new_password' => $data['new_password'],
+            'message' => 'Password reset successful'
+        ]);
+    }
 }
