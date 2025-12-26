@@ -211,4 +211,22 @@ class UserAccountController extends Controller
             'message' => 'Password reset successful'
         ]);
     }
+    public function findByEmail(Request $request): JsonResponse
+{
+    $request->validate(['email' => 'required|email']);
+    
+    $user = UserAccount::cariUserByEmail($request->email);
+
+    if (!$user) {
+        return response()->json([
+            'success' => false, 
+            'message' => 'User not found'],
+             404);
+    }
+
+    return response()->json([
+        'success' => true,
+         'data' => $user
+        ]);
+}
 }
