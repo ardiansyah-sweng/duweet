@@ -169,11 +169,26 @@ class UserAccountController extends Controller
     }
 
     /**
+     * Get user accounts inactive within a specified period
+     */
+    public function inactiveByPeriod(Request $request)
+    {
+        $days = $request->query('hari', 7);
+
+        $data = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu($days);
+
+        return response()->json([
+            'success' => true,
+            'days_threshold' => $days,
+            'data' => $data
+        ]);
+    }
+
+    /**
      * ======================================================
      * RESET PASSWORD – (DML VERSION)
      * ======================================================
      */
-
     public function resetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -196,23 +211,22 @@ class UserAccountController extends Controller
             'message' => 'Password reset successful'
         ]);
     }
+    public function findByEmail(Request $request): JsonResponse
+{
+    $request->validate(['email' => 'required|email']);
+    
+    $user = UserAccount::cariUserByEmail($request->email);
 
-    // public function findByEmail(Request $request): JsonResponse
-    // {
-    //     $request->validate([
-    //         'email' => ['required', 'email'],
-    //     ]);
+    if (!$user) {
+        return response()->json([
+            'success' => false, 
+            'message' => 'User not found'],
+             404);
+    }
 
-    //     $user = UserAccount::cariUserByEmail($request->email);
-
-    //     if (!$user) {
-    //         return response()->json(['message' => 'User not found'], 404);
-    //     }
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'data' => $user
-    //     ]);
-    // }
-
+    return response()->json([
+        'success' => true,
+         'data' => $user
+        ]);
+}
 }

@@ -37,9 +37,12 @@ class UserAccount extends Model
     /**
      * Fillable (menggunakan constant class).
      */
-    public function getFillable()
+    protected $fillable = [];
+
+    public function __construct(array $attributes = [])
     {
-        return UserAccountColumns::getFillable();
+        parent::__construct($attributes);
+        $this->fillable = UserAccountColumns::getFillable();
     }
 
     /**
@@ -57,11 +60,25 @@ class UserAccount extends Model
 
     /**
      * Relasi ke UserFinancialAccounts
-     * Setiap UserAccount bisa memiliki beberapa akun keuangan
      */
     public function userFinancialAccounts()
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Ambil user yang tidak login dalam periode tertentu
+     */
+    public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
+    {
+       $query = "
+        SELECT * FROM user_accounts 
+        WHERE (last_login_at < datetime('now', '-' || ? || ' days') 
+               OR last_login_at IS NULL)
+        AND is_active = 1
+    ";
+
+    return DB::select($query, [$days]);
     }
 
     /**
@@ -72,6 +89,7 @@ class UserAccount extends Model
         try {
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
+
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'
@@ -83,7 +101,6 @@ class UserAccount extends Model
             ];
         }
     }
-    
 
     /**
      * DML: Cari user by email menggunakan RAW QUERY

@@ -16,8 +16,6 @@ use App\Http\Controllers\FinancialAccountController;
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
-
-// Transaction detail
 // Simple health check endpoint
 Route::get('/health', function () {
     return response()->json([
@@ -26,19 +24,17 @@ Route::get('/health', function () {
         'timestamp' => now()->toDateTimeString()
     ]);
 });
-// jika ingin validasi cari user by email menggunakan POST
-// Route::post('/find-by-email', [UserAccountController::class, 'findByEmail']);
+
 Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 
-// GET endpoint to find user by email (safe response, no password)
-Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
+// GET endpoint to find user by email
+Route::get('/user/find', [UserAccountController::class, 'findByEmail']);
 
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 
-
-// UserAccount API Routes (no CSRF protection needed)
+// UserAccount API Routes
 Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 
@@ -49,6 +45,7 @@ Route::prefix('user-account')->group(function () {
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+    Route::get('/inactive/period', [UserAccountController::class, 'inactiveByPeriod'])->name('api.user-account.inactive-period');
 });
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
@@ -56,7 +53,6 @@ Route::get('/ping', fn () => response()->json(['pong' => true]));
 Route::get('/accounts', function () {
     return response()->json(['ok' => true]);
 });
-
 
 Route::post('/financial_accounts', [AccountController::class, 'store']);
 Route::get('/financial_accounts', [AccountController::class, 'index']);
@@ -81,4 +77,3 @@ Route::prefix('reports')->group(function () {
 });
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
-
