@@ -19,10 +19,11 @@ class FinancialAccountSeeder extends Seeder
             FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BNI',
             FinancialAccountColumns::IS_GROUP        => false,
             FinancialAccountColumns::IS_ACTIVE       => true,
+            FinancialAccountColumns::IS_LIQUID       => true,
             FinancialAccountColumns::SORT_ORDER      => 1,
             FinancialAccountColumns::LEVEL           => 0,
         ]);
-            FinancialAccount::create([
+        FinancialAccount::create([
             FinancialAccountColumns::PARENT_ID       => null,
             FinancialAccountColumns::NAME            => 'Bank BRI',
             FinancialAccountColumns::TYPE            => 'AS',
@@ -31,6 +32,7 @@ class FinancialAccountSeeder extends Seeder
             FinancialAccountColumns::DESCRIPTION     => 'Rekening Bank BRI',
             FinancialAccountColumns::IS_GROUP        => false,
             FinancialAccountColumns::IS_ACTIVE       => true,
+            FinancialAccountColumns::IS_LIQUID       => true,
             FinancialAccountColumns::SORT_ORDER      => 1,
             FinancialAccountColumns::LEVEL           => 0,
         ]);
@@ -43,7 +45,8 @@ class FinancialAccountSeeder extends Seeder
             FinancialAccountColumns::INITIAL_BALANCE => 5000000,
             FinancialAccountColumns::DESCRIPTION     => 'Rekening utama BCA',
             FinancialAccountColumns::IS_GROUP        => false,
-            FinancialAccountColumns::IS_ACTIVE       => false,
+            FinancialAccountColumns::IS_ACTIVE       => true,
+            FinancialAccountColumns::IS_LIQUID       => true,
             FinancialAccountColumns::SORT_ORDER      => 2,
             FinancialAccountColumns::LEVEL           => 0,
         ]);

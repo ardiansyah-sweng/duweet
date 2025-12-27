@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MonthlyExpenseController;
 
 
-Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
-
 use App\Http\Controllers\FinancialAccountController; 
 use App\Http\Controllers\ReportController; // PENTING: Import Controller
+
+Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
 
 Route::get('/test/liquid-assets', function () {
     try {
