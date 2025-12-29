@@ -130,22 +130,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
-    
-    public function financialAccounts()
-    {
-        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
-                    ->withPivot(['initial_balance', 'balance', 'is_active'])
-                    ->withTimestamps();
-    }
-    
-    public function accounts() {
-        return $this->hasMany(\App\Models\UserAccount::class);
-    }
 
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
