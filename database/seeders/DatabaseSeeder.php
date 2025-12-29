@@ -7,19 +7,11 @@ use App\Models\UserAccount;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
 use Illuminate\Support\Str;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    /**
-     * See
-     * dhe application's database.
-     */
-=======
->>>>>>> 9098301e33abbea79813738da148ce7f6cc1d637
-=======
->>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
     public function run(): void
     {
         // Sesuaikan dengan skema users saat ini (tidak ada password / timestamps / email_verified_at)
@@ -68,19 +60,10 @@ class DatabaseSeeder extends Seeder
             FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
-<<<<<<< HEAD
-<<<<<<< HEAD
             AccountSeeder::class,
-=======
-=======
->>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
-            FinancialAccountSeeder::class,
-            // AccountSeeder::class,
->>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
-            AccountSeeder::class,
             TransaksiSeeder::class,
         ]);
     }

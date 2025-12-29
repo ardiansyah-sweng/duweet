@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 use App\Models\UserAccount;
 use App\Models\UserFinancialAccount;
 use App\Models\FinancialAccount;
@@ -20,7 +19,6 @@ class User extends Authenticatable
 
     protected $table = 'users';
     
-
     /**
      * Insert user 
      */
