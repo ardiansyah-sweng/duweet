@@ -63,6 +63,9 @@ class DatabaseSeeder extends Seeder
             //UserFinancialAccountSeeder::class,
             //TransactionSeeder::class,
             //AccountSeeder::class,
+            //UserTelephoneSeeder::class,
+           
+            
         ]);
     }
 }
