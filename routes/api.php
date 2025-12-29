@@ -20,6 +20,8 @@ Route::get('/user', function (Request $request) {
 // =============================================================
 // 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
 // =============================================================
+// User API Routes
+Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
