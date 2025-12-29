@@ -69,8 +69,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             UserAccountSeeder::class,
 <<<<<<< HEAD
+<<<<<<< HEAD
             AccountSeeder::class,
 =======
+=======
+>>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
             FinancialAccountSeeder::class,
             // AccountSeeder::class,
 >>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162

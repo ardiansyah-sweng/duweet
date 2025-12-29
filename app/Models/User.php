@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use App\Models\UserAccount;
 use App\Models\UserFinancialAccount;
 use App\Models\FinancialAccount;
@@ -130,6 +131,21 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class);
     }
     
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
+                    ->withPivot(['initial_balance', 'balance', 'is_active'])
+                    ->withTimestamps();
+    }
+    
+    public function accounts() {
+        return $this->hasMany(\App\Models\UserAccount::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')

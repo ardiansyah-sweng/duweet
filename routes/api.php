@@ -13,8 +13,11 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+<<<<<<< HEAD
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
+=======
+>>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
