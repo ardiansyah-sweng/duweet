@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\UserAccount;
 use App\Models\FinancialAccount;
@@ -11,55 +10,75 @@ use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
+<<<<<<< HEAD
+<<<<<<< HEAD
+    /**
+     * See
+     * dhe application's database.
+     */
+=======
+>>>>>>> 9098301e33abbea79813738da148ce7f6cc1d637
+=======
+>>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
     public function run(): void
     {
-        // User
-        $user = User::create([
-            'name' => 'Mahasiswa',
-            'email' => 'mahasiswa@example.com',
-            'password' => bcrypt('password')
-        ]);
+        // Sesuaikan dengan skema users saat ini (tidak ada password / timestamps / email_verified_at)
+        // Pastikan kolom alamat yang wajib diisi karena tidak nullable di migration
+        $attrs = [
+            'name'          => 'Test User',
+            'first_name'    => 'Test',
+            'middle_name'   => null,
+            'last_name'     => 'User',
+            'email'         => 'test@example.com',
+            'provinsi'      => 'Jawa Barat',
+            'kabupaten'     => 'Bandung',
+            'kecamatan'     => 'Coblong',
+            'jalan'         => 'Jl. Dago No. 123',
+            'kode_pos'      => '40135',
+            // Birth data (integer fields per current migration)
+            'tanggal_lahir' => 15,
+            'bulan_lahir'   => 8,
+            'tahun_lahir'   => 2002,
+            'usia'          => 21,
+        ];
 
-<<<<<<< HEAD
-        // User Account
-        $userAccount = UserAccount::create([
-            'user_id' => $user->id,
-            'name' => 'Dompet Utama'
-        ]);
+        // Kolom opsional yang mungkin ada pada skema lama: password / email_verified_at / remember_token
+        if (Schema::hasColumn('users', 'password')) {
+            $attrs['password'] = bcrypt('password');
+        }
+        if (Schema::hasColumn('users', 'remember_token')) {
+            $attrs['remember_token'] = Str::random(10);
+        }
+        if (Schema::hasColumn('users', 'email_verified_at')) {
+            $attrs['email_verified_at'] = now();
+        }
 
-        // Financial Account
-        $financialAccount = FinancialAccount::create([
-            'name' => 'Kas Utama',
-            'type' => 'asset'
-        ]);
+        User::updateOrCreate(['email' => $attrs['email']], $attrs);
 
-        // Transaction
-        Transaction::create([
-            'user_account_id' => $userAccount->id,
-            'financial_account_id' => $financialAccount->id,
-            'transaction_group_id' => Str::uuid(),
-            'entry_type' => 'debit',
-            'balance_effect' => 'increase',
-            'amount' => 500000,
-            'description' => 'Saldo awal',
-            'is_balance' => true
-=======
+        // Create a test user only if not already exists
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::factory()->create([
+                'email' => 'test@example.com',
+                'name' => 'Test User',
+            ]);
+        }
+
         // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
             FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
-            FinancialAccountSeeder::class,
 <<<<<<< HEAD
+            AccountSeeder::class,
 =======
+            FinancialAccountSeeder::class,
             // AccountSeeder::class,
+>>>>>>> 48360fa7025e7384ef84dd10d7f8e913b6aee162
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
->>>>>>> origin/main
             TransactionSeeder::class,
             AccountSeeder::class,
             TransaksiSeeder::class,
->>>>>>> main
         ]);
     }
 }
