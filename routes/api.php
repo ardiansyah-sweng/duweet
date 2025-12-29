@@ -22,6 +22,8 @@ Route::prefix('user')->group(function () {
     Route::put('/{id}', [UserController::class, 'update'])->name('api.user.update');
     Route::delete('/{id}', [UserController::class, 'destroy'])->name('api.user.destroy');
 });
+// User API Routes
+Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
