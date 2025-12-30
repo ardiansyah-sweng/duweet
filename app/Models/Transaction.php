@@ -533,7 +533,7 @@ class Transaction extends Model
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'Failed: ' . $e->getMessage(), 'deleted_count' => 0];
         }
-=======
+
         
         $transaction = static::find($transactionId);
 
@@ -543,6 +543,5 @@ class Transaction extends Model
         }
         
         return false; 
->>>>>>> Stashed changes
     }
 }
