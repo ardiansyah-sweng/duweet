@@ -156,6 +156,7 @@ class UserController extends Controller
 
             /**
              * 2️⃣ Hapus transaksi
+             * Kolom relasi tetap didefinisikan oleh TransactionColumns
              */
             if ($userAccountIds->isNotEmpty()) {
                 Transaction::deleteByUserAccountIds($userAccountIds);
