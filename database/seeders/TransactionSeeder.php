@@ -32,16 +32,18 @@ class TransactionSeeder extends Seeder
 
         // Truncate tables untuk fresh start - support SQLite dan MySQL
         $driver = DB::connection()->getDriverName();
-        
         if ($driver === 'sqlite') {
             DB::statement('PRAGMA foreign_keys = OFF;');
-            DB::table($transactionsTable)->truncate();
-            DB::table($userFinancialAccountsTable)->truncate();
-            DB::statement('PRAGMA foreign_keys = ON;');
         } else {
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            DB::table($transactionsTable)->truncate();
-            DB::table($userFinancialAccountsTable)->truncate();
+        }
+        
+        DB::table($transactionsTable)->truncate();
+        DB::table($userFinancialAccountsTable)->truncate();
+        
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON;');
+        } else {
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         }
 
