@@ -85,3 +85,7 @@ Route::prefix('reports')->group(function () {
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
+Route::get(
+    '/admin/reports/spending-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
+);
