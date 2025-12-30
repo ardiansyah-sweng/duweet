@@ -101,6 +101,11 @@ class Transaction extends Model
         return collect($rows);
     }
 
+<<<<<<< Updated upstream
+=======
+    //  MENGHAPUS SATU TRANSAKSI ---
+
+>>>>>>> Stashed changes
     /**
      * Hard delete semua transaksi berdasarkan kumpulan user_account_id
      *
@@ -109,6 +114,7 @@ class Transaction extends Model
      */
     public static function deleteByUserAccountIds($userAccountIds): int
     {
+<<<<<<< Updated upstream
         if (empty($userAccountIds) || count($userAccountIds) === 0) {
             return 0;
         }
@@ -531,5 +537,16 @@ class Transaction extends Model
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'Failed: ' . $e->getMessage(), 'deleted_count' => 0];
         }
+=======
+        
+        $transaction = static::find($transactionId);
+
+        if ($transaction) {
+            // Hapus transaksi. Mengembalikan boolean
+            return $transaction->delete();
+        }
+        
+        return false; 
+>>>>>>> Stashed changes
     }
 }
