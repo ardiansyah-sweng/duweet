@@ -23,7 +23,7 @@ class UserTelephoneSeeder extends Seeder
         $telephones = [];
         foreach ($userIds as $i => $id) {
             $telephones[] = [
-                Columns::ID_USER => $id,
+                Columns::USER_ID => $id,
                 Columns::NUMBER => '0812345678' . str_pad($i + 1, 2, '0', STR_PAD_LEFT),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
