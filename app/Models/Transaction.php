@@ -460,6 +460,46 @@ class Transaction extends Model
         return collect(DB::select($sql, $bindings));
     }
 
+    /**
+     * Filter transaksi dari akun tertentu menggunakan raw SQL
+     * 
+     * @param  int  $userAccountId  User Account ID
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getTransactionsByUserAccount(int $userAccountId): \Illuminate\Support\Collection
+    {
+        $query = "
+            SELECT
+                t.id,
+                t.user_account_id,
+                t.financial_account_id,
+                t.transaction_group_id,
+                t.amount,
+                t.entry_type,
+                t.balance_effect,
+                t.is_balance,
+                t.description,
+                t.created_at,
+                t.updated_at,
+                ua.username as user_account_username,
+                ua.email as user_account_email,
+                fa.name as financial_account_name,
+                fa.type as financial_account_type
+            FROM
+                transactions t
+            INNER JOIN
+                user_accounts ua ON t.user_account_id = ua.id
+            INNER JOIN
+                financial_accounts fa ON t.financial_account_id = fa.id
+            WHERE
+                t.user_account_id = ?
+            ORDER BY
+                t.created_at DESC
+        ";
+
+        return collect(DB::select($query, [$userAccountId]));
+    }
+
     public static function getLatestActivitiesRaw()
     {
         $query = "

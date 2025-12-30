@@ -151,10 +151,7 @@ class TransactionController extends Controller
      */
     public function getByUserAccount($userAccountId): JsonResponse
     {
-        $transactions = Transaction::with(['userAccount', 'financialAccount'])
-            ->byUserAccount($userAccountId)
-            ->orderBy(TransactionColumns::CREATED_AT, 'desc')
-            ->get();
+        $transactions = Transaction::getTransactionsByUserAccount($userAccountId);
 
         return response()->json([
             'success' => true,
@@ -328,14 +325,13 @@ class TransactionController extends Controller
 
         $periodeBulan = sprintf('%04d-%02d', $year, $month);
 
-        // ✅ RAW SQL dari Model
         $results = Transaction::getMonthlyExpensesByUser(
             $start->toDateTimeString(),
             $end->toDateTimeString(),
             $userId
         );
 
-        $rows = collect($results)->map(function ($row) use ($periodeBulan) {
+        $rows = collect($results)->map(function (\stdClass $row) use ($periodeBulan) {
             return [
                 'user_id'        => (int) $row->user_id,
                 'user_name'      => $row->username,
