@@ -88,42 +88,41 @@ class UserAccount extends Model
         }
     }
 
-    /**
-     * DML: Cari user berdasarkan username
-     */
-    public static function findByUsername(string $username)
-    {
-        $result = DB::select(
-            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
-            [$username]
-        );
+   /**
+ * DML: Cari user berdasarkan username dan password
+ */
+public static function findByUsername(string $username, string $password)
+{
+    $result = DB::select(
+        "SELECT * FROM user_accounts WHERE username = ? AND password = ? LIMIT 1",
+        [$username, $password]
+    );
 
-        return $result[0] ?? null;
-    }
+    return $result[0] ?? null;
+}
 
-    /**
-     * DML: Cari user berdasarkan email
-     */
-    public static function cariUserByEmail($email)
-    {
-        $result = DB::select(
-            "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
-            [$email]
-        );
+/**
+ * DML: Cari user berdasarkan email dan password
+ */
+public static function cariUserByEmail(string $email, string $password)
+{
+    $result = DB::select(
+        "SELECT * FROM user_accounts WHERE email = ? AND password = ? LIMIT 1",
+        [$email, $password]
+    );
 
-        return $result[0] ?? null;
-    }
+    return $result[0] ?? null;
+}
 
-    /**
-     * DML: Reset password berdasarkan email
-     */
-    public static function resetPasswordByEmail($email, $newPassword)
-    {
-        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+/**
+ * DML: Reset password berdasarkan email
+ */
+public static function resetPasswordByEmail($email, $newPassword)
+{
+    $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
 
-        return DB::update(
-            "UPDATE user_accounts SET password = ? WHERE email = ?",
-            [$hashed, $email]
-        );
-    }
+    return DB::update(
+        "UPDATE user_accounts SET password = ? WHERE email = ?",
+        [$hashed, $email]
+    );
 }
