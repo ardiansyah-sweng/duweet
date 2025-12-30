@@ -86,6 +86,17 @@ class UserAccount extends Model
     
 
     /**
+     * DML: Cari user account by ID menggunakan RAW QUERY
+     */
+    public static function cariUserById($id)
+    {
+        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+        $result = DB::select($query, [$id]);
+
+        return $result[0] ?? null;
+    }
+
+    /**
      * DML: Cari user by email menggunakan RAW QUERY
      */
     public static function cariUserByEmail($email)
