@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Transaction;
 
-
 // Import constants
 use App\Constants\UserColumns;
 use App\Constants\UserAccountColumns;
@@ -20,60 +19,8 @@ use App\Constants\TransactionColumns;
 class UserController extends Controller
 {
     /**
-     * Menampilkan semua user
+     * Terima request, validasi, dan delegasikan insert ke model (createUserRaw).
      */
-    public function index()
-    {
-        try {
-            $users = User::all();
-            return response()->json(['message' => 'OK', 'data' => $users]);
-        } catch (\Throwable $e) {
-            return response()->json(['message' => 'Terjadi kesalahan', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Menampilkan detail user berdasarkan ID
-     */
-    public function show($id)
-    {
-        try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json(['message' => 'User tidak ditemukan'], 404);
-            }
-            return response()->json(['message' => 'OK', 'data' => $user]);
-        } catch (\Throwable $e) {
-            return response()->json(['message' => 'Terjadi kesalahan', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Pencarian user berdasarkan nama/email/alamat
-     */
-    public function search(Request $request)
-    {
-        try {
-            $q = (string) $request->input('q', '');
-            if ($q === '') {
-                return response()->json(['message' => 'Parameter q wajib diisi', 'data' => []], 400);
-            }
-
-            $users = User::query()
-                ->where('name', 'like', "%$q%")
-                ->orWhere('email', 'like', "%$q%")
-                ->orWhere('jalan', 'like', "%$q%")
-                ->orWhere('kabupaten', 'like', "%$q%")
-                ->orWhere('provinsi', 'like', "%$q%")
-                ->get();
-
-            return response()->json(['message' => 'OK', 'data' => $users]);
-        } catch (\Throwable $e) {
-            return response()->json(['message' => 'Terjadi kesalahan', 'error' => $e->getMessage()], 500);
-        }
-    }
-     //Terima request, validasi, dan delegasikan insert ke model (createUserRaw).
-    //
     public function createUserRaw(Request $request): JsonResponse
     {
         // Validasi input dasar di controller — biar model tetap bertanggung jawab atas query
@@ -185,4 +132,3 @@ class UserController extends Controller
         }
     }
 }
-

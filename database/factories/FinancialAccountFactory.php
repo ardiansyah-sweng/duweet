@@ -37,6 +37,7 @@ class FinancialAccountFactory extends Factory
             FinancialAccountColumns::IS_GROUP => $this->faker->boolean(10),
             FinancialAccountColumns::DESCRIPTION => $this->faker->optional()->sentence(3),
             FinancialAccountColumns::IS_ACTIVE => true,
+            FinancialAccountColumns::IS_LIQUID => $this->faker->boolean(70),
             FinancialAccountColumns::SORT_ORDER => $this->faker->numberBetween(0, 10),
             FinancialAccountColumns::LEVEL => 0,
         ];
