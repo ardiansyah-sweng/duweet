@@ -51,7 +51,7 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
+        // Seed accounts with real world data
         $this->call([
             FinancialAccountSeeder::class,
             UserSeeder::class,
@@ -60,6 +60,12 @@ class DatabaseSeeder extends Seeder
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
+            UserTelephoneSeeder::class,
+            //AccountSeeder::class,
+            //FinancialAccountSeeder::class,
+            //TransactionSeeder::class,
+            //FinancialAccountSeeder::class,
+            
         ]);
     }
 }

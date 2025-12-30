@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\UserAccountColumns;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash; // Masih dibutuhkan untuk method update
 use Illuminate\Http\JsonResponse;
 
 class UserAccountController extends Controller
@@ -40,7 +41,7 @@ class UserAccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $userAccounts
+            'data'    => $userAccounts,
         ]);
     }
 
@@ -56,43 +57,57 @@ class UserAccountController extends Controller
         if (!$userAccount) {
             return response()->json([
                 'success' => false,
-                'message' => 'UserAccount tidak ditemukan'
+                'message' => 'UserAccount tidak ditemukan',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $userAccount
+            'data'    => $userAccount,
         ]);
     }
 
     /**
+     * Store a new user account (RAW QUERY - Via Model)
+     * Controller sekarang hanya validasi dan memanggil Model.
      * ============================
      * CREATE USER ACCOUNT
      * ============================
      */
-    public function store(Request $request)
+    public function storeRaw(Request $request)
     {
+        // 1. Validasi Input
+        // Menggunakan Constant agar nama field validasi sinkron dengan database
         $validated = $request->validate([
-            UserAccountColumns::ID_USER => 'required|exists:users,id',
-            UserAccountColumns::USERNAME => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME . '|max:255',
-            UserAccountColumns::EMAIL => 'required|email|unique:user_accounts,' . UserAccountColumns::EMAIL . '|max:255',
-            UserAccountColumns::PASSWORD => 'required|string|min:8',
-            UserAccountColumns::IS_ACTIVE => 'boolean',
+            UserAccountColumns::ID_USER   => 'required|exists:users,id',
+            UserAccountColumns::USERNAME  => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME,
+            UserAccountColumns::EMAIL     => 'required|email|unique:user_accounts,' . UserAccountColumns::EMAIL,
+            UserAccountColumns::PASSWORD  => 'required|string|min:8',
         ]);
 
-        $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
+        try {
+            // 2. Panggil fungsi static di Model untuk eksekusi INSERT
+            UserAccount::insertUserAccountRaw($validated);
 
-        $userAccount = UserAccount::create($validated);
+            return response()->json([
+                'success' => true,
+                'message' => 'UserAccount berhasil ditambahkan',
+                'data'    => [
+                    UserAccountColumns::USERNAME => $validated[UserAccountColumns::USERNAME],
+                    UserAccountColumns::EMAIL    => $validated[UserAccountColumns::EMAIL],
+                ],
+            ], 201);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'UserAccount berhasil dibuat',
-            'data' => $userAccount
-        ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal insert data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
+     * Update a user account (Standard Eloquent)
      * ============================
      * UPDATE USER ACCOUNT
      * ============================
@@ -104,19 +119,19 @@ class UserAccountController extends Controller
         if (!$userAccount) {
             return response()->json([
                 'success' => false,
-                'message' => 'UserAccount tidak ditemukan'
+                'message' => 'UserAccount tidak ditemukan',
             ], 404);
         }
 
         $validated = $request->validate([
             UserAccountColumns::USERNAME => 'sometimes|string|unique:user_accounts,' . UserAccountColumns::USERNAME . ',' . $id . '|max:255',
-            UserAccountColumns::EMAIL => 'sometimes|email|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id . '|max:255',
+            UserAccountColumns::EMAIL    => 'sometimes|email|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id . '|max:255',
             UserAccountColumns::PASSWORD => 'sometimes|string|min:8',
             UserAccountColumns::IS_ACTIVE => 'boolean',
         ]);
 
         if (isset($validated[UserAccountColumns::PASSWORD])) {
-            $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
+            $validated[UserAccountColumns::PASSWORD] = Hash::make($validated[UserAccountColumns::PASSWORD]);
         }
 
         $userAccount->update($validated);
@@ -124,7 +139,7 @@ class UserAccountController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'UserAccount berhasil diupdate',
-            'data' => $userAccount
+            'data'    => $userAccount,
         ]);
     }
 
@@ -140,7 +155,7 @@ class UserAccountController extends Controller
         if (!$userAccount) {
             return response()->json([
                 'success' => false,
-                'message' => 'UserAccount tidak ditemukan'
+                'message' => 'UserAccount tidak ditemukan',
             ], 404);
         }
 
@@ -148,7 +163,7 @@ class UserAccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'UserAccount berhasil dihapus'
+            'message' => 'UserAccount berhasil dihapus',
         ]);
     }
 
@@ -216,3 +231,5 @@ class UserAccountController extends Controller
     // }
 
 }
+
+

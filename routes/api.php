@@ -13,6 +13,13 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+// =============================================================
+// 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
+// =============================================================
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
@@ -77,12 +84,18 @@ Route::prefix('financial-account')->group(function () {
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
 });
 
-// Reports API Routes
+// =============================================================
+// 3. REPORTS
+// =============================================================
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
 });
 
+// =============================================================
+// 4. TRANSACTION (Tambahan dari Incoming Change)
+// =============================================================
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
 Route::get(
