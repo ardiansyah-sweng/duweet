@@ -37,6 +37,6 @@ class UserAccountColumns
 
     public static function getForeignKey(): string
     {
-    return self::ID_USER;
+        return self::ID_USER;
     }
 }
