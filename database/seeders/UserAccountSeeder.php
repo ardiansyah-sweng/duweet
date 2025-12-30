@@ -122,7 +122,7 @@ class UserAccountSeeder extends Seeder
 
         // Loop ke semua user yang ada (termasuk John, Jane, Bob)
         User::all()->each(function (User $user) {
-            $count = rand(1, 3); 
+            $count = rand(1, 3);
 
             $willCopyEmail = (bool) rand(0, 1);
             $copyIndex = $willCopyEmail ? rand(0, $count - 1) : null;
