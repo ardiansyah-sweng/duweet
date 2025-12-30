@@ -12,20 +12,10 @@ class UserTelephoneSeeder extends Seeder
 {
     public function run(): void
     {
-        // Disable foreign key checks to allow truncate (compatible with both MySQL and SQLite)
-        if (DB::getDriverName() === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF');
-        } else {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        }
-        
+        // Nonaktifkan FK sementara
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         UserTelephone::truncate();
-        
-        if (DB::getDriverName() === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = ON');
-        } else {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Ambil semua id user
         $userIds = DB::table(config('db_tables.users', 'users'))->pluck('id');
