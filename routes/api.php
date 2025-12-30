@@ -79,13 +79,11 @@ Route::prefix('reports')->group(function () {
         ->name('api.reports.transactions-per-user-account');
 });
 
-<<<<<<< HEAD
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
-=======
+
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
 Route::get(
     '/admin/reports/spending-summary',
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
->>>>>>> 9071eb386d4aca75d41644ebf4363b072a8e6013
