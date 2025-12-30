@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MonthlyExpenseController;
+use App\Http\Controllers\CountUserPerTanggalBulan;
 
 
 Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
@@ -59,3 +60,12 @@ Route::get('/', function () {
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
 Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
+
+/*
+|--------------------------------------------------------------------------
+| (COUNT USER PER TANGGAL DAN BULAN)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/user/per-tanggal', [CountUserPerTanggalBulan::class, 'countUserPerTanggal']);
+Route::get('/user/per-bulan', [CountUserPerTanggalBulan::class, 'countUserPerBulan']);
