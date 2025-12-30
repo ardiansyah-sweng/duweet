@@ -171,4 +171,41 @@ class TransactionController extends Controller
         $status = $result['success'] ? 200 : 400;
         return response()->json($result, $status);
     }
+
+    /**
+     * Update transaksi existing (amount, description, created_at)
+     * 
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        try {
+            // Validasi input
+            $validated = $request->validate([
+                'amount' => 'nullable|integer|min:0',
+                'description' => 'nullable|string|max:1000',
+                'created_at' => 'nullable|date_format:Y-m-d H:i:s',
+            ]);
+
+            // Panggil method dari model
+            $result = Transaction::updateTransaction((int) $id, $validated);
+
+            $status = $result['success'] ? 200 : 400;
+            return response()->json($result, $status);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal update transaksi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

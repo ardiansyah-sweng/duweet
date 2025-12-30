@@ -532,4 +532,135 @@ class Transaction extends Model
             return ['success' => false, 'message' => 'Failed: ' . $e->getMessage(), 'deleted_count' => 0];
         }
     }
+
+    /**
+     * Update transaksi existing (amount, description, created_at) dengan raw SQL 
+     * dan sesuaikan saldo di user_financial_accounts
+     *
+     * DML SQL (MySQL/MariaDB):
+     * -----------------------------------------------------------
+     * -- 1. Ambil data transaksi lama
+     * SELECT * FROM transactions WHERE id = ? FOR UPDATE;
+     * 
+     * -- 2. Rollback saldo lama
+     * UPDATE user_financial_accounts 
+     * SET balance = balance +/- old_amount 
+     * WHERE user_account_id = ? AND financial_account_id = ?;
+     * 
+     * -- 3. Update transaksi dengan data baru
+     * UPDATE transactions 
+     * SET amount = ?, description = ?, created_at = ?, updated_at = NOW()
+     * WHERE id = ?;
+     * 
+     * -- 4. Apply saldo baru
+     * UPDATE user_financial_accounts 
+     * SET balance = balance +/- new_amount 
+     * WHERE user_account_id = ? AND financial_account_id = ?;
+     * -----------------------------------------------------------
+     *
+     * @param int $transactionId
+     * @param array $data ['amount' => int, 'description' => string, 'created_at' => string]
+     * @return array{success:bool,message:string,data:object|null}
+     */
+    public static function updateTransaction(int $transactionId, array $data): array
+    {
+        try {
+            $updatedTransaction = null;
+
+            DB::transaction(function () use ($transactionId, $data, &$updatedTransaction) {
+                // 1. Ambil transaksi lama dengan lock
+                $transactionsTable = config('db_tables.transaction', 'transactions');
+                $sql = "SELECT * FROM {$transactionsTable} WHERE " . TransactionColumns::ID . " = ? FOR UPDATE";
+                $oldTransactions = DB::select($sql, [$transactionId]);
+
+                if (empty($oldTransactions)) {
+                    throw new \Exception('Transaction not found: ' . $transactionId);
+                }
+
+                $oldTransaction = $oldTransactions[0];
+                $userAccountId = $oldTransaction->{TransactionColumns::USER_ACCOUNT_ID};
+                $financialAccountId = $oldTransaction->{TransactionColumns::FINANCIAL_ACCOUNT_ID};
+                $oldAmount = $oldTransaction->{TransactionColumns::AMOUNT};
+                $balanceEffect = $oldTransaction->{TransactionColumns::BALANCE_EFFECT};
+
+                // 2. Rollback saldo lama dari user_financial_accounts
+                $ufaTable = UserFinancialAccountColumns::TABLE;
+                $ufaSql = "SELECT * FROM {$ufaTable} WHERE " . 
+                    UserFinancialAccountColumns::USER_ACCOUNT_ID . " = ? AND " . 
+                    UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . " = ? FOR UPDATE";
+                $ufaRows = DB::select($ufaSql, [$userAccountId, $financialAccountId]);
+
+                if (!empty($ufaRows)) {
+                    $ufa = $ufaRows[0];
+                    $currentBalance = $ufa->{UserFinancialAccountColumns::BALANCE};
+
+                    // Rollback: reverse effect dari amount lama
+                    if ($balanceEffect === 'increase') {
+                        $rollbackBalance = $currentBalance - $oldAmount;
+                    } else { // decrease
+                        $rollbackBalance = $currentBalance + $oldAmount;
+                    }
+
+                    DB::update(
+                        "UPDATE {$ufaTable} SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . 
+                        UserFinancialAccountColumns::ID . " = ?",
+                        [$rollbackBalance, $ufa->{UserFinancialAccountColumns::ID}]
+                    );
+
+                    // 3. Update transaksi dengan data baru
+                    $newAmount = $data['amount'] ?? $oldAmount;
+                    $newDescription = $data['description'] ?? $oldTransaction->{TransactionColumns::DESCRIPTION};
+                    $newCreatedAt = $data['created_at'] ?? $oldTransaction->{TransactionColumns::CREATED_AT};
+                    
+                    // Pastikan format timestamp yang benar
+                    if ($newCreatedAt instanceof Carbon) {
+                        $newCreatedAt = $newCreatedAt->toDateTimeString();
+                    }
+
+                    $updateSql = "UPDATE {$transactionsTable} SET " . 
+                        TransactionColumns::AMOUNT . " = ?, " . 
+                        TransactionColumns::DESCRIPTION . " = ?, " . 
+                        TransactionColumns::CREATED_AT . " = ?, " . 
+                        TransactionColumns::UPDATED_AT . " = NOW() " . 
+                        "WHERE " . TransactionColumns::ID . " = ?";
+
+                    DB::update($updateSql, [
+                        $newAmount,
+                        $newDescription,
+                        $newCreatedAt,
+                        $transactionId
+                    ]);
+
+                    // 4. Apply saldo baru
+                    if ($balanceEffect === 'increase') {
+                        $newBalance = $rollbackBalance + $newAmount;
+                    } else { // decrease
+                        $newBalance = $rollbackBalance - $newAmount;
+                    }
+
+                    DB::update(
+                        "UPDATE {$ufaTable} SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . 
+                        UserFinancialAccountColumns::ID . " = ?",
+                        [$newBalance, $ufa->{UserFinancialAccountColumns::ID}]
+                    );
+                }
+
+                // 5. Ambil data transaksi yang sudah diupdate
+                $updatedTransactions = DB::select("SELECT * FROM {$transactionsTable} WHERE " . TransactionColumns::ID . " = ?", [$transactionId]);
+                $updatedTransaction = $updatedTransactions[0] ?? null;
+            });
+
+            return [
+                'success' => true, 
+                'message' => 'Transaction updated successfully', 
+                'data' => $updatedTransaction
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false, 
+                'message' => 'Failed to update transaction: ' . $e->getMessage(), 
+                'data' => null
+            ];
+        }
+    }
 }

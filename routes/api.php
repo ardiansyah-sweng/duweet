@@ -1,15 +1,11 @@
 <?php
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
-use App\Models\FinancialAccount;
-use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
@@ -68,6 +64,7 @@ Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 Route::prefix('transactions')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
     Route::delete('/group/{groupId}/hard', [TransactionController::class, 'hardDeleteByGroupId']);
 });
 

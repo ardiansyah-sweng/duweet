@@ -28,6 +28,22 @@ class TransactionSeeder extends Seeder
         $userAccountsTable = config('db_tables.user_account', 'user_accounts');
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $userFinancialAccountsTable = config('db_tables.user_financial_account', 'user_financial_accounts');
+
+        // Truncate tables untuk fresh start - support SQLite dan MySQL
+        $driver = DB::connection()->getDriverName();
+        
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+            DB::table($transactionsTable)->truncate();
+            DB::table($userFinancialAccountsTable)->truncate();
+            DB::statement('PRAGMA foreign_keys = ON;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::table($transactionsTable)->truncate();
+            DB::table($userFinancialAccountsTable)->truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         // ===== VALIDATION: Check prerequisites =====
         $userAccountsCount = DB::table($userAccountsTable)->count();
