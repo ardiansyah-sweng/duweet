@@ -130,7 +130,6 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class);
     }
 
-
     /**
      * DML Murni: Query user yang belum setup account
      */
