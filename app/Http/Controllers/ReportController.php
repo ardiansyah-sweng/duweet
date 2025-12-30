@@ -241,5 +241,14 @@ class ReportController extends Controller
         }
     }
 
+    /**
+     * Get sum of all users' financial accounts grouped by type
+     */
+    public function sumFinancialAccountsByType()
+    {
+        $result = UserFinancialAccount::sumAllUsersFinancialAccountsByType();
+        return response()->json($result);
+    }
+
     
 }
