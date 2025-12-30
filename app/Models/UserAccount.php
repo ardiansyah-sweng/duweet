@@ -140,7 +140,6 @@ class UserAccount extends Model
             ];
         }
     }
-
     /**
      * DML: Cari user by email menggunakan RAW QUERY
      */
