@@ -81,6 +81,9 @@ Route::prefix('financial-account')->group(function () {
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
+
+    Route::get('/surplus-deficit', [ReportController::class, 'surplusDeficitByPeriod'])
+        ->name('api.reports.surplus-deficit');
 });
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
