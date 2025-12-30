@@ -98,7 +98,7 @@ class User extends Authenticatable
                     $trimmed = trim((string) $telephone);
                     if ($trimmed !== '') {
                         DB::insert(
-                             "INSERT INTO user_telephones (user_id, number, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at) VALUES (?, ?, ?, ?)",
                             [$userId, $trimmed, $nowString, $nowString]
                         );
                     }
