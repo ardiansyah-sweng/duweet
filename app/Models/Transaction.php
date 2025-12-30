@@ -474,41 +474,38 @@ class Transaction extends Model
         return DB::select($query);
     }
 
-     /*** ADMIN REPORT
-     * Sum total spending per user account in period*/
-    
-     public static function getTotalSpendingByUserAccountAdmin(
-        Carbon $startDate,
-        Carbon $endDate
-    ) {
-        $transactionsTable = config('db_tables.transaction') ?? 'transactions';
-        $financialAccountsTable = config('db_tables.financial_account') ?? 'financial_accounts';
-        $userAccountsTable = config('db_tables.user_account') ?? 'user_accounts';
-    
-        $sql = "
-            SELECT
-                ua.id AS user_account_id,
-                ua.username,
-                COALESCE(SUM(t.amount), 0) AS total_spending
-            FROM {$transactionsTable} t
-            INNER JOIN {$financialAccountsTable} fa
-                ON fa.id = t.financial_account_id
-            INNER JOIN {$userAccountsTable} ua
-                ON ua.id = t.user_account_id
-            WHERE
-                fa.type = 'SP'
-                AND fa.is_group = 0
-                AND t.created_at >= ?
-                AND t.created_at <= ?
-            GROUP BY ua.id, ua.username
-            ORDER BY total_spending DESC
-        ";
-    
-        return collect(DB::select($sql, [
-            $startDate->startOfDay()->toDateTimeString(),
-            $endDate->endOfDay()->toDateTimeString(),
-        ]));
-    }
+/***
+ * ADMIN REPORT
+ * Sum total spending per user account in a given period
+ */
+public static function getTotalSpendingByUserAccountAdmin(
+    Carbon $startDate,
+    Carbon $endDate
+) {
+    $sql = "
+        SELECT
+            ua.id AS user_account_id,
+            ua.username,
+            COALESCE(SUM(t.amount), 0) AS total_spending
+        FROM transactions t
+        INNER JOIN financial_accounts fa
+            ON fa.id = t.financial_account_id
+        INNER JOIN user_accounts ua
+            ON ua.id = t.user_account_id
+        WHERE
+            fa.type = 'SP'
+            AND fa.is_group = 0
+            AND t.created_at BETWEEN ? AND ?
+        GROUP BY ua.id, ua.username
+        ORDER BY total_spending DESC
+    ";
+
+    return collect(DB::select($sql, [
+        $startDate->startOfDay(),
+        $endDate->endOfDay(),
+    ]));
+}
+
     
     /**
      * Hard delete semua transaksi dalam satu transaction_group_id dan
