@@ -11,9 +11,7 @@ return new class extends Migration
 
     public function __construct()
     {
-        // Use the configured table name if present, otherwise fall back to the
-        // default 'financial_accounts' to avoid assigning null to the typed property.
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
+        $this->table = config('db_tables.financial_account');
     }
 
     /**
