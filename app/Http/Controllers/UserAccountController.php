@@ -197,6 +197,28 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ======================================================
+     * FIND USER ACCOUNT BY ID – (DML VERSION)
+     * ======================================================
+     */
+    public function findById($id): JsonResponse
+    {
+        $user = UserAccount::cariUserById($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User account tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
+
     // public function findByEmail(Request $request): JsonResponse
     // {
     //     $request->validate([

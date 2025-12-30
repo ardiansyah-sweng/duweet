@@ -88,41 +88,53 @@ class UserAccount extends Model
         }
     }
 
-   /**
- * DML: Cari user berdasarkan username dan password
- */
-public static function findByUsername(string $username, string $password)
-{
-    $result = DB::select(
-        "SELECT * FROM user_accounts WHERE username = ? AND password = ? LIMIT 1",
-        [$username, $password]
-    );
+    /**
+     * DML: Cari user berdasarkan ID
+     */
+    public static function cariUserById($id)
+    {
+        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+        $result = DB::select($query, [$id]);
 
-    return $result[0] ?? null;
-}
+        return $result[0] ?? null;
+    }
 
-/**
- * DML: Cari user berdasarkan email dan password
- */
-public static function cariUserByEmail(string $email, string $password)
-{
-    $result = DB::select(
-        "SELECT * FROM user_accounts WHERE email = ? AND password = ? LIMIT 1",
-        [$email, $password]
-    );
+    /**
+     * DML: Cari user berdasarkan username dan password
+     */
+    public static function findByUsername(string $username, string $password)
+    {
+        $result = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? AND password = ? LIMIT 1",
+            [$username, $password]
+        );
 
-    return $result[0] ?? null;
-}
+        return $result[0] ?? null;
+    }
 
-/**
- * DML: Reset password berdasarkan email
- */
-public static function resetPasswordByEmail($email, $newPassword)
-{
-    $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+    /**
+     * DML: Cari user berdasarkan email dan password
+     */
+    public static function cariUserByEmail(string $email, string $password)
+    {
+        $result = DB::select(
+            "SELECT * FROM user_accounts WHERE email = ? AND password = ? LIMIT 1",
+            [$email, $password]
+        );
 
-    return DB::update(
-        "UPDATE user_accounts SET password = ? WHERE email = ?",
-        [$hashed, $email]
-    );
+        return $result[0] ?? null;
+    }
+
+    /**
+     * DML: Reset password berdasarkan email
+     */
+    public static function resetPasswordByEmail($email, $newPassword)
+    {
+        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+
+        return DB::update(
+            "UPDATE user_accounts SET password = ? WHERE email = ?",
+            [$hashed, $email]
+        );
+    }
 }
