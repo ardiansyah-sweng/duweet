@@ -52,33 +52,12 @@ Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 
 Route::prefix('user-account')->group(function () {
-    // List semua user account
-    Route::get('/', [UserAccountController::class, 'index'])
-        ->name('api.user-account.index');
-
-    // Detail by ID
-    Route::get('/{id}', [UserAccountController::class, 'show'])
-        ->whereNumber('id')
-        ->name('api.user-account.show');
-
-    // CREATE – cuma 1 endpoint, pakai RAW QUERY BUILDER
-    Route::post('/', [UserAccountController::class, 'storeRaw'])
-        ->name('api.user-account.store');
-
-    // UPDATE
-    Route::put('/{id}', [UserAccountController::class, 'update'])
-        ->whereNumber('id')
-        ->name('api.user-account.update');
-
-    // DELETE pakai Eloquent
-    Route::delete('/{id}', [UserAccountController::class, 'destroy'])
-        ->whereNumber('id')
-        ->name('api.user-account.destroy');
-
-    // DELETE pakai RAW QUERY (kalau masih mau dipakai tugas raw)
-    Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])
-        ->whereNumber('id')
-        ->name('api.user-account.destroy-raw');
+Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
+    Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
+    Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
+    Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
+    Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
+    Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
