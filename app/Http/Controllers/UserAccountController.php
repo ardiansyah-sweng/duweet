@@ -89,7 +89,6 @@ class UserAccountController extends Controller
         $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
 
         $userAccount = UserAccount::create($validated);
-        
         return response()->json([
             'success' => true,
             'message' => 'UserAccount berhasil dibuat',
