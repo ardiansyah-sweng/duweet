@@ -92,4 +92,6 @@ Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActi
 Route::get(
     '/admin/reports/spending-summary',
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
+
+Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 );
