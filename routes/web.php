@@ -3,8 +3,13 @@
 use App\Http\Controllers\AccountController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MonthlyExpenseController;
+
+
+Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
+
 use App\Http\Controllers\FinancialAccountController; 
-use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReportController; // PENTING: Import Controller
 
 Route::get('/test/liquid-assets', function () {
     try {
