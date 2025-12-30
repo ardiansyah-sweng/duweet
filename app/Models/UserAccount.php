@@ -126,8 +126,8 @@ class UserAccount extends Model
     {
         try {
             // Menggunakan raw query DELETE FROM
-            $query = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            DB::delete($query, [$id]);
+            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            DB::delete($deleteQuery, [$id]);
 
             return [
                 'success' => true,
