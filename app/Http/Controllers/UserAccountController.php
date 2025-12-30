@@ -41,7 +41,7 @@ class UserAccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $userAccounts,
+            'data' => $userAccounts
         ]);
     }
 
@@ -63,7 +63,7 @@ class UserAccountController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $userAccount
+            'data' => $userAccount
         ]);
     }
 
