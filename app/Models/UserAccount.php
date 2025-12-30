@@ -90,7 +90,7 @@ class UserAccount extends Model
      */
     public static function cariUserById($id)
     {
-        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ? LIMIT 1";
+        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
         $result = DB::select($query, [$id]);
 
         return $result[0] ?? null;
