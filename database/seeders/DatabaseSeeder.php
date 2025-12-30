@@ -51,7 +51,7 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Seed accounts with real world data
+         // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
         $this->call([
             FinancialAccountSeeder::class,
             UserSeeder::class,

@@ -25,7 +25,7 @@ class UserAccount extends Model
      * Casting otomatis.
      */
     protected $casts = [
-        UserAccountColumns::IS_ACTIVE   => 'boolean',
+        UserAccountColumns::IS_ACTIVE => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
