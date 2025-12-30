@@ -224,6 +224,26 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ======================================================
+     * GET INACTIVE USERS – (DML VERSION)
+     * ======================================================
+     */
+    public function inactiveByPeriod(Request $request): JsonResponse
+    {
+        $days = $request->query('hari', 7);
+
+        // Memanggil fungsi murni dari Model
+        $data = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu($days);
+
+        return response()->json([
+            'success' => true,
+            'days_threshold' => $days,
+            'total_found' => count($data),
+            'data' => $data
+        ]);
+    }
+
     // public function findByEmail(Request $request): JsonResponse
     // {
     //     $request->validate([
@@ -243,5 +263,3 @@ class UserAccountController extends Controller
     // }
 
 }
-
-
