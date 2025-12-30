@@ -60,8 +60,8 @@ class DatabaseSeeder extends Seeder
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
             UserTelephoneSeeder::class,
-             //AccountSeeder::class,
-           //FinancialAccountSeeder::class,
+            //AccountSeeder::class,
+            //FinancialAccountSeeder::class,
             //TransactionSeeder::class,
             //FinancialAccountSeeder::class,
             
