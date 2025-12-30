@@ -66,10 +66,10 @@ class User extends Authenticatable
                 $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
-            // INSERT user - Perbaikan: jumlah placeholder (14) harus sama dengan jumlah value
+            // INSERT user
             DB::insert(
                 "INSERT INTO users (name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $data[UserColumns::NAME] ?? null,
                     $data[UserColumns::FIRST_NAME] ?? null,
@@ -98,7 +98,8 @@ class User extends Authenticatable
                     $trimmed = trim((string) $telephone);
                     if ($trimmed !== '') {
                         DB::insert(
-                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at)
+                             VALUES (?, ?, ?, ?)",
                             [$userId, $trimmed, $nowString, $nowString]
                         );
                     }
@@ -106,7 +107,7 @@ class User extends Authenticatable
             }
 
             DB::commit();
-            return $userId; // Mengembalikan ID user yang berhasil dibuat
+            return $userId;
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -132,58 +133,81 @@ class User extends Authenticatable
 
 
     /**
-     * DML Murni: Query user yang belum setup account (Base Query)
-     * WHERE NOT EXISTS (SELECT 1 FROM user_accounts WHERE id_user = user.id)
-     * 
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    /**
      * DML Murni: Query user yang belum setup account
-     * 
-     * @return \Illuminate\Support\Collection
      */
     public static function userBelumSetupAccount()
     {
-        $all = self::getAllUsersWithAccountStatus();
-        return $all->filter(function($user) {
-            return $user->setup_account == 0;
-        })->values();
+        $sql = "
+            SELECT
+                u.id,
+                u.name AS nama,
+                u.email,
+                0 AS setup_account,
+                'Belum Setup' AS status_account
+            FROM users u
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM user_accounts ua 
+                WHERE ua.id_user = u.id
+            )
+            ORDER BY u.id
+        ";
+
+        return collect(DB::select($sql));
     }
 
     /**
      * DML Murni: Query user yang sudah setup account
-     * 
-     * @return \Illuminate\Support\Collection
      */
     public static function userSudahSetupAccount()
     {
-        $all = self::getAllUsersWithAccountStatus();
-        return $all->filter(function($user) {
-            return $user->setup_account == 1;
-        })->values();
+        $sql = "
+            SELECT
+                u.id,
+                u.name AS nama,
+                u.email,
+                1 AS setup_account,
+                'Sudah Setup' AS status_account
+            FROM users u
+            WHERE EXISTS (
+                SELECT 1 
+                FROM user_accounts ua 
+                WHERE ua.id_user = u.id
+            )
+            ORDER BY u.id
+        ";
+
+        return collect(DB::select($sql));
     }
 
     /**
      * DML Murni: Get all users dengan status setup account
-     * LEFT JOIN dengan user_accounts untuk mengetahui status
-     * 
-     * @return \Illuminate\Support\Collection
      */
     public static function getAllUsersWithAccountStatus()
     {
-        return DB::table('users')
-            ->leftJoin('user_accounts', 'users.id', '=', 'user_accounts.id_user')
-            ->select(
-                'users.id',
-                'users.name as nama',
-                'users.email',
-                DB::raw('CASE WHEN MAX(user_accounts.id) IS NOT NULL THEN 1 ELSE 0 END as setup_account'),
-                DB::raw('CASE WHEN MAX(user_accounts.id) IS NOT NULL THEN "Sudah Setup" ELSE "Belum Setup" END as status_account')
-            )
-            ->groupBy('users.id', 'users.name', 'users.email')
-            ->orderBy('users.id')
-            ->get();
+        $sql = "
+            SELECT
+                u.id,
+                u.name AS nama,
+                u.email,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM user_accounts ua WHERE ua.id_user = u.id
+                    ) THEN 1 ELSE 0
+                END AS setup_account,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM user_accounts ua WHERE ua.id_user = u.id
+                    ) THEN 'Sudah Setup' ELSE 'Belum Setup'
+                END AS status_account
+            FROM users u
+            ORDER BY u.id
+        ";
+
+        return collect(DB::select($sql));
     }
+
+  
 
     public function financialAccounts()
     {
@@ -200,3 +224,4 @@ class User extends Authenticatable
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 }
+

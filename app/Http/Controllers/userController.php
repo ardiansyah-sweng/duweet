@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\User;
 use App\Models\Transaction;
-use App\Models\User;
 
 // Import constants
 use App\Constants\UserColumns;
@@ -20,22 +19,20 @@ use App\Constants\TransactionColumns;
 class UserController extends Controller
 {
     /**
-     * Index: Get users belum setup account dengan dynamic filtering
-     * Query params: paginate, per_page, min_age, max_age, provinsi, limit, with_age_group
-     * Contoh: /api/users/belum-setup?paginate=true&min_age=20&max_age=30&provinsi=Jawa Barat
+     * Index: Get users belum setup account
      */
     public function index(Request $request)
     {
         try {
             $users = User::userBelumSetupAccount();
-            
+
             return response()->json([
                 'status' => 'success',
                 'keterangan' => 'Data user yang belum setup account',
-                'total_data' => count($users),
+                'total_data' => $users->count(),
                 'data' => $users
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
                 'keterangan' => 'Error: ' . $e->getMessage(),
@@ -52,14 +49,14 @@ class UserController extends Controller
     {
         try {
             $users = User::userSudahSetupAccount();
-            
+
             return response()->json([
                 'status' => 'success',
                 'keterangan' => 'Data user yang sudah setup account',
-                'total_data' => count($users),
+                'total_data' => $users->count(),
                 'data' => $users
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
                 'keterangan' => 'Error: ' . $e->getMessage(),
@@ -77,14 +74,14 @@ class UserController extends Controller
     {
         try {
             $users = User::getAllUsersWithAccountStatus();
-            
+
             return response()->json([
                 'status' => 'success',
                 'keterangan' => 'Data user berdasarkan status setup account',
-                'total_data' => count($users),
+                'total_data' => $users->count(),
                 'data' => $users
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
                 'keterangan' => 'Error: ' . $e->getMessage(),
@@ -93,6 +90,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Terima request, validasi, dan delegasikan insert ke model (createUserRaw).
@@ -149,8 +147,6 @@ class UserController extends Controller
         try {
             /**
              * 1️⃣ Ambil semua user_account ID
-             * Controller tahu relasi via constant,
-             * tapi tidak tahu detail DML transaksi
              */
             $userAccountIds = DB::table('user_accounts')
                 ->where(UserAccountColumns::ID_USER, $id)
@@ -158,7 +154,6 @@ class UserController extends Controller
 
             /**
              * 2️⃣ Hapus transaksi
-             * Kolom relasi tetap didefinisikan oleh TransactionColumns
              */
             if ($userAccountIds->isNotEmpty()) {
                 Transaction::deleteByUserAccountIds($userAccountIds);
