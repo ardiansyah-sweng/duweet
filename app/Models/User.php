@@ -19,7 +19,6 @@ class User extends Authenticatable
 
     protected $table = 'users';
     
-
     /**
      * Insert user 
      */
@@ -129,7 +128,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
-    
+
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')

@@ -3,6 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\UserAccount;
+use App\Models\FinancialAccount;
+use App\Models\Transaction;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
 
@@ -35,7 +39,7 @@ class DatabaseSeeder extends Seeder
             $attrs['password'] = bcrypt('password');
         }
         if (Schema::hasColumn('users', 'remember_token')) {
-            $attrs['remember_token'] = str()->random(10);
+            $attrs['remember_token'] = Str::random(10);
         }
         if (Schema::hasColumn('users', 'email_verified_at')) {
             $attrs['email_verified_at'] = now();
@@ -60,6 +64,7 @@ class DatabaseSeeder extends Seeder
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
+            TransaksiSeeder::class,
         ]);
     }
 }
