@@ -101,11 +101,8 @@ class Transaction extends Model
         return collect($rows);
     }
 
-<<<<<<< Updated upstream
-=======
     //  MENGHAPUS SATU TRANSAKSI ---
 
->>>>>>> Stashed changes
     /**
      * Hard delete semua transaksi berdasarkan kumpulan user_account_id
      *
@@ -114,7 +111,6 @@ class Transaction extends Model
      */
     public static function deleteByUserAccountIds($userAccountIds): int
     {
-<<<<<<< Updated upstream
         if (empty($userAccountIds) || count($userAccountIds) === 0) {
             return 0;
         }
