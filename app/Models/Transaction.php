@@ -628,4 +628,49 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
+
+    /** Spending summary by period */
+    public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_spending
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE
+                t.user_account_id = ?
+                AND fa.type = 'EX'
+                AND t.balance_effect = 'decrease'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
 }
