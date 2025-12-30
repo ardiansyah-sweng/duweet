@@ -25,6 +25,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // If the table already exists (from another migration), skip creation
+        if (Schema::hasTable($this->table)) {
+            return;
+        }
+
         Schema::create($this->table, function (Blueprint $table) {
             $table->id(UserFinancialAccountColumns::ID);
 

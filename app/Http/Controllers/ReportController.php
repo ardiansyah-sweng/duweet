@@ -22,6 +22,20 @@ use App\Constants\UserFinancialAccountColumns;
 class ReportController extends Controller
 {
     /**
+     * Get sum of all users' financial accounts grouped by account type
+     */
+    public function sumAllUsersFinancialAccountsByType()
+    {
+        $result = UserFinancialAccount::sumAllUsersFinancialAccountsByType();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sum of all users financial accounts by type',
+            'data' => $result
+        ]);
+    }
+
+    /**
      * Mengambil ringkasan total pendapatan (Income) per bulan dengan metadata lengkap
      */
     public function incomeSummary(Request $request)

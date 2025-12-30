@@ -81,6 +81,8 @@ Route::prefix('financial-account')->group(function () {
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
+    Route::get('/sum-all-users-financial-accounts-by-type', [ReportController::class, 'sumAllUsersFinancialAccountsByType'])
+        ->name('api.reports.sum-all-users-financial-accounts-by-type');
 });
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
