@@ -29,6 +29,7 @@ return new class extends Migration
             $table->boolean(FinancialAccountColumns::IS_GROUP)->default(false);
             $table->text(FinancialAccountColumns::DESCRIPTION)->nullable();
             $table->boolean(FinancialAccountColumns::IS_ACTIVE)->default(true);
+            $table->boolean(FinancialAccountColumns::IS_LIQUID)->default(false); 
             
             //$table->string('color', 7)->nullable(); // hex color code
             //$table->string('icon', 50)->nullable();
