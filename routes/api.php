@@ -13,6 +13,8 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+// User API Routes
+Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
@@ -44,6 +46,7 @@ Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
+    Route::get('/find-by-id/{id}', [UserAccountController::class, 'findById'])->name('api.user-account.find-by-id');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
     Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
@@ -66,6 +69,7 @@ Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 Route::prefix('transactions')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::delete('/group/{groupId}/hard', [TransactionController::class, 'hardDeleteByGroupId']);
 });
 
 // Financial Account API Routes
@@ -82,3 +86,7 @@ Route::prefix('reports')->group(function () {
 
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
+Route::get(
+    '/admin/reports/spending-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
+);
