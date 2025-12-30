@@ -35,7 +35,6 @@ class FinancialAccount extends Model
         FinancialAccountColumns::DESCRIPTION,
         FinancialAccountColumns::SORT_ORDER,
         FinancialAccountColumns::LEVEL,
-        FinancialAccountColumns::IS_LIQUID,
     ];
 
     protected $casts = [
@@ -44,7 +43,6 @@ class FinancialAccount extends Model
         FinancialAccountColumns::INITIAL_BALANCE => 'integer',
         FinancialAccountColumns::IS_GROUP => 'boolean',
         FinancialAccountColumns::IS_ACTIVE => 'boolean',
-        FinancialAccountColumns::IS_LIQUID => 'boolean',
     ];
 
     public $timestamps = true;
