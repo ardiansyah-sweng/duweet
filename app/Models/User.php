@@ -66,7 +66,7 @@ class User extends Authenticatable
                 $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
-            // INSERT user
+            // INSERT user - Perbaikan: jumlah placeholder (14) harus sama dengan jumlah value
             DB::insert(
                 "INSERT INTO users (name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
