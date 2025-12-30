@@ -3,27 +3,21 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Transaction;
-use App\Models\UserAccount;
-use App\Models\UserTelephone;
-use App\Models\FinancialAccount;
-use App\Models\UserFinancialAccount;
-use App\Constants\UserAccountColumns;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use App\Constants\UserColumns;
+use App\Models\UserAccount;
+use App\Models\UserFinancialAccount;
+use App\Models\FinancialAccount;
+use App\Models\Transaction;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     /**
      * Disable automatic timestamps because users table does not have created_at/updated_at
      *
@@ -71,7 +65,7 @@ class User extends Authenticatable
      */
     public function userAccounts()
     {
-        return $this->hasMany(UserAccount::class, UserAccountColumns::ID_USER);
+        return $this->hasMany(UserAccount::class, 'id_user');
     }
     
     public function accounts() {
@@ -82,6 +76,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
+    
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')

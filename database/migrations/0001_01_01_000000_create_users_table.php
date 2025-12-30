@@ -39,6 +39,9 @@ return new class extends Migration
             $table->integer(UserColumns::BULAN_LAHIR);
             $table->integer(UserColumns::TAHUN_LAHIR);
             $table->integer(UserColumns::USIA);
+
+            // Auditing
+            $table->timestamps();
         });
     
     }
@@ -49,6 +52,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists($this->table);
     }
 };
