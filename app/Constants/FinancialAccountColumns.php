@@ -2,7 +2,7 @@
 
 namespace App\Constants;
 
-class AccountColumns
+class FinancialAccountColumns
 {
     public const ID             = 'id'; // Primary Key
     public const PARENT_ID      = 'parent_id'; // Foreign Key to accounts.id
@@ -18,6 +18,7 @@ class AccountColumns
     public const LEVEL          = 'level'; // Level in the hierarchy (0 = root, 1 = child, 2 = grandchild)
     public const CREATED_AT     = 'created_at';
     public const UPDATED_AT     = 'updated_at';
+    public const IS_LIQUID     = 'is_liquid'; // Boolean to indicate if the account is liquid
 
     /**
      * Get fillable columns (exclude id, created_at, updated_at)
@@ -36,6 +37,7 @@ class AccountColumns
             self::SORT_ORDER,
             self::LEVEL,
             self::DESCRIPTION,
+            self::IS_LIQUID,
         ];
     }
 }
