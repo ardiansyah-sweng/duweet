@@ -106,7 +106,7 @@ class User extends Authenticatable
             }
 
             DB::commit();
-            return $userId;
+            return $userId; // Mengembalikan ID user yang berhasil dibuat
 
         } catch (\Exception $e) {
             DB::rollBack();
