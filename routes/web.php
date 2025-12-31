@@ -58,4 +58,5 @@ Route::get('/', function () {
 // FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
 
+// Tambahkan route lain di sini jika ada...
 Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);

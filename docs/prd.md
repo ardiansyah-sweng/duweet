@@ -97,6 +97,7 @@ Aplikasi personal finance berbasis gamifikasi
 - **Transactions**: adalah entitas yang mendata tiap transaksi keuangan yang terjadi
   - Atribut
     - id (Primary Key) - Unique identifier
+    - transaction_date (datetime) - Tanggal terjadinya transaksi
     - transaction_group_id (string) - UUID untuk mengelompokkan debit-credit pair
     - user_account_id (Foreign Key) - Reference ke User_Accounts.id
     - financial_account_id (Foreign Key) - Account yang terpengaruh (single account per record). References ke financial_accounts.id

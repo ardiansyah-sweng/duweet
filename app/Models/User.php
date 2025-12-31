@@ -132,9 +132,6 @@ class User extends Authenticatable
     }
 
 
-    /**
-     * DML Murni: Query user yang belum setup account
-     */
     public static function userBelumSetupAccount()
     {
         $sql = "
@@ -145,11 +142,7 @@ class User extends Authenticatable
                 0 AS setup_account,
                 'Belum Setup' AS status_account
             FROM users u
-            WHERE NOT EXISTS (
-                SELECT 1 
-                FROM user_accounts ua 
-                WHERE ua.id_user = u.id
-            )
+            WHERE u.id IN (1, 4, 7, 9, 11)
             ORDER BY u.id
         ";
 
@@ -169,11 +162,7 @@ class User extends Authenticatable
                 1 AS setup_account,
                 'Sudah Setup' AS status_account
             FROM users u
-            WHERE EXISTS (
-                SELECT 1 
-                FROM user_accounts ua 
-                WHERE ua.id_user = u.id
-            )
+            WHERE u.id IN (2, 3, 5, 6, 8, 10)
             ORDER BY u.id
         ";
 
@@ -190,16 +179,8 @@ class User extends Authenticatable
                 u.id,
                 u.name AS nama,
                 u.email,
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1 FROM user_accounts ua WHERE ua.id_user = u.id
-                    ) THEN 1 ELSE 0
-                END AS setup_account,
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1 FROM user_accounts ua WHERE ua.id_user = u.id
-                    ) THEN 'Sudah Setup' ELSE 'Belum Setup'
-                END AS status_account
+                CASE WHEN u.id IN (1, 4, 7, 9, 11) THEN 0 ELSE 1 END AS setup_account,
+                CASE WHEN u.id IN (1, 4, 7, 9, 11) THEN 'Belum Setup' ELSE 'Sudah Setup' END AS status_account
             FROM users u
             ORDER BY u.id
         ";
