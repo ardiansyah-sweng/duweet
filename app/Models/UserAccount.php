@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserAccount extends Model
 {
@@ -15,6 +16,7 @@ class UserAccount extends Model
     protected $table = 'user_accounts';
 
     /**
+     * Table ini tidak menggunakan created_at/updated_at default Laravel
      * Model ini tidak menggunakan created_at dan updated_at.
      */
     public $timestamps = false;
@@ -42,6 +44,11 @@ class UserAccount extends Model
         return UserAccountColumns::getFillable();
     }
 
+    public function getKeyName()
+    {
+        return UserAccountColumns::getPrimaryKey();
+    }
+
     /**
      * Relasi ke tabel users.
      */
@@ -65,6 +72,7 @@ class UserAccount extends Model
     }
 
     /**
+
      * Query users yang belum setup account
      * Static method untuk mendapatkan users yang belum punya user_accounts record
      */
@@ -75,13 +83,65 @@ class UserAccount extends Model
     }
 
     /**
+
+     * Insert UserAccount baru menggunakan MURNI SQL (INSERT INTO)
+     * Logika hashing dan default value dilakukan di sini.
+     * * @param array $data Data yang sudah divalidasi dari controller
+     * @return bool
+     */
+    public static function insertUserAccountRaw(array $data)
+    {
+        // 1. Siapkan variabel data dari input array
+        // Kita gunakan Constant sebagai key agar tidak typo
+        $idUser     = $data[UserAccountColumns::ID_USER];
+        $username   = $data[UserAccountColumns::USERNAME];
+        $email      = $data[UserAccountColumns::EMAIL];
+        
+        // 2. Hash Password (enkripsi)
+        $password   = Hash::make($data[UserAccountColumns::PASSWORD]);
+        
+        // 3. Set Default Values
+        $verifiedAt = now(); 
+        $isActive   = 1; // Boolean true di MySQL/MariaDB disimpan sebagai 1
+
+        // 4. Rakit Query SQL Native (INSERT INTO)
+        // Kita gunakan concatenation Constant untuk nama kolom agar dinamis & aman
+        $tableName = 'user_accounts'; 
+        
+        $query = "INSERT INTO $tableName (
+                    " . UserAccountColumns::ID_USER . ", 
+                    " . UserAccountColumns::USERNAME . ", 
+                    " . UserAccountColumns::EMAIL . ", 
+                    " . UserAccountColumns::PASSWORD . ", 
+                    " . UserAccountColumns::VERIFIED_AT . ", 
+                    " . UserAccountColumns::IS_ACTIVE . "
+                  ) VALUES (?, ?, ?, ?, ?, ?)";
+
+        
+        return DB::insert($query, [
+            $idUser, 
+            $username, 
+            $email, 
+            $password, 
+            $verifiedAt, 
+            $isActive
+        ]);
+    }
+
+    /**
+     * Hapus satu UserAccount berdasarkan ID dengan raw query (DELETE FROM)
+     * * @param int $id
+     * @return array
+
      * RAW DELETE USER ACCOUNT (DML)
      */
     public static function deleteUserAccountRaw($id)
     {
         try {
+            // Menggunakan raw query DELETE FROM
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
             DB::delete($deleteQuery, [$id]);
+
             return [
                 'success' => true,
                 'message' => 'UserAccount berhasil dihapus'
@@ -93,8 +153,6 @@ class UserAccount extends Model
             ];
         }
     }
-    
-
     /**
      * DML: Cari user account by ID menggunakan RAW QUERY
      */
