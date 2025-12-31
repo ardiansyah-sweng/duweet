@@ -147,6 +147,8 @@ class UserController extends Controller
         try {
             /**
              * 1️⃣ Ambil semua user_account ID
+             * Controller tahu relasi via constant,
+             * tapi tidak tahu detail DML transaksi
              */
             $userAccountIds = DB::table('user_accounts')
                 ->where(UserAccountColumns::ID_USER, $id)
@@ -154,6 +156,7 @@ class UserController extends Controller
 
             /**
              * 2️⃣ Hapus transaksi
+             * Kolom relasi tetap didefinisikan oleh TransactionColumns
              */
             if ($userAccountIds->isNotEmpty()) {
                 Transaction::deleteByUserAccountIds($userAccountIds);

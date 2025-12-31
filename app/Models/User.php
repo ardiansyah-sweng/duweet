@@ -66,10 +66,10 @@ class User extends Authenticatable
                 $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
-            // INSERT user
+            // INSERT user - Perbaikan: jumlah placeholder (14) harus sama dengan jumlah value
             DB::insert(
                 "INSERT INTO users (name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $data[UserColumns::NAME] ?? null,
                     $data[UserColumns::FIRST_NAME] ?? null,
@@ -98,8 +98,7 @@ class User extends Authenticatable
                     $trimmed = trim((string) $telephone);
                     if ($trimmed !== '') {
                         DB::insert(
-                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at)
-                             VALUES (?, ?, ?, ?)",
+                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at) VALUES (?, ?, ?, ?)",
                             [$userId, $trimmed, $nowString, $nowString]
                         );
                     }
@@ -107,7 +106,7 @@ class User extends Authenticatable
             }
 
             DB::commit();
-            return $userId;
+            return $userId; // Mengembalikan ID user yang berhasil dibuat
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -123,7 +122,7 @@ class User extends Authenticatable
     }
     
     public function accounts() {
-        return $this->hasMany(UserAccount::class);
+        return $this->hasMany(\App\Models\UserAccount::class);
     }
 
     public function transactions(): HasMany
@@ -132,6 +131,11 @@ class User extends Authenticatable
     }
 
 
+
+
+    /**
+     * DML Murni: Query user yang belum setup account
+     */
     public static function userBelumSetupAccount()
     {
         $sql = "
