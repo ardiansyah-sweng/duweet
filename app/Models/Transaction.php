@@ -10,6 +10,7 @@ use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
+use Illuminate\Support\Facades\Schema;
 
 class Transaction extends Model
 {
@@ -628,12 +629,23 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
-
+    
     /** Spending summary by period */
     public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // Tentukan kolom tanggal yang digunakan: prefer `transaction_date`, fallback ke `created_at`
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionsTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            // Jika pengecekan schema gagal (mis. koneksi), gunakan default
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
 
         try {
             $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
@@ -642,11 +654,11 @@ class Transaction extends Model
         }
 
         if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+            $periodeExpr = "strftime('%Y-%m', t." . $dateColumn . ")";
         } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+            $periodeExpr = "to_char(t." . $dateColumn . ", 'YYYY-MM')";
         } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+            $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')"; // MySQL/MariaDB
         }
 
         $sql = "
@@ -660,7 +672,7 @@ class Transaction extends Model
                 AND fa.type IN ('EX','SP')
                 AND t.balance_effect = 'decrease'
                 AND fa.is_group = 0
-                AND t.created_at BETWEEN ? AND ?
+                AND t." . $dateColumn . " BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
             ORDER BY periode ASC
         ";
