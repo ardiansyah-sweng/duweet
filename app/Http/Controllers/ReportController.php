@@ -240,6 +240,61 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * ADMIN REPORT
+     * Get expenses summary by period (month) for all users
+     * 
+     * GET /api/admin/reports/expenses-summary
+     * Query parameters:
+     * - start_date: optional (default: start of current month)
+     * - end_date: optional (default: end of current month)
+     */
+    public function adminExpensesSummary(Request $request)
+    {
+        // 1. Get period from query params
+        $startDate = $request->query('start_date')
+            ? Carbon::parse($request->query('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->query('end_date')
+            ? Carbon::parse($request->query('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        // 2. Validate period
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 3. Call Model (ADMIN REPORT)
+        try {
+            $data = Transaction::getExpensesSummaryByPeriodAdmin(
+                $startDate,
+                $endDate
+            );
+
+            return response()->json([
+                'success' => true,
+                'type' => 'ADMIN_EXPENSES_REPORT',
+                'period' => [
+                    'from' => $startDate->toDateString(),
+                    'to'   => $endDate->toDateString(),
+                ],
+                'total_periods' => $data->count(),
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil laporan expenses admin',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
     
         /**
      * Surplus / Defisit user berdasarkan periode

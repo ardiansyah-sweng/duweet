@@ -106,3 +106,8 @@ Route::get(
     '/admin/reports/spending-summary',
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
+
+Route::get(
+    '/admin/reports/expenses-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminExpensesSummary']
+);
