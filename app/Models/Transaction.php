@@ -635,52 +635,28 @@ class Transaction extends Model
     {
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
-
-        // Tentukan kolom tanggal yang digunakan: prefer `transaction_date`, fallback ke `created_at`
-        $dateColumn = TransactionColumns::TRANSACTION_DATE;
-        try {
-            if (!Schema::hasColumn($transactionsTable, $dateColumn)) {
-                $dateColumn = 'created_at';
-            }
-        } catch (\Exception $e) {
-            // Jika pengecekan schema gagal (mis. koneksi), gunakan default
-            $dateColumn = TransactionColumns::TRANSACTION_DATE;
-        }
-
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t." . $dateColumn . ")";
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t." . $dateColumn . ", 'YYYY-MM')";
-        } else {
-            $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')"; // MySQL/MariaDB
-        }
+        $dateColumn = 'transaction_date'; 
 
         $sql = "
-            SELECT
-                {$periodeExpr} AS periode,
+            SELECT 
+                DATE_FORMAT(t.{$dateColumn}, '%Y-%m') AS periode,
                 COALESCE(SUM(t.amount), 0) AS total_spending
             FROM {$transactionsTable} t
             INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
-            WHERE
+            WHERE 
                 t.user_account_id = ?
-                AND fa.type IN ('EX','SP')
-                AND t.balance_effect = 'decrease'
+                AND t.{$dateColumn} BETWEEN ? AND ?
+                AND fa.type = 'SP'        
+                AND t.balance_effect = 'increase' 
                 AND fa.is_group = 0
-                AND t." . $dateColumn . " BETWEEN ? AND ?
-            GROUP BY {$periodeExpr}
+            GROUP BY periode
             ORDER BY periode ASC
         ";
 
         $rows = DB::select($sql, [
             $userAccountId,
-            $startDate->toDateTimeString(),
-            $endDate->toDateTimeString(),
+            $startDate->startOfDay()->toDateTimeString(),
+            $endDate->endOfDay()->toDateTimeString()
         ]);
 
         return collect($rows);

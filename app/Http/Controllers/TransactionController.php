@@ -196,7 +196,7 @@ class TransactionController extends Controller
 
             $data = collect($results)->map(function ($row) {
                 return [
-                    'periode' => $row->periode,
+                    'period' => $row->periode,
                     'total_spending' => (int) $row->total_spending,
                 ];
             })->values();
