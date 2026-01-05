@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\FinancialAccount;
+use App\Models\UserAccount;
 use App\Models\UserFinancialAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,5 +122,21 @@ class AccountController extends Controller
 
         return response()->json(['data' => $row], 200);
     }
+
+     public function updatePassword($id, Request $request)
+    {
+        
+        $password = $request->input('password');
+
+        $result = UserAccount::updatePasswordById($id, $password);
+
+        return response()->json([
+            'success' => $result ? true : false,
+            'id_user' => $id,
+            'password_baru' => $password
+        ]);
+    }
+
+
 
 }

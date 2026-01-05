@@ -177,4 +177,14 @@ class UserAccount extends Model
 
         return DB::update($query, [$hashed, $email]);
     }
+
+    public static function updatePasswordById($idUser, $newPassword){
+    $hashed = bcrypt($newPassword);
+
+    return DB::update("
+        UPDATE user_accounts
+        SET password = ?
+        WHERE id_user = ?
+    ", [$hashed, $idUser]);
+    }
 }

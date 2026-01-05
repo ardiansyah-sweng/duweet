@@ -106,3 +106,7 @@ Route::get(
     '/admin/reports/spending-summary',
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
+
+
+Route::post('/test-update-password/{id}', [AccountController::class, 'updatePassword']);
+
