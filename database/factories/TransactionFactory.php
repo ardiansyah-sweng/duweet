@@ -42,6 +42,7 @@ class TransactionFactory extends Factory
             TransactionColumns::TRANSACTION_GROUP_ID => Str::uuid()->toString(),
             TransactionColumns::USER_ACCOUNT_ID => $userAccount?->id ?? 1,
             TransactionColumns::FINANCIAL_ACCOUNT_ID => $financialAccount?->id ?? 1,
+            TransactionColumns::TRANSACTION_DATE => $this->faker->dateTimeBetween('-1 year', 'now'),
             TransactionColumns::ENTRY_TYPE => $this->faker->randomElement(['debit', 'credit']),
             TransactionColumns::AMOUNT => $this->faker->numberBetween(10000, 1000000),
             TransactionColumns::BALANCE_EFFECT => $this->faker->randomElement(['increase', 'decrease']),
@@ -93,6 +94,7 @@ class TransactionFactory extends Factory
             TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
             TransactionColumns::USER_ACCOUNT_ID => $userAccountId,
             TransactionColumns::FINANCIAL_ACCOUNT_ID => $debitAccountId,
+            TransactionColumns::TRANSACTION_DATE => $timestamp,
             TransactionColumns::ENTRY_TYPE => 'debit',
             TransactionColumns::AMOUNT => $amount,
             TransactionColumns::BALANCE_EFFECT => $debitBalanceEffect,
@@ -107,6 +109,7 @@ class TransactionFactory extends Factory
             TransactionColumns::TRANSACTION_GROUP_ID => $groupId,
             TransactionColumns::USER_ACCOUNT_ID => $userAccountId,
             TransactionColumns::FINANCIAL_ACCOUNT_ID => $creditAccountId,
+            TransactionColumns::TRANSACTION_DATE => $timestamp,
             TransactionColumns::ENTRY_TYPE => 'credit',
             TransactionColumns::AMOUNT => $amount,
             TransactionColumns::BALANCE_EFFECT => $creditBalanceEffect,
@@ -117,5 +120,57 @@ class TransactionFactory extends Factory
         ];
 
         return [$debit, $credit];
+    }
+
+    /**
+     * Set specific transaction date
+     *
+     * @param string|\DateTime $date
+     * @return static
+     */
+    public function transactionDate($date): static
+    {
+        return $this->state(fn () => [
+            TransactionColumns::TRANSACTION_DATE => $date,
+        ]);
+    }
+
+    /**
+     * Set transaction date to past days
+     *
+     * @param int $daysAgo Number of days ago (default: 30)
+     * @return static
+     */
+    public function daysAgo(int $daysAgo = 30): static
+    {
+        return $this->state(fn () => [
+            TransactionColumns::TRANSACTION_DATE => $this->faker->dateTimeBetween("-{$daysAgo} days", 'now'),
+        ]);
+    }
+
+    /**
+     * Set transaction date within specific range
+     *
+     * @param string $startDate
+     * @param string $endDate
+     * @return static
+     */
+    public function between(string $startDate, string $endDate): static
+    {
+        return $this->state(fn () => [
+            TransactionColumns::TRANSACTION_DATE => $this->faker->dateTimeBetween($startDate, $endDate),
+        ]);
+    }
+
+    /**
+     * Set transaction date to today
+     *
+     * @return static
+     */
+    public function today(): static
+    {
+        return $this->state(fn () => [
+            TransactionColumns::TRANSACTION_DATE => now(),
+        ]);
     }
 }
