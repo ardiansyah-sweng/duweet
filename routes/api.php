@@ -109,9 +109,17 @@ Route::prefix('reports')->group(function () {
 Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
+
+// ============================================
+// User yang belum setup account Routes
+// ============================================
+Route::get('/users/with-status', [UserController::class, 'getAllWithStatus'])->name('api.users.with-status');
+
+
 Route::get(
     '/admin/reports/spending-summary',
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
+
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
