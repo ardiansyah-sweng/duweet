@@ -26,7 +26,7 @@ class UserColumns
     public const USIA           = 'usia';             // Umur user (integer)
 
     
-    public const ACCOUNTS_COUNT = 'accounts_count';
+   
     public static function getFillable(): array
     {
         return [
@@ -47,8 +47,10 @@ class UserColumns
         ];
     }
 
-    public static function getAllColumns(): array
+    
+        public const ACCOUNTS_COUNT = 'accounts_count';
     {
         return array_merge([self::ID], self::getFillable());
     }
+
 }
