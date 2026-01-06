@@ -144,4 +144,33 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
+
+    public static function getUserAccounts($userId)
+    {
+
+        $query = "SELECT 
+                    ua.id as user_account_id,
+                    ua.id_user,
+                    ua.username,
+                    ua.email,
+                    ua.verified_at,
+                    ua.is_active
+                  FROM user_accounts ua
+                  WHERE ua.id_user = ?
+                  ORDER BY ua.id";
+        
+        $results = DB::select($query, [$userId]);
+        
+      
+        return array_map(function($row) {
+            return [
+                'user_account_id' => $row->user_account_id,
+                'id_user' => $row->id_user,
+                'username' => $row->username,
+                'email' => $row->email,
+                'verified_at' => $row->verified_at,
+                'is_active' => (bool) $row->is_active
+            ];
+        }, $results);
+    }
 }
