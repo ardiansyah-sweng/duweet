@@ -205,4 +205,33 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function getUserAccounts($id): JsonResponse
+    {
+        
+        $user = DB::table('users')
+            ->where(UserColumns::ID, $id)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan.'
+            ], 404);
+        }
+
+        $accounts = User::getUserAccounts($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil data accounts.',
+            'data' => [
+                'user_id' => (int) $id,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'accounts' => $accounts,
+                'total_accounts' => count($accounts)
+            ]
+        ], 200);
+    }
 }
