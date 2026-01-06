@@ -290,4 +290,97 @@ class ReportController extends Controller
             'summary' => $summary
         ]);
     }
+
+    /**
+     * Sum Cash In (credit transactions) by period
+     * 
+     * GET /api/reports/sum-cash-in-by-period
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function cashInByPeriod(Request $request)
+    {
+        // Validate request parameters
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'user_account_id' => 'nullable|integer|exists:user_accounts,id',
+            'financial_account_id' => 'nullable|integer|exists:financial_accounts,id',
+            'period_format' => 'nullable|in:day,week,month,quarter,year',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Get period parameters
+            $startDate = $request->input('start_date')
+                ? Carbon::parse($request->input('start_date'))->startOfDay()
+                : Carbon::now()->startOfMonth();
+
+            $endDate = $request->input('end_date')
+                ? Carbon::parse($request->input('end_date'))->endOfDay()
+                : Carbon::now()->endOfMonth();
+
+            // Validate date range
+            if ($startDate->greaterThan($endDate)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+                ], 400);
+            }
+
+            // Get optional filters
+            $userAccountId = $request->input('user_account_id');
+            $financialAccountId = $request->input('financial_account_id');
+            $periodFormat = $request->input('period_format', 'month');
+
+            // Query data from model
+            $data = Transaction::sumCashInByPeriod(
+                $startDate,
+                $endDate,
+                $userAccountId,
+                $financialAccountId,
+                $periodFormat
+            );
+
+            // Calculate summary statistics
+            $totalCashIn = $data->sum('total_cash_in');
+            $transactionCount = $data->sum('transaction_count');
+            $recordCount = $data->count();
+
+            // Format response
+            return response()->json([
+                'status' => 'success',
+                'type' => 'CASH_IN_BY_PERIOD_REPORT',
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'format' => $periodFormat,
+                ],
+                'filters' => [
+                    'user_account_id' => $userAccountId,
+                    'financial_account_id' => $financialAccountId,
+                ],
+                'summary' => [
+                    'total_cash_in' => $totalCashIn,
+                    'total_transactions' => $transactionCount,
+                    'period_records' => $recordCount,
+                ],
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil laporan cash in by period',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

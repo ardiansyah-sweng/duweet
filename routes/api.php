@@ -99,6 +99,8 @@ Route::prefix('reports')->group(function () {
     Route::get(
         '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
         ->name('api.reports.surplus-defisit');
+    Route::get('/cash-in-by-period', [ReportController::class, 'cashInByPeriod'])  
+        ->name('api.reports.cash-in-by-period');
 });
 
 // =============================================================
