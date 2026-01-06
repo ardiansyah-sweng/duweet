@@ -28,6 +28,7 @@ return new class extends Migration
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
 
+
             // Foreign key columns (without constraints yet)
             $table->unsignedBigInteger(TransactionColumns::USER_ACCOUNT_ID)->index();
             $table->unsignedBigInteger(TransactionColumns::FINANCIAL_ACCOUNT_ID)->index();
@@ -41,6 +42,7 @@ return new class extends Migration
             $table->enum(TransactionColumns::BALANCE_EFFECT, ['increase', 'decrease']);
             $table->text(TransactionColumns::DESCRIPTION)->nullable();
             $table->boolean(TransactionColumns::IS_BALANCE)->default(false);
+            $table->dateTime(TransactionColumns::TRANSACTION_DATE)->useCurrent();
 
             $table->timestamps();
 
