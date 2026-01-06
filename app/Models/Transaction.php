@@ -563,7 +563,7 @@ class Transaction extends Model
             INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
             WHERE 
                 fa.type = 'EX'
-                AND t.balance_effect = 'increase'
+                AND t.balance_effect = 'decrease'
                 AND fa.is_group = 0
                 AND t.created_at BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
