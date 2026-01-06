@@ -339,20 +339,16 @@ class Transaction extends Model
      */
     public static function getTransactionsByUserAccount(
         int $userAccountId,
-        ?string $entryType = null,
         ?string $startDate = null,
         ?string $endDate = null
     ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction', 'transactions');
 
+        // Hanya filter berdasarkan user_account_id dan (opsional) rentang tanggal; entry_type diabaikan (tidak ada debit/credit filter)
         $sql = "SELECT * FROM {$transactionTable} WHERE " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
         $bindings = [$userAccountId];
 
-        if ($entryType !== null) {
-            $sql .= " AND " . TransactionColumns::ENTRY_TYPE . " = ?";
-            $bindings[] = $entryType;
-        }
-
+        // Rentang tanggal (butuh start & end)
         if ($startDate !== null && $endDate !== null) {
             $sql .= " AND created_at BETWEEN ? AND ?";
             $bindings[] = $startDate . ' 00:00:00';

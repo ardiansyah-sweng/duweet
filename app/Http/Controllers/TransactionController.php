@@ -36,14 +36,12 @@ class TransactionController extends Controller
         try {
             $request->validate([
                 'user_account_id' => 'required|integer',
-                'entry_type' => 'nullable|in:debit,credit',
                 'start_date' => 'nullable|date|date_format:Y-m-d',
                 'end_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:start_date',
             ]);
 
             $transactions = Transaction::getTransactionsByUserAccount(
                 (int) $request->input('user_account_id'),
-                $request->input('entry_type'),
                 $request->input('start_date'),
                 $request->input('end_date')
             );
@@ -52,7 +50,6 @@ class TransactionController extends Controller
                 'success' => true,
                 'filters' => [
                     'user_account_id' => (int) $request->input('user_account_id'),
-                    'entry_type' => $request->input('entry_type'),
                     'start_date' => $request->input('start_date'),
                     'end_date' => $request->input('end_date'),
                 ],
