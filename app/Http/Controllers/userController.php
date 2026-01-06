@@ -24,7 +24,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         try {
-            $users = User::userBelumSetupAccount();
+            $users = User::getUsersWithStatus('belum_setup');
 
             return response()->json([
                 'status' => 'success',
@@ -48,7 +48,7 @@ class UserController extends Controller
     public function sudahSetupAccount(Request $request)
     {
         try {
-            $users = User::userSudahSetupAccount();
+            $users = User::getUsersWithStatus('sudah_setup');
 
             return response()->json([
                 'status' => 'success',
@@ -73,7 +73,7 @@ class UserController extends Controller
     public function getAllWithStatus()
     {
         try {
-            $users = User::getAllUsersWithAccountStatus();
+            $users = User::getUsersWithStatus();
 
             return response()->json([
                 'status' => 'success',

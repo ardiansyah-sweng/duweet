@@ -132,66 +132,33 @@ class User extends Authenticatable
 
 
 
+/**
+ * DML Murni: Get users dengan status setup account (Optimized version)
+ * @param string|null $status - 'belum_setup', 'sudah_setup', atau null untuk semua
+ */
+public static function getUsersWithStatus($status = null)
+{
+    $sql = "
+        SELECT
+            u.id,
+            u.name AS nama,
+            u.email,
+            IF(ua.id_user IS NOT NULL, 1, 0) AS setup_account,
+            IF(ua.id_user IS NOT NULL, 'Sudah Setup', 'Belum Setup') AS status_account
+        FROM users u
+        LEFT JOIN (SELECT DISTINCT id_user FROM user_accounts) ua ON u.id = ua.id_user
+    ";
 
-    /**
-     * DML Murni: Query user yang belum setup account
-     */
-    public static function userBelumSetupAccount()
-    {
-        $sql = "
-            SELECT
-                u.id,
-                u.name AS nama,
-                u.email,
-                0 AS setup_account,
-                'Belum Setup' AS status_account
-            FROM users u
-            WHERE u.id IN (1, 4, 7, 9, 11)
-            ORDER BY u.id
-        ";
-
-        return collect(DB::select($sql));
+    if ($status === 'belum_setup') {
+        $sql .= " WHERE ua.id_user IS NULL";
+    } elseif ($status === 'sudah_setup') {
+        $sql .= " WHERE ua.id_user IS NOT NULL";
     }
 
-    /**
-     * DML Murni: Query user yang sudah setup account
-     */
-    public static function userSudahSetupAccount()
-    {
-        $sql = "
-            SELECT
-                u.id,
-                u.name AS nama,
-                u.email,
-                1 AS setup_account,
-                'Sudah Setup' AS status_account
-            FROM users u
-            WHERE u.id IN (2, 3, 5, 6, 8, 10)
-            ORDER BY u.id
-        ";
+    $sql .= " ORDER BY u.id";
 
-        return collect(DB::select($sql));
-    }
-
-    /**
-     * DML Murni: Get all users dengan status setup account
-     */
-    public static function getAllUsersWithAccountStatus()
-    {
-        $sql = "
-            SELECT
-                u.id,
-                u.name AS nama,
-                u.email,
-                CASE WHEN u.id IN (1, 4, 7, 9, 11) THEN 0 ELSE 1 END AS setup_account,
-                CASE WHEN u.id IN (1, 4, 7, 9, 11) THEN 'Belum Setup' ELSE 'Sudah Setup' END AS status_account
-            FROM users u
-            ORDER BY u.id
-        ";
-
-        return collect(DB::select($sql));
-    }
-
+    return collect(DB::select($sql));
+}
   
 
     public function financialAccounts()
