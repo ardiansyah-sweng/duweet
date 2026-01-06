@@ -37,4 +37,34 @@ class UserFinancialAccount extends Model
     {
         return $this->belongsTo(FinancialAccount::class);
     }
+
+    /**
+     * Query DML untuk mendapatkan liquid assets semua user
+     * 
+     * @return array
+     */
+    public static function getAllUsersLiquidAssetsQuery($user_account_id = null)
+    {
+        $query = "
+            SELECT 
+                ufa.user_account_id,
+                SUM(ufa.balance) as total_liquid_assets
+            FROM 
+                user_financial_accounts ufa
+            INNER JOIN 
+                financial_accounts fa ON ufa.financial_account_id = fa.id
+            WHERE 
+                fa.is_liquid = 1 
+                AND fa.is_active = 1
+                AND ufa.is_active = 1
+                AND fa.type = 'AS'
+        ";
+        $bindings = [];
+        if ($user_account_id !== null) {
+            $query .= " AND ufa.user_account_id = ? ";
+            $bindings[] = $user_account_id;
+        }
+        $query .= " GROUP BY ufa.user_account_id ORDER BY total_liquid_assets DESC ";
+        return \DB::select($query, $bindings);
+    }
 }
