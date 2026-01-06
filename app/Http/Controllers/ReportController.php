@@ -2,13 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use App\Models\FinancialAccount;
+use App\Models\UserFinancialAccount;
+use Illuminate\Http\Request;
 use App\Models\UserAccount; // Asumsi Model ini ada atau dibuat
 use App\Models\Transaction; // <-- PENTING: Import Model Transaction
 use App\Constants\TransactionColumns;
 use Carbon\Carbon;
+
+
+use App\Constants\UserColumns;
+use App\Constants\AccountColumns;
+use App\Constants\FinancialAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
 
 class ReportController extends Controller
 {
@@ -19,25 +28,25 @@ class ReportController extends Controller
     {
         // 1. Ambil data dasar pengguna dan akun (Thin Controller)
         $baseData = $this->getReportBaseData($request);
-
+    
         if ($baseData instanceof \Illuminate\Http\JsonResponse) {
             return $baseData; // Mengembalikan error jika user/account tidak ditemukan
         }
-
+    
         ['user' => $user, 'userAccount' => $userAccount, 'userData' => $userData, 'userAccountData' => $userAccountData] = $baseData;
         $userAccountId = $userAccount->id;
-
+    
         // 2. Penanganan Periode
         $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
         $defaultEndDate = Carbon::create(2025, 12, 31)->endOfDay();
-
+    
         $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : $defaultStartDate;
         $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : $defaultEndDate;
-
+    
         if ($startDate->greaterThan($endDate)) {
             return response()->json(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.'], 400);
         }
-
+    
         // 3. Panggil Logika Query dari Model
         try {
             $summary = Transaction::getIncomeSummaryByPeriod(
@@ -45,16 +54,16 @@ class ReportController extends Controller
                 $startDate,
                 $endDate
             );
-
+    
             // 4. Format response dengan metadata lengkap
             $response = [
                 'user' => $userData,
                 'user_account' => $userAccountData,
                 'summary' => $summary,
             ];
-
+    
             return response()->json($response);
-
+    
         } catch (\Exception $e) {
             // Tangani error database/query
             return response()->json([
@@ -64,7 +73,7 @@ class ReportController extends Controller
             ], 500);
         }
     }
-
+    
     /**
      * Helper privat untuk mengambil data dasar User dan User Account.
      * Mengurangi duplikasi kode di dalam controller.
@@ -77,7 +86,7 @@ class ReportController extends Controller
         $email = $request->query('email');
         $userId = $request->query('user_id');
         $userAccountId = $request->query('user_account_id');
-
+    
         // Temukan user_account jika diberikan langsung
         if ($userAccountId) {
             $userAccount = DB::table('user_accounts')->where('id', (int) $userAccountId)->first();
@@ -98,11 +107,11 @@ class ReportController extends Controller
                 $user = User::first();
             }
         }
-
+    
         if (!$user) {
             return response()->json(['error' => 'User not found. Provide email, user_id, or create users via seeder.'], 404);
         }
-
+    
         // Ambil user account terkait hanya jika belum ditemukan dari user_account_id param
         if (!isset($userAccount) || $userAccount === null) {
             $userAccount = DB::table('user_accounts')->where('id_user', $user->id)->first();
@@ -117,11 +126,11 @@ class ReportController extends Controller
                 $user = User::find($userAccount->id_user);
             }
         }
-
+    
         if (!$userAccount) {
             return response()->json(['error' => 'User account configuration not found for user ID ' . $user->id . '.'], 404);
         }
-
+    
         // Siapkan data user untuk metadata
         $userData = [
             'id' => $user->id,
@@ -137,7 +146,148 @@ class ReportController extends Controller
             'username' => $userAccount->username,
             'email' => $userAccount->email,
         ];
-
+    
         return compact('user', 'userAccount', 'userData', 'userAccountData');
+    }
+    private function rupiah(int|float $n): string
+    {
+        return 'Rp ' . number_format((float) $n, 0, ',', '.');
+    }
+
+    /**
+     * Return total transactions per user account as JSON.
+     *
+     * GET /api/reports/transactions-per-user-account
+     * Query parameters:
+     * - user_account_id: Filter by specific user account (optional)
+     * 
+     * Returns:
+     * - user_account_id: User account ID
+     * - user_account_email: User account email
+     * - transaction_count: Count of unique transaction groups (COUNT DISTINCT transaction_group_id)
+     */
+    public function getTotalTransactionsPerUserAccount(Request $request)
+    {
+        // Validate optional parameter
+        $validator = Validator::make($request->all(), [
+            'user_account_id' => 'nullable|integer|exists:user_accounts,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error', 
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $userAccountId = $request->query('user_account_id');
+
+        // Get transaction totals per user account from model
+        $data = Transaction::getTotalTransactionsPerUserAccount($userAccountId);
+
+        return response()->json([
+            'status' => 'success',
+            'filter' => [
+                'user_account_id' => $userAccountId,
+            ],
+            'count' => $data->count(),
+            'data' => $data,
+        ]);
+    }
+    
+    public function adminSpendingSummary(Request $request)
+    {
+        // 1. Ambil periode (query params)
+        $startDate = $request->query('start_date')
+            ? Carbon::parse($request->query('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->query('end_date')
+            ? Carbon::parse($request->query('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        // 2. Validasi periode
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 3. Panggil Model (ADMIN REPORT)
+        try {
+            $data = Transaction::getTotalSpendingByUserAccountAdmin(
+                $startDate,
+                $endDate
+            );
+
+            return response()->json([
+                'success' => true,
+                'type' => 'ADMIN_SPENDING_REPORT',
+                'period' => [
+                    'from' => $startDate->toDateString(),
+                    'to'   => $endDate->toDateString(),
+                ],
+                'total_user_accounts' => $data->count(),
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil laporan pengeluaran admin',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+        /**
+     * Surplus / Defisit user berdasarkan periode
+     *
+     * GET /api/reports/surplus-defisit
+     */
+    public function surplusDefisitByPeriod(Request $request)
+    {
+        // 1. Ambil data dasar user & user account
+        $baseData = $this->getReportBaseData($request);
+
+        if ($baseData instanceof \Illuminate\Http\JsonResponse) {
+            return $baseData;
+        }
+
+        ['user' => $user, 'userAccount' => $userAccount, 'userData' => $userData, 'userAccountData' => $userAccountData] = $baseData;
+
+        // 2. Periode
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 3. Query ke model
+        $summary = Transaction::getSurplusDefisitByPeriod(
+            $userAccount->id,
+            $startDate,
+            $endDate
+        );
+
+        // 4. Response
+        return response()->json([
+            'user' => $userData,
+            'user_account' => $userAccountData,
+            'period' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+            ],
+            'summary' => $summary
+        ]);
     }
 }
