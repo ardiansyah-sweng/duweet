@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+
 use App\Models\UserAccount;
 use App\Models\UserFinancialAccount;
 use App\Models\FinancialAccount;
@@ -17,6 +18,34 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    /**
+     * Disable timestamps (created_at & updated_at)
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'nomor_telepon',
+        'role',
+        'usia',
+        'is_active',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
     protected $table = 'users';
     
 
@@ -29,6 +58,14 @@ class User extends Authenticatable
             return 'Email harus diisi.';
         }
 
+    /**
+     * Relationship:
+     * One user can have many user accounts
+     */
+    public function userAccounts()
+    {
+        return $this->hasMany(UserAccount::class, 'id_user');
+    }
         // Pindahkan validasi email ke sini
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return 'Format email tidak valid.';
@@ -138,11 +175,24 @@ class User extends Authenticatable
     }
 
     /**
-     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     * Get all users using raw SQL query
      */
-    public function userFinancialAccounts()
+    public static function getAllUsersRaw()
     {
-        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+        $query = "
+            SELECT
+                id,
+                CONCAT_WS(' ', first_name, middle_name, last_name) AS full_name,
+                email,
+                nomor_telepon,
+                role,
+                is_active,
+                created_at
+            FROM users
+            ORDER BY first_name ASC
+        ";
+
+        return DB::select($query);
     }
 
     public static function getUserAccounts($userId)
