@@ -10,6 +10,7 @@ use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
+use Illuminate\Support\Facades\Schema;
 
 class Transaction extends Model
 {
@@ -627,5 +628,37 @@ class Transaction extends Model
         ]);
 
         return collect($rows)->toArray();
+    }
+    
+    /** Spending summary by period */
+    public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $dateColumn = 'transaction_date'; 
+
+        $sql = "
+            SELECT 
+                DATE_FORMAT(t.{$dateColumn}, '%Y-%m') AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_spending
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE 
+                t.user_account_id = ?
+                AND t.{$dateColumn} BETWEEN ? AND ?
+                AND fa.type = 'SP'        
+                AND t.balance_effect = 'increase' 
+                AND fa.is_group = 0
+            GROUP BY periode
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->startOfDay()->toDateTimeString(),
+            $endDate->endOfDay()->toDateTimeString()
+        ]);
+
+        return collect($rows);
     }
 }
