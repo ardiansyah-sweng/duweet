@@ -54,6 +54,11 @@ class AccountSeeder extends Seeder
      */
     private function insertAccount(array $accountData, ?int $parentId = null): int
     {
+        // Determine if account is liquid
+        // Liquid assets: Cash, Bank Account, E-Wallet (and their children)
+        $liquidAccounts = ['Cash', 'Bank Account', 'E-Wallet', 'Dompet', 'Kas Kecil', 'BCA Tabungan', 'Mandiri Tabungan', 'BNI Tabungan', 'BRI Simpedes', 'GoPay', 'OVO', 'Dana', 'ShopeePay'];
+        $isLiquid = in_array($accountData['name'], $liquidAccounts) ? 1 : 0;
+
         // Prepare account data for insertion
         $account = [
             'parent_id' => $parentId,
@@ -66,6 +71,7 @@ class AccountSeeder extends Seeder
             'is_active' => $accountData['is_active'] ?? true,
             'sort_order' => $accountData['sort_order'] ?? 0,
             'level' => $accountData['level'] ?? 0,
+            'is_liquid' => $isLiquid,
             'created_at' => now(),
             'updated_at' => now(),
         ];

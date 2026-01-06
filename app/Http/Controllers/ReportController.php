@@ -242,6 +242,7 @@ class ReportController extends Controller
     }
 
     /**
+<<<<<<< HEAD
      * ADMIN REPORT
      * Get expenses summary by period (month) for all users
      * 
@@ -294,6 +295,14 @@ class ReportController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+=======
+     * Get sum of all users' financial accounts grouped by type
+     */
+    public function sumFinancialAccountsByType()
+    {
+        $result = UserFinancialAccount::sumAllUsersFinancialAccountsByType();
+        return response()->json($result);
+>>>>>>> 5ee55d6720b30d2bf89a05a639a8f839d7dfbf87
     }
     
         /**

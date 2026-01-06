@@ -39,11 +39,13 @@ class UserFinancialAccountSeeder extends Seeder
 
         foreach ($userAccountIds as $uaId) {
             foreach ($financialAccountIds as $faId) {
+                $initialBalance = random_int(50_000, 2_000_000);
+
                 $records[] = [
                     UserFinancialAccountColumns::USER_ACCOUNT_ID => $uaId,
                     UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID => $faId,
-                    UserFinancialAccountColumns::INITIAL_BALANCE => 1_000_000,
-                    UserFinancialAccountColumns::BALANCE => 1_000_000,
+                    UserFinancialAccountColumns::INITIAL_BALANCE => $initialBalance,
+                    UserFinancialAccountColumns::BALANCE => $initialBalance,
                     UserFinancialAccountColumns::IS_ACTIVE => true,
                     'created_at' => now(),
                     'updated_at' => now(),
