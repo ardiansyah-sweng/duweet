@@ -115,3 +115,7 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+
+use App\Http\Controllers\UserAccountTestController;
+
+Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
