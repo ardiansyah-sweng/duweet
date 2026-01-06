@@ -113,3 +113,6 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+
+// Count financial accounts per user (all users)
+Route::get('/users/accounts/count', [\App\Http\Controllers\UserAccountCountController::class, 'index'])->name('api.users.accounts.count');
