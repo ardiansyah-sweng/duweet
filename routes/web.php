@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\UserBalanceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,3 +20,9 @@ Route::get('/api/users', [UserBalanceController::class, 'byQuery']);
 Route::get('/api/users/balances', [UserBalanceController::class, 'byQuery']);
 Route::get('/api/users/{user}/balances', [UserBalanceController::class, 'index']);
 
+
+// Route GET yang Benar untuk endpoint incomeSummary
+// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
+
+// Tambahkan route lain di sini jika ada...
