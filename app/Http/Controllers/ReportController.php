@@ -240,6 +240,54 @@ class ReportController extends Controller
             ], 500);
         }
     }
-
     
+        /**
+     * Surplus / Defisit user berdasarkan periode
+     *
+     * GET /api/reports/surplus-defisit
+     */
+    public function surplusDefisitByPeriod(Request $request)
+    {
+        // 1. Ambil data dasar user & user account
+        $baseData = $this->getReportBaseData($request);
+
+        if ($baseData instanceof \Illuminate\Http\JsonResponse) {
+            return $baseData;
+        }
+
+        ['user' => $user, 'userAccount' => $userAccount, 'userData' => $userData, 'userAccountData' => $userAccountData] = $baseData;
+
+        // 2. Periode
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 3. Query ke model
+        $summary = Transaction::getSurplusDefisitByPeriod(
+            $userAccount->id,
+            $startDate,
+            $endDate
+        );
+
+        // 4. Response
+        return response()->json([
+            'user' => $userData,
+            'user_account' => $userAccountData,
+            'period' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+            ],
+            'summary' => $summary
+        ]);
+    }
 }
