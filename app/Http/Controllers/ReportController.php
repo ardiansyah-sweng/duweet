@@ -267,5 +267,48 @@ class ReportController extends Controller
             }),
         ]);
     }
+    /**
+     * ADMIN REPORT
+     * Sum cash-in grouped by period for admin view
+     * GET /api/admin/reports/cashin-by-period
+     */
+    public function adminCashinByPeriod(Request $request)
+    {
+        $startDate = $request->query('start_date')
+            ? Carbon::parse($request->query('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->query('end_date')
+            ? Carbon::parse($request->query('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        try {
+            $data = Transaction::getTotalCashinByPeriodAdmin($startDate, $endDate);
+
+            return response()->json([
+                'success' => true,
+                'type' => 'ADMIN_CASHIN_BY_PERIOD',
+                'period' => [
+                    'from' => $startDate->toDateString(),
+                    'to' => $endDate->toDateString(),
+                ],
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil laporan cash-in',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }

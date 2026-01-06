@@ -89,4 +89,6 @@ Route::prefix('reports')->group(function () {
     // Tambahkan ini di sini:
     Route::get('/sum-cash-in', [ReportController::class, 'sumCashInByPeriod'])
         ->name('api.reports.sum-cash-in');
+
+        Route::get('/admin/reports/cashin-by-period', [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']);
 });
