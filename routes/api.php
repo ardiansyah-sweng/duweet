@@ -13,6 +13,13 @@ use Illuminate\Http\Request as HttpRequest;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\FinancialAccountController;
 
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+// =============================================================
+// 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
+// =============================================================
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
@@ -76,17 +83,33 @@ Route::prefix('transactions')->group(function () {
 Route::prefix('financial-account')->group(function () {
     Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+
+    // Liquid Assets Route - per user_account_id
+    Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
+    // Liquid Assets Route - semua user
+    Route::get('/liquid-assets/all-users', [FinancialAccountController::class, 'getAllUsersLiquidAssets'])->name('api.financial-account.liquid-assets.all-users');
 });
 
-// Reports API Routes
+// =============================================================
+// 3. REPORTS
+// =============================================================
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
+    Route::get(
+        '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
+        ->name('api.reports.surplus-defisit');
 });
 
+// =============================================================
+// 4. TRANSACTION (Tambahan dari Incoming Change)
+// =============================================================
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
 Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
 Route::get(
     '/admin/reports/spending-summary',
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
+
+Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
