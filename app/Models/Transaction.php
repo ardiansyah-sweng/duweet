@@ -334,15 +334,15 @@ class Transaction extends Model
     }
 
     /**
-     * Ambil transaksi berdasarkan user_account_id dengan opsi filter jenis entry dan periode.
-     * Opsional: filter entry_type (debit/credit) serta rentang tanggal created_at.
+     * Ambil transaksi berdasarkan user_account_id dengan opsional filter rentang tanggal.
+     * Tidak ada filter entry_type (debit/credit).
      */
     public static function getTransactionsByUserAccount(
         int $userAccountId,
         ?string $startDate = null,
         ?string $endDate = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Hanya filter berdasarkan user_account_id dan (opsional) rentang tanggal; entry_type diabaikan (tidak ada debit/credit filter)
         $sql = "SELECT * FROM {$transactionTable} WHERE " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
