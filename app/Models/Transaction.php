@@ -661,24 +661,8 @@ class Transaction extends Model
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
 
-        // Tentukan format periode (MySQL / SQLite / PostgreSQL)
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
-        } elseif ($driver === 'pgsql') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
-        } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
-        }
-
         $sql = "
             SELECT
-                {$periodeExpr} AS periode,
                 SUM(CASE    
                     WHEN fa.type = 'IN' THEN t.amount
                     ELSE 0
@@ -698,8 +682,6 @@ class Transaction extends Model
             WHERE
                 t.user_account_id = ?
                 AND t.created_at BETWEEN ? AND ?
-            GROUP BY {$periodeExpr}
-            ORDER BY periode ASC
         ";
 
         $rows = DB::select($sql, [
