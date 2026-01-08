@@ -110,13 +110,11 @@ class Transaction extends Model
      *
      * @param \Carbon\Carbon $startDate
      * @param \Carbon\Carbon $endDate
-     * @param string $period 'day'|'month'|'year'
      * @return \Illuminate\Support\Collection
      */
     public static function getSurplusDeficitSummaryByPeriod(
         Carbon $startDate,
-        Carbon $endDate,
-        string $period = 'month'
+        Carbon $endDate
     ): \Illuminate\Support\Collection {
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
@@ -127,20 +125,13 @@ class Transaction extends Model
             $driver = 'mysql';
         }
 
-        $period = strtolower(trim($period));
-        if (!in_array($period, ['day', 'month', 'year'], true)) {
-            $period = 'month';
-        }
-
+        // Grouping periode dibuat bulanan saja (YYYY-MM)
         if ($driver === 'sqlite') {
-            $format = $period === 'day' ? '%Y-%m-%d' : ($period === 'year' ? '%Y' : '%Y-%m');
-            $periodExpr = "strftime('{$format}', t.created_at)";
+            $periodExpr = "strftime('%Y-%m', t.created_at)";
         } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $format = $period === 'day' ? 'YYYY-MM-DD' : ($period === 'year' ? 'YYYY' : 'YYYY-MM');
-            $periodExpr = "to_char(t.created_at, '{$format}')";
+            $periodExpr = "to_char(t.created_at, 'YYYY-MM')";
         } else {
-            $format = $period === 'day' ? '%Y-%m-%d' : ($period === 'year' ? '%Y' : '%Y-%m');
-            $periodExpr = "DATE_FORMAT(t.created_at, '{$format}')";
+            $periodExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
         }
 
         $sql = "
