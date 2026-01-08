@@ -7,15 +7,11 @@ use Illuminate\Http\Request;
 
 class UserAccountTestController extends Controller
 {
-    /**
-     * Test login berdasarkan email/username & password
-     * Fokus: Menggunakan method yang benar dari Model UserAccount.php
-     */
     public function testLogin(Request $request)
     {
         // 1. Validasi Input
         $request->validate([
-            'login' => 'required|string', // Bisa diisi email atau username
+            'login' => 'required|string', // Bisa email atau username
             'password' => 'required|string'
         ]);
 
@@ -23,33 +19,18 @@ class UserAccountTestController extends Controller
         $password = $request->password;
 
         /**
-         * 2. Cari User
-         * Perbaikan: Menggunakan 'cariUserByEmail' karena itu yang tersedia di Model kamu.
-         * Jika kamu ingin mencari berdasarkan username juga, pastikan fungsi 'cariUserByUsername' 
-         * sudah ditambahkan di Model UserAccount.php.
+         * 2. Cari User menggunakan fungsi BARU yang kita buat di Model
+         * Kita coba cari berdasarkan email login dulu
          */
-        $user = UserAccount::cariUserByEmail($login);
+        $user = UserAccount::cariUserByEmailLogin($login, $password);
 
-        // Jika pencarian email gagal, kita coba asumsikan input tersebut adalah username
+        // 3. Jika berdasarkan email tidak ketemu, coba cari berdasarkan username login
         if (!$user) {
-            // Catatan: Pastikan kamu sudah menambahkan method cariUserByUsername di model UserAccount
-            $query = \Illuminate\Support\Facades\DB::select("SELECT * FROM user_accounts WHERE username = ? LIMIT 1", [$login]);
-            $user = $query[0] ?? null;
+            $user = UserAccount::cariUserByUsernameLogin($login, $password);
         }
 
-        // 3. Cek apakah user ditemukan
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan'
-            ]);
-        }
-
-        /**
-         * 4. Verifikasi Password
-         * Fokus: Mencocokkan teks asli dari Postman dengan hash di database.
-         */
-        if (password_verify($password, $user->password)) {
+        // 4. Response JSON untuk Postman
+        if ($user) {
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
@@ -61,10 +42,12 @@ class UserAccountTestController extends Controller
                 ]
             ]);
         } else {
+            // Karena kita menggunakan password langsung di Query SQL, 
+            // jika tidak ketemu artinya kemungkinan email/username salah ATAU password salah
             return response()->json([
                 'success' => false,
-                'message' => 'Password salah'
-            ]);
+                'message' => 'Login gagal: Email/Username atau Password salah'
+            ], 401);
         }
     }
 }
