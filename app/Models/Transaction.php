@@ -679,7 +679,7 @@ class Transaction extends Model
         $sql = "
             SELECT
                 {$periodeExpr} AS periode,
-                SUM(CASE 
+                SUM(CASE    
                     WHEN fa.type = 'IN' THEN t.amount
                     ELSE 0
                 END) AS total_income,
