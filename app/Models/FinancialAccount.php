@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class FinancialAccount extends Model
 {
     use HasFactory;
-    use HasFactory; // Diletakkan di awal body class
 
     protected $table;
 
@@ -86,12 +85,12 @@ class FinancialAccount extends Model
     {
         static::deleting(function ($account) {
             // Tidak boleh menghapus akun grup jika masih punya anak
-            if ($account->{AccountColumns::IS_GROUP} && $account->children()->exists()) {
+            if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
             }
 
             // Tidak boleh menghapus akun leaf yang masih punya transaksi
-            if (!$account->{AccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
             }
         });

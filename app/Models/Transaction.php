@@ -655,4 +655,77 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
+
+    /**
+     * Update existing transaction using raw SQL
+     * 
+     * DML SQL Query:
+     * UPDATE transactions 
+     * SET description = ?, 
+     *     amount = ?, 
+     *     entry_type = ?, 
+     *     balance_effect = ?, 
+     *     transaction_date = ?,
+     *     updated_at = ?
+     * WHERE id = ?
+     * 
+     * @param int $id Transaction ID
+     * @param array $data Data yang akan diupdate
+     * @return bool Success status
+     * @throws \Exception jika transaksi tidak ditemukan
+     */
+    public static function updateTransaction(int $id, array $data): bool
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+
+        // Validasi: pastikan transaksi dengan ID tersebut ada
+        $exists = DB::selectOne(
+            "SELECT id FROM {$transactionsTable} WHERE id = ?",
+            [$id]
+        );
+
+        if (!$exists) {
+            throw new \Exception("Transaction with ID {$id} not found");
+        }
+
+        // Siapkan field yang bisa diupdate
+        $updateFields = [];
+        $bindings = [];
+
+        // Field yang diperbolehkan untuk update
+        $allowedFields = [
+            TransactionColumns::DESCRIPTION,
+            TransactionColumns::AMOUNT,
+            TransactionColumns::ENTRY_TYPE,
+            TransactionColumns::BALANCE_EFFECT,
+            TransactionColumns::TRANSACTION_DATE,
+        ];
+
+        // Build dynamic UPDATE query
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $updateFields[] = "{$field} = ?";
+                $bindings[] = $data[$field];
+            }
+        }
+
+        // Jika tidak ada field yang diupdate, return false
+        if (empty($updateFields)) {
+            return false;
+        }
+
+        // Tambahkan updated_at
+        $updateFields[] = TransactionColumns::UPDATED_AT . " = ?";
+        $bindings[] = now()->toDateTimeString();
+
+        // Tambahkan ID untuk WHERE clause
+        $bindings[] = $id;
+
+        // Build dan eksekusi query UPDATE
+        $sql = "UPDATE {$transactionsTable} SET " . implode(', ', $updateFields) . " WHERE id = ?";
+        
+        $affected = DB::update($sql, $bindings);
+
+        return $affected > 0;
+    }
 }

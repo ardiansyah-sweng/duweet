@@ -33,7 +33,7 @@ class UserFactory extends Factory
             // Address data
             'provinsi' => fake()->state(),
             'kabupaten' => fake()->city(),
-            'kecamatan' => fake()->cityPrefix() . ' ' . fake()->citySuffix(),
+            'kecamatan' => fake()->city(),
             'jalan' => fake()->streetAddress(),
             'kode_pos' => fake()->postcode(),
             
