@@ -23,8 +23,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             UserAccountSeeder::class,
-            //AccountSeeder::class,
-            FinancialAccountSeeder::class,
+            AccountSeeder::class, // Seed full account hierarchy including INCOME
+            // FinancialAccountSeeder::class, // Not needed when using AccountSeeder
+            TransactionSeeder::class, // Seed sample income transactions
         ]);
     }
 }
