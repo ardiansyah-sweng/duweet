@@ -194,4 +194,64 @@ class TransactionController extends Controller
 
         return response()->json($result, $status);
     }
+
+    /**
+     * Update existing transaction
+     * 
+     * @param Request $request
+     * @param int $id Transaction ID
+     * @return JsonResponse
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        try {
+            // Validasi input
+            $validated = $request->validate([
+                'description' => 'nullable|string|max:1000',
+                'amount' => 'nullable|integer|min:0',
+                'entry_type' => 'nullable|in:debit,credit',
+                'balance_effect' => 'nullable|in:increase,decrease',
+                'transaction_date' => 'nullable|date',
+            ]);
+
+            // Cek apakah ada data yang akan diupdate
+            if (empty($validated)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data yang akan diupdate',
+                ], 400);
+            }
+
+            // Panggil method update di model
+            $updated = Transaction::updateTransaction((int) $id, $validated);
+
+            if (!$updated) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengupdate transaksi atau tidak ada perubahan data',
+                ], 400);
+            }
+
+            // Ambil data transaksi yang sudah diupdate
+            $transaction = Transaction::getDetailById($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil diupdate',
+                'data' => $transaction,
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate transaksi: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
