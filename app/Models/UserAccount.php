@@ -25,7 +25,7 @@ class UserAccount extends Model
      * Casting otomatis.
      */
     protected $casts = [
-        UserAccountColumns::IS_ACTIVE => 'boolean',
+        UserAccountColumns::IS_ACTIVE   => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
@@ -81,37 +81,36 @@ class UserAccount extends Model
     {
         // 1. Siapkan variabel data dari input array
         // Kita gunakan Constant sebagai key agar tidak typo
-        $idUser     = $data[UserAccountColumns::ID_USER];
-        $username   = $data[UserAccountColumns::USERNAME];
-        $email      = $data[UserAccountColumns::EMAIL];
-        
+        $idUser   = $data[UserAccountColumns::ID_USER];
+        $username = $data[UserAccountColumns::USERNAME];
+        $email    = $data[UserAccountColumns::EMAIL];
+
         // 2. Hash Password (enkripsi)
-        $password   = Hash::make($data[UserAccountColumns::PASSWORD]);
-        
+        $password = Hash::make($data[UserAccountColumns::PASSWORD]);
+
         // 3. Set Default Values
-        $verifiedAt = now(); 
+        $verifiedAt = now();
         $isActive   = 1; // Boolean true di MySQL/MariaDB disimpan sebagai 1
 
         // 4. Rakit Query SQL Native (INSERT INTO)
         // Kita gunakan concatenation Constant untuk nama kolom agar dinamis & aman
-        $tableName = 'user_accounts'; 
-        
+        $tableName = 'user_accounts';
+
         $query = "INSERT INTO $tableName (
-                    " . UserAccountColumns::ID_USER . ", 
-                    " . UserAccountColumns::USERNAME . ", 
-                    " . UserAccountColumns::EMAIL . ", 
-                    " . UserAccountColumns::PASSWORD . ", 
-                    " . UserAccountColumns::VERIFIED_AT . ", 
+                    " . UserAccountColumns::ID_USER . ",
+                    " . UserAccountColumns::USERNAME . ",
+                    " . UserAccountColumns::EMAIL . ",
+                    " . UserAccountColumns::PASSWORD . ",
+                    " . UserAccountColumns::VERIFIED_AT . ",
                     " . UserAccountColumns::IS_ACTIVE . "
                   ) VALUES (?, ?, ?, ?, ?, ?)";
 
-        
         return DB::insert($query, [
-            $idUser, 
-            $username, 
-            $email, 
-            $password, 
-            $verifiedAt, 
+            $idUser,
+            $username,
+            $email,
+            $password,
+            $verifiedAt,
             $isActive
         ]);
     }
@@ -140,12 +139,13 @@ class UserAccount extends Model
             ];
         }
     }
+
     /**
      * DML: Cari user account by ID menggunakan RAW QUERY
      */
     public static function cariUserById($id)
     {
-        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+        $query  = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
         $result = DB::select($query, [$id]);
 
         return $result[0] ?? null;
@@ -156,7 +156,7 @@ class UserAccount extends Model
      */
     public static function cariUserByEmail($email)
     {
-        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
+        $query  = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
         $result = DB::select($query, [$email]);
 
         return $result[0] ?? null;
@@ -170,47 +170,55 @@ class UserAccount extends Model
         $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
 
         $query = "
-            UPDATE user_accounts 
+            UPDATE user_accounts
             SET password = ?
             WHERE email = ?
         ";
 
         return DB::update($query, [$hashed, $email]);
-    }/**
+    }
+
+    /**
      * DML: Cari user berdasarkan email dan password (LOGIKA FIX)
      */
-   public static function cariUserByEmailLogin(string $email, string $password)
-{
-    $user = DB::select("SELECT * FROM user_accounts WHERE email = ? LIMIT 1", [$email]);
+    public static function cariUserByEmailLogin(string $email, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
+            [$email]
+        );
 
-    if (!empty($user)) {
-        $userData = $user[0];
-        
-        // Hash::check untuk membandingkan input dengan bcrypt di DB
-        if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
-            return $userData;
+        if (!empty($user)) {
+            $userData = $user[0];
+
+            // Hash::check untuk membandingkan input dengan bcrypt di DB
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
         }
+
+        return null;
     }
-    return null;
-}
 
     /**
      * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
      */
-  
-public static function cariUserByUsernameLogin(string $username, string $password)
-{
-    $user = DB::select("SELECT * FROM user_accounts WHERE username = ? LIMIT 1", [$username]);
+    public static function cariUserByUsernameLogin(string $username, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+            [$username]
+        );
 
-    // Hash::check
-    if (!empty($user)) {
-        $userData = $user[0];
-        
-        if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
-            return $userData;
+        // Hash::check
+        if (!empty($user)) {
+            $userData = $user[0];
+
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
         }
-    }
 
-    return null;
-}
+        return null;
+    }
 }
