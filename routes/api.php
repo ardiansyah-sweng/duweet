@@ -114,4 +114,9 @@ Route::get(
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
 
+Route::get(
+    '/admin/reports/expenses-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminExpensesSummary']
+);
+
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
