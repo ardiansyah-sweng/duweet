@@ -194,4 +194,30 @@ class TransactionController extends Controller
 
         return response()->json($result, $status);
     }
+    public function destroy($id)
+    {
+    try {
+        // Memanggil fungsi deleteByIdRaw yang tadi dibuat
+        $deleted = Transaction::deleteByGroupIdRaw($id);
+
+        if ($deleted) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Transaksi berhasil dihapus'
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Data tidak ditemukan'
+        ], 404);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+        }
+    }
+}
 }

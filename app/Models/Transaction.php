@@ -655,4 +655,15 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
+
+    public static function deleteByGroupIdRaw(int $id)
+    {
+        $query = "
+            DELETE FROM 
+                transactions 
+            WHERE 
+                transaction_group_id = ?
+        ";
+        return DB::delete($query, [$id]);
+    }
 }

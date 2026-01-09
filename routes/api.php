@@ -74,10 +74,15 @@ Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 // Transaction API Routes
 Route::prefix('transactions')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::delete('/group/{groupId}/hard', [TransactionController::class, 'hardDeleteByGroupId']);
+    Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
     Route::get('/', [\App\Http\Controllers\TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
+ main
 });
 
 // Financial Account API Routes
