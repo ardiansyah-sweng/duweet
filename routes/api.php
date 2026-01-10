@@ -8,6 +8,7 @@ use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\AdminController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
@@ -61,6 +62,22 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
 });
 
+// Admin API Routes - Income Reports
+Route::prefix('admin')->group(function () {
+    Route::prefix('income')->group(function () {
+        // Sum income by period (daily, weekly, monthly, yearly)
+        Route::get('/by-period', [AdminController::class, 'getIncomeByPeriod'])->name('api.admin.income.by-period');
+        
+        // Sum income by financial account category
+        Route::get('/by-category', [AdminController::class, 'getIncomeByCategory'])->name('api.admin.income.by-category');
+        
+        // Get income summary
+        Route::get('/summary', [AdminController::class, 'getIncomeSummary'])->name('api.admin.income.summary');
+        
+        // Get comprehensive income report
+        Route::get('/report', [AdminController::class, 'getIncomeReport'])->name('api.admin.income.report');
+    });
+});
 Route::get('/ping', fn () => response()->json(['pong' => true]));
 
 Route::get('/accounts', function () {
