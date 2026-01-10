@@ -21,7 +21,7 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
-            
+
             // Foreign key to user_accounts
             $table->foreignId(CashoutColumns::USER_ACCOUNT_ID)
                 ->constrained('user_accounts')

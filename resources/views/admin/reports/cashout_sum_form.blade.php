@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <h2>Query Sum Cashout by Period</h2>
-    
+
     <form action="{{ route('admin.cashout.sum.result') }}" method="POST">
         @csrf
 

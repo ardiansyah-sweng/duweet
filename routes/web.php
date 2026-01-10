@@ -1,12 +1,26 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\FinancialAccountController;
 use App\Http\Controllers\ReportController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+// ==========================
+// Test Liquid Assets
+// ==========================
 Route::get('/test/liquid-assets', function () {
     try {
         $rows = DB::table('users as u')
@@ -15,7 +29,11 @@ Route::get('/test/liquid-assets', function () {
                 $join->on('fa.id', '=', 'ufa.financial_account_id')
                      ->where('fa.type', 'AS');
             })
-            ->select('u.id as user_id','u.name as user_name', DB::raw('COALESCE(SUM(ufa.balance),0) as total_asset'))
+            ->select(
+                'u.id as user_id',
+                'u.name as user_name',
+                DB::raw('COALESCE(SUM(ufa.balance),0) as total_asset')
+            )
             ->groupBy('u.id','u.name')
             ->orderByDesc('total_asset')
             ->get();
@@ -26,41 +44,34 @@ Route::get('/test/liquid-assets', function () {
     }
 });
 
+// ==========================
+// Accounts Routes
+// ==========================
 Route::post('/accounts', [AccountController::class, 'store']);
 Route::get('/accounts', [AccountController::class, 'index']);
 Route::get('/accounts/{id}', [AccountController::class, 'show']);
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-<<<<<<< HEAD
-Route::middleware(['auth'])->prefix('admin')->group(function () {
-
-    Route::get('/cashout/sum', [ReportController::class, 'showCashoutSumForm'])
-        ->name('admin.cashout.sum.form');
-
-    Route::post('/cashout/sum', [ReportController::class, 'getCashoutSumByPeriod'])
-        ->name('admin.cashout.sum.result');
-        
-    Route::post('/cashout/sum/export', [ReportController::class, 'exportCashoutCsv'])
-        ->name('admin.cashout.sum.export');
-});
-=======
+// ==========================
 // Financial Accounts
+// ==========================
 Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
 
-// Reports
+// ==========================
+// Reports (public)
+// ==========================
 Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
->>>>>>> 9407691f691aa55f6d5169d1f1a5a35a51787acc
+
+// ==========================
+// ADMIN ROUTES (with auth middleware)
+// ==========================
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+
+    Route::get('/cashout/sum', [AdminReportController::class, 'showCashoutSumForm'])
+        ->name('admin.cashout.sum.form');
+
+    Route::post('/cashout/sum', [AdminReportController::class, 'getCashoutSumByPeriod'])
+        ->name('admin.cashout.sum.result');
+
+    Route::post('/cashout/sum/export', [AdminReportController::class, 'exportCashoutCsv'])
+        ->name('admin.cashout.sum.export');
+});
