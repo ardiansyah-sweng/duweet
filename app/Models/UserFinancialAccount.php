@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class UserFinancialAccount extends Model
 {
@@ -20,16 +21,21 @@ class UserFinancialAccount extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function parent()
+    public function parentAccount()
     {
-        return $this->belongsTo(UserFinancialAccount::class, 'parent_account_id');
+        return $this->belongsTo(self::class, 'parent_account_id');
     }
 
     public function children()
     {
-        return $this->hasMany(UserFinancialAccount::class, 'parent_account_id');
+        return $this->hasMany(self::class, 'parent_account_id');
+    }
+
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
     }
 }

@@ -25,9 +25,9 @@ class TransactionSeeder extends Seeder
     public function run(): void
     {
         // Get table names from config
-        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $userAccountsTable = config('db_tables.user_account');
+        $transactionsTable = config('db_tables.transaction');
+        $financialAccountsTable = config('db_tables.financial_account',);
 
         // ===== VALIDATION: Check prerequisites =====
         $userAccountsCount = DB::table($userAccountsTable)->count();
@@ -183,5 +183,11 @@ class TransactionSeeder extends Seeder
                 DB::table($transactionsTable)->insert($chunk);
             }
         }
+
+        // Tambahan: Membuat beberapa data transaksi random menggunakan TransactionFactory
+        // untuk variasi data selain transaksi balanced dengan variasi waktu
+        Transaction::factory(15)->daysAgo(90)->create(); // 1-90 hari lalu
+        Transaction::factory(10)->between('-1 year', '-6 months')->create(); // 6 bulan - 1 tahun lalu
+        Transaction::factory(5)->today()->create(); // Hari ini
     }
 }
