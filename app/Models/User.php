@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Support\Facades\DB;
+use App\Constants\UserAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -172,5 +174,27 @@ class User extends Authenticatable
                 'is_active' => (bool) $row->is_active
             ];
         }, $results);
+    }
+
+   
+    public static function countFinancialAccountsPerUser(bool $onlyActiveAccounts = true)
+    {
+        $userTable = config('db_tables.user');
+        $userAccountTable = config('db_tables.user_account');
+        $userFinancialTable = config('db_tables.user_financial_account');
+
+        $qb = DB::table("{$userTable} as u")
+            ->leftJoin("{$userAccountTable} as ua", "ua." . UserAccountColumns::ID_USER, '=', 'u.id')
+            ->leftJoin("{$userFinancialTable} as ufa", function ($join) use ($onlyActiveAccounts) {
+                $join->on('ufa.user_account_id', '=', 'ua.id');
+                if ($onlyActiveAccounts) {
+                    $join->where('ufa.' . UserFinancialAccountColumns::IS_ACTIVE, 1);
+                }
+            })
+            ->select('u.id as user_id', 'u.email', DB::raw('COUNT(ufa.id) as total_accounts'))
+            ->groupBy('u.id', 'u.email')
+            ->orderByDesc('total_accounts');
+
+        return $qb->get();
     }
 }
