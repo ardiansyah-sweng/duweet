@@ -9,6 +9,8 @@ use App\Constants\TransactionColumns;
 use App\Constants\FinancialAccountColumns;
 use App\Enums\AccountType;
 use Illuminate\Support\Str;
+use Illuminate\Support\Str;
+use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
@@ -198,6 +200,8 @@ class Transaction extends Model
         // Convert to collection
         return collect($results);
     }
+
+    protected $fillable = [];
 
     protected $casts = [
         TransactionColumns::AMOUNT => 'integer',
@@ -867,4 +871,5 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
+}
 }
