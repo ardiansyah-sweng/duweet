@@ -237,6 +237,7 @@ class Transaction extends Model
 
     /**
      * Sum income by period for admin
+     * Implementasi dengan DML SQL murni
      * 
      * @param string $period - 'daily', 'weekly', 'monthly', 'yearly'
      * @param string|null $startDate - Start date filter (Y-m-d format)
@@ -250,57 +251,84 @@ class Transaction extends Model
         ?string $endDate = null,
         ?int $userId = null
     ) {
-        $financialAccountTable = config('db_tables.financial_account');
-        $transactionTable = config('db_tables.transaction');
-        $userAccountTable = config('db_tables.user_account');
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+        $userAccountTable = config('db_tables.user_account', 'user_accounts');
 
-        // Define date format based on period
-        $dateFormat = match($period) {
-            'daily' => '%Y-%m-%d',
-            'weekly' => '%Y-W%u',
-            'monthly' => '%Y-%m',
-            'yearly' => '%Y',
-            default => '%Y-%m',
+        // Tentukan fungsi format tanggal berdasarkan driver database
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        // Define date format based on period dan driver database
+        $periodExpr = match($period) {
+            'daily' => $driver === 'sqlite' 
+                ? "strftime('%Y-%m-%d', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY-MM-DD')"
+                    : "DATE_FORMAT(t.created_at, '%Y-%m-%d')"),
+            'weekly' => $driver === 'sqlite'
+                ? "strftime('%Y-W%W', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY-IW')"
+                    : "DATE_FORMAT(t.created_at, '%Y-W%u')"),
+            'yearly' => $driver === 'sqlite'
+                ? "strftime('%Y', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY')"
+                    : "DATE_FORMAT(t.created_at, '%Y')"),
+            default => $driver === 'sqlite'
+                ? "strftime('%Y-%m', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY-MM')"
+                    : "DATE_FORMAT(t.created_at, '%Y-%m')"),
         };
 
-        $query = DB::table($transactionTable . ' as t')
-            ->join($financialAccountTable . ' as fa', 
-                't.' . TransactionColumns::FINANCIAL_ACCOUNT_ID, 
-                '=', 
-                'fa.' . FinancialAccountColumns::ID
-            )
-            ->leftJoin($userAccountTable . ' as ua',
-                't.' . TransactionColumns::USER_ACCOUNT_ID,
-                '=',
-                'ua.id'
-            )
-            ->where('fa.' . FinancialAccountColumns::TYPE, AccountType::INCOME->value)
-            ->where('t.' . TransactionColumns::ENTRY_TYPE, 'credit')
-            ->select([
-                DB::raw("DATE_FORMAT(t." . TransactionColumns::CREATED_AT . ", '{$dateFormat}') as period"),
-                DB::raw("SUM(t." . TransactionColumns::AMOUNT . ") as total_income"),
-                DB::raw("COUNT(DISTINCT t." . TransactionColumns::TRANSACTION_GROUP_ID . ") as transaction_count"),
-                DB::raw("COUNT(DISTINCT t." . TransactionColumns::USER_ACCOUNT_ID . ") as user_count"),
-            ])
-            ->groupBy('period')
-            ->orderBy('period', 'desc');
+        // Build WHERE clause for filtering
+        $whereClause = "WHERE fa.type = 'IN' AND t.entry_type = 'credit'";
+        $bindings = [];
 
-        // Apply date filters
         if ($startDate) {
-            $query->where('t.' . TransactionColumns::CREATED_AT, '>=', $startDate . ' 00:00:00');
+            $whereClause .= " AND t.created_at >= ?";
+            $bindings[] = $startDate . ' 00:00:00';
         }
 
         if ($endDate) {
-            $query->where('t.' . TransactionColumns::CREATED_AT, '<=', $endDate . ' 23:59:59');
+            $whereClause .= " AND t.created_at <= ?";
+            $bindings[] = $endDate . ' 23:59:59';
         }
 
-        // Apply user filter
         if ($userId) {
-            $query->join('users as u', 'ua.user_id', '=', 'u.id')
-                ->where('u.id', $userId);
+            $whereClause .= " AND u.id = ?";
+            $bindings[] = $userId;
         }
 
-        return $query->get();
+        // Tentukan JOIN clause untuk user filter
+        $joinClause = $userId 
+            ? "LEFT JOIN {$userAccountTable} AS ua ON t.user_account_id = ua.id 
+               LEFT JOIN users AS u ON ua.user_id = u.id"
+            : "LEFT JOIN {$userAccountTable} AS ua ON t.user_account_id = ua.id";
+
+        // DML SQL murni
+        $sql = "
+            SELECT 
+                {$periodExpr} AS period,
+                SUM(t.amount) AS total_income,
+                COUNT(DISTINCT t.transaction_group_id) AS transaction_count,
+                COUNT(DISTINCT t.user_account_id) AS user_count
+            FROM {$transactionTable} AS t
+            JOIN {$financialAccountTable} AS fa ON t.financial_account_id = fa.id
+            {$joinClause}
+            {$whereClause}
+            GROUP BY {$periodExpr}
+            ORDER BY period DESC
+        ";
+
+        $rows = DB::select($sql, $bindings);
+
+        return collect($rows);
     }
 
     /**
