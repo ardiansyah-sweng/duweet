@@ -199,8 +199,6 @@ class Transaction extends Model
         return collect($results);
     }
 
-    protected $fillable = [];
-
     protected $casts = [
         TransactionColumns::AMOUNT => 'integer',
         TransactionColumns::IS_BALANCE => 'boolean',
@@ -431,7 +429,8 @@ class Transaction extends Model
             ],
         ];
     }
-}
+
+    /**
      * Ambil detail transaksi lengkap via JOIN
      */
     public static function getDetailById($id)
