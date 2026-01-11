@@ -674,6 +674,14 @@ class Transaction extends Model
      * @return bool Success status
      * @throws \Exception jika transaksi tidak ditemukan
      */
+    /**
+     * Update existing transaction using raw SQL
+     * (Hanya Description & Transaction Date sesuai tugas)
+     * 
+     * @param int $id Transaction ID
+     * @param array $data Data yang akan diupdate
+     * @return bool Success status
+     */
     public static function updateTransaction(int $id, array $data): bool
     {
         $transactionsTable = config('db_tables.transaction', 'transactions');
@@ -692,12 +700,9 @@ class Transaction extends Model
         $updateFields = [];
         $bindings = [];
 
-        // Field yang diperbolehkan untuk update
+        // Field yang diperbolehkan untuk update (Dibatasi sesuai tugas)
         $allowedFields = [
             TransactionColumns::DESCRIPTION,
-            TransactionColumns::AMOUNT,
-            TransactionColumns::ENTRY_TYPE,
-            TransactionColumns::BALANCE_EFFECT,
             TransactionColumns::TRANSACTION_DATE,
         ];
 
@@ -721,7 +726,7 @@ class Transaction extends Model
         // Tambahkan ID untuk WHERE clause
         $bindings[] = $id;
 
-        // Build dan eksekusi query UPDATE
+        // Build dan eksekusi query UPDATE simple (Tanpa logika saldo)
         $sql = "UPDATE {$transactionsTable} SET " . implode(', ', $updateFields) . " WHERE id = ?";
         
         $affected = DB::update($sql, $bindings);

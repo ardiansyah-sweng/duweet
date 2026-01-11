@@ -205,12 +205,9 @@ class TransactionController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            // Validasi input
+            // Validasi input (Hanya Description & Transaction Date sesuai tugas)
             $validated = $request->validate([
                 'description' => 'nullable|string|max:1000',
-                'amount' => 'nullable|integer|min:0',
-                'entry_type' => 'nullable|in:debit,credit',
-                'balance_effect' => 'nullable|in:increase,decrease',
                 'transaction_date' => 'nullable|date',
             ]);
 
