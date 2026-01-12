@@ -55,9 +55,9 @@ class Transaction extends Model
      */
     public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        // Gunakan nama tabel dari config bila ada
-        $transactionsTable = config('db_tables.transaction');
-        $accountsTable = config('db_tables.financial_account');
+        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
         // Tentukan fungsi format tanggal berdasarkan driver database
         try {
@@ -116,8 +116,8 @@ class Transaction extends Model
         Carbon $startDate,
         Carbon $endDate
     ): \Illuminate\Support\Collection {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         $sql = "
             SELECT
