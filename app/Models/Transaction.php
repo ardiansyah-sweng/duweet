@@ -55,9 +55,9 @@ class Transaction extends Model
      */
     public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        // Gunakan nama tabel dari config bila ada
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         // Tentukan fungsi format tanggal berdasarkan driver database
         try {
@@ -116,8 +116,8 @@ class Transaction extends Model
         Carbon $startDate,
         Carbon $endDate
     ): \Illuminate\Support\Collection {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         $sql = "
             SELECT
@@ -357,7 +357,7 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
         $sql = "SELECT * FROM {$transactionTable} WHERE 1=1";
@@ -405,7 +405,7 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
         $sql = "SELECT * FROM {$transactionTable} WHERE created_at BETWEEN ? AND ?";
@@ -466,10 +466,10 @@ class Transaction extends Model
         string $endDate,
         ?int $userId = null
     ): \Illuminate\Support\Collection {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
-        $usersTable = config('db_tables.user', 'users');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $userAccountsTable = config('db_tables.user_account');
+        $usersTable = config('db_tables.user');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         $sql = "
             SELECT 
@@ -631,8 +631,8 @@ class Transaction extends Model
         Carbon $startDate,
         Carbon $endDate
     ): array {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         // Tentukan format periode (MySQL / SQLite / PostgreSQL)
         try {
