@@ -102,7 +102,7 @@ class Transaction extends Model
     }
 
     /**
-     * Ambil ringkasan surplus/defisit per periode (ADMIN: agregat semua user).
+        * Ambil ringkasan surplus/defisit dalam rentang tanggal (ADMIN: agregat semua user).
      *
      * Definisi (mengikuti pola query di project ini):
      * - Income  : financial_accounts.type = 'IN' dan transactions.balance_effect = 'increase'
@@ -119,24 +119,8 @@ class Transaction extends Model
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        // Grouping periode dibuat bulanan saja (YYYY-MM)
-        if ($driver === 'sqlite') {
-            $periodExpr = "strftime('%Y-%m', t.created_at)";
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodExpr = "to_char(t.created_at, 'YYYY-MM')";
-        } else {
-            $periodExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
-        }
-
         $sql = "
             SELECT
-                {$periodExpr} AS period,
                 COALESCE(SUM(CASE
                     WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
                     ELSE 0
@@ -162,8 +146,6 @@ class Transaction extends Model
                 fa.is_group = 0
                 AND fa.type IN ('IN','EX','SP')
                 AND t.created_at BETWEEN ? AND ?
-            GROUP BY {$periodExpr}
-            ORDER BY period ASC
         ";
 
         $rows = DB::select($sql, [
