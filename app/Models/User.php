@@ -165,7 +165,9 @@ class User extends Authenticatable
 	public function totalBalance(): int
 	{
 		try {
-			return (int) DB::table('user_financial_accounts')->where('user_id', $this->id)->sum('balance');
+			$direct = (int) DB::table('financial_accounts')->where('user_id', $this->id)->sum('balance');
+			$pivot = (int) DB::table('user_financial_accounts')->where('user_id', $this->id)->sum('balance');
+			return $direct + $pivot;
 		} catch (\Exception $e) {
 			return 0;
 		}
