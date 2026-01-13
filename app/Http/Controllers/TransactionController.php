@@ -3,22 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
-    /**
-     * Get all transactions with optional filters using raw SQL
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function index(Request $request): JsonResponse
     {
         try {
-            // Use raw SQL query method
             $transactions = Transaction::getAllTransactions(
                 $request->input('user_account_id'),
                 $request->input('financial_account_id'),
@@ -28,22 +21,55 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $transactions,
-                'count' => $transactions->count()
+                'count' => $transactions->count(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil data transaksi: ' . $e->getMessage()
+                'message' => 'Gagal mengambil data transaksi: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    /**
-     * Filter transactions by date range (period) using raw SQL
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
+    public function byUserAccount(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'user_account_id' => 'required|integer',
+                'start_date' => 'nullable|date|date_format:Y-m-d',
+                'end_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:start_date',
+            ]);
+
+            $transactions = Transaction::getTransactionsByUserAccount(
+                (int) $request->input('user_account_id'),
+                $request->input('start_date'),
+                $request->input('end_date')
+            );
+
+            return response()->json([
+                'success' => true,
+                'filters' => [
+                    'user_account_id' => (int) $request->input('user_account_id'),
+                    'start_date' => $request->input('start_date'),
+                    'end_date' => $request->input('end_date'),
+                ],
+                'count' => $transactions->count(),
+                'data' => $transactions,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal filter transaksi: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function filterByPeriod(Request $request): JsonResponse
     {
         try {
@@ -52,10 +78,9 @@ class TransactionController extends Controller
                 'end_date' => 'required|date|date_format:Y-m-d|after_or_equal:start_date',
                 'user_account_id' => 'nullable|integer',
                 'financial_account_id' => 'nullable|integer',
-                'entry_type' => 'nullable|in:debit,credit'
+                'entry_type' => 'nullable|in:debit,credit',
             ]);
 
-            // Use raw SQL query method
             $transactions = Transaction::filterTransactionsByPeriod(
                 $request->start_date,
                 $request->end_date,
@@ -70,26 +95,23 @@ class TransactionController extends Controller
                 'count' => $transactions->count(),
                 'period' => [
                     'start_date' => $request->start_date,
-                    'end_date' => $request->end_date
-                ]
+                    'end_date' => $request->end_date,
+                ],
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal filter transaksi berdasarkan periode: ' . $e->getMessage()
+                'message' => 'Gagal filter transaksi berdasarkan periode: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    /**
-     * Detail transaksi berdasarkan ID
-     */
     public function show($id)
     {
         $result = Transaction::getDetailById($id);
@@ -107,25 +129,24 @@ class TransactionController extends Controller
         ]);
     }
 
-     public function monthlyExpense(Request $request): JsonResponse
+    public function monthlyExpense(Request $request): JsonResponse
     {
         $request->validate([
             'user_id' => 'nullable|integer|min:1',
-            'year'    => 'nullable|integer',
-            'month'   => 'nullable|integer|min:1|max:12',
+            'year' => 'nullable|integer',
+            'month' => 'nullable|integer|min:1|max:12',
         ]);
 
-        $year   = (int) ($request->query('year', now()->year));
-        $month  = (int) ($request->query('month', now()->month));
+        $year = (int) ($request->query('year', now()->year));
+        $month = (int) ($request->query('month', now()->month));
         $userId = $request->query('user_id');
 
-        // Awal bulan & awal bulan berikutnya
         $start = Carbon::createFromDate($year, $month, 1)->startOfDay();
-        $end   = (clone $start)->addMonth();
+        $end = (clone $start)->addMonth();
 
         $periodeBulan = sprintf('%04d-%02d', $year, $month);
 
-        // ✅ RAW SQL dari Model
+        /** @var \Illuminate\Support\Collection<int, \stdClass|array> $results */
         $results = Transaction::getMonthlyExpensesByUser(
             $start->toDateTimeString(),
             $end->toDateTimeString(),
@@ -133,42 +154,76 @@ class TransactionController extends Controller
         );
 
         $rows = collect($results)->map(function ($row) use ($periodeBulan) {
+            $r = is_array($row) ? (object) $row : $row;
+
             return [
-                'user_id'        => (int) $row->user_id,
-                'user_name'      => $row->username,
-                'periode_bulan'  => $periodeBulan,
-                'total_expenses' => (int) $row->total_expenses,
+                'user_id' => (int) ($r->user_id ?? 0),
+                'user_name' => $r->username ?? null,
+                'periode_bulan' => $periodeBulan,
+                'total_expenses' => (int) ($r->total_expenses ?? 0),
             ];
         });
 
         return response()->json([
             'success' => true,
             'period' => [
-                'year'       => $year,
-                'month'      => $month,
+                'year' => $year,
+                'month' => $month,
                 'start_date' => $start->toDateString(),
-                'end_date'   => $end->copy()->subDay()->toDateString(),
+                'end_date' => $end->copy()->subDay()->toDateString(),
             ],
             'data' => $rows,
-            ]);
-    }
-    public function getLatestActivities()
-    {
-        $activities = Transaction::getLatestActivitiesRaw();
-        return response()->json([
-            'success' => true,
-            'data' => $activities
         ]);
     }
 
-    /**
-     * Hard delete transaksi berdasarkan transaction_group_id.
-     */
+    public function getLatestActivities()
+    {
+        $activities = Transaction::getLatestActivitiesRaw();
+
+        return response()->json([
+            'success' => true,
+            'data' => $activities,
+        ]);
+    }
+
     public function hardDeleteByGroupId($groupId)
     {
         $result = Transaction::hardDeleteByGroupId($groupId);
 
         $status = $result['success'] ? 200 : 400;
+
         return response()->json($result, $status);
+    }
+
+    public function Insert(Request $request)
+    {
+        $validated = $request->validate([
+            'user_account_id' => 'required|integer',
+            'financial_account_id' => 'required|integer',
+            'entry_type' => 'required|in:debit,credit',
+            'amount' => 'required|numeric|min:0',
+            'description' => 'nullable|string|max:255',
+            'transaction_date' => 'required|date|date_format:Y-m-d H:i:s',
+        ]);
+
+       
+        $validated['balance_effect'] = $validated['entry_type'] === 'debit' ? 'decrease' : 'increase';
+        $validated['is_balance'] = $request->boolean('is_balance', false);
+
+        try {
+            $transactionId = Transaction::insertTransactionRaw($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil disimpan.',
+                'transaction_id' => $transactionId
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan transaksi: ' . $e->getMessage()
+            ], 500);
+        }
+
     }
 }
