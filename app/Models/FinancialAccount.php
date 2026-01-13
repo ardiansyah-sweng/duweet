@@ -20,6 +20,7 @@ class FinancialAccount extends Model
     }
 
     protected $fillable = [
+        FinancialAccountColumns::USER_ID,
         FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::NAME,
         FinancialAccountColumns::TYPE,
