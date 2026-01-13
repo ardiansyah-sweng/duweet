@@ -66,8 +66,6 @@ Route::get('/ping', fn () => response()->json(['pong' => true]));
 Route::get('/accounts', function () {
     return response()->json(['ok' => true]);
 });
-
-
 Route::post('/financial_accounts', [AccountController::class, 'store']);
 Route::get('/financial_accounts', [AccountController::class, 'index']);
 Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
@@ -115,3 +113,6 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+//Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+use App\Http\Controllers\UserAccountTestController;
+Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
