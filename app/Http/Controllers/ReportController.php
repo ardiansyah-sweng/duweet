@@ -242,6 +242,10 @@ class ReportController extends Controller
     }
 
     /**
+<<<<<<< HEAD
+=======
+
+>>>>>>> eda2232a3d559427f48ff07d68eb31743f2ae69d
      * ADMIN REPORT
      * Get expenses summary by period (month) for all users
      * 
