@@ -685,4 +685,198 @@ class Transaction extends Model
 
         return (int) DB::getPdo()->lastInsertId();
     }
+
+    /**
+     * Get sum of cash in (credit transactions) by period using raw SQL
+     * 
+     * -----------------------------------------------------------
+     *
+     * @param  Carbon  $startDate  Start date for period
+     * @param  Carbon  $endDate  End date for period
+     * @param  int|null  $userAccountId  Optional: Filter by user account
+     * @param  int|null  $financialAccountId  Optional: Filter by financial account
+     * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumCashInByPeriod(
+        Carbon $startDate,
+        Carbon $endDate,
+        ?int $userAccountId = null,
+        ?int $financialAccountId = null,
+        string $periodFormat = 'month'
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // Determine database driver and date format function
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        // Generate appropriate date format expression based on period and driver
+        if ($driver === 'sqlite') {
+            $periodExpressions = [
+                'day' => "DATE(t.created_at)",
+                'week' => "strftime('%Y-W%W', t.created_at)",
+                'month' => "strftime('%Y-%m', t.created_at)",
+                'quarter' => "strftime('%Y', t.created_at) || '-Q' || CAST((CAST(strftime('%m', t.created_at) AS INTEGER) - 1) / 3 + 1 AS TEXT)",
+                'year' => "strftime('%Y', t.created_at)",
+            ];
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodExpressions = [
+                'day' => "DATE(t.created_at)",
+                'week' => "to_char(t.created_at, 'YYYY-IW')",
+                'month' => "to_char(t.created_at, 'YYYY-MM')",
+                'quarter' => "to_char(t.created_at, 'YYYY-Q')",
+                'year' => "to_char(t.created_at, 'YYYY')",
+            ];
+        } else {
+            // MySQL/MariaDB
+            $periodExpressions = [
+                'day' => "DATE(t.created_at)",
+                'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
+                'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
+                'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
+                'year' => "YEAR(t.created_at)",
+            ];
+        }
+
+        // Use selected period format, default to 'month'
+        $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
+
+        // Build base SQL with JOIN using aliases for consistency
+        $sql = "
+            SELECT 
+                {$periodExpr} AS period,
+                fa.id AS account_id,
+                fa.name AS account_name,
+                fa.type AS account_type,
+                COALESCE(SUM(t.amount), 0) AS total_cash_in,
+                COUNT(t.id) AS transaction_count
+            FROM {$transactionTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE t.entry_type = 'credit'
+                AND t.balance_effect = 'increase'
+                AND t.created_at BETWEEN ? AND ?
+        ";
+
+        $bindings = [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ];
+
+        // Add optional filters
+        if ($userAccountId !== null) {
+            $sql .= " AND t.user_account_id = ?";
+            $bindings[] = $userAccountId;
+        }
+
+        if ($financialAccountId !== null) {
+            $sql .= " AND t.financial_account_id = ?";
+            $bindings[] = $financialAccountId;
+        }
+
+        // Add GROUP BY and ORDER BY
+        if ($periodFormat === 'week' && $driver === 'mysql') {
+            $sql .= " GROUP BY YEAR(t.created_at), WEEK(t.created_at, 1), fa.id, fa.name, fa.type";
+        } else {
+            $sql .= " GROUP BY {$periodExpr}, fa.id, fa.name, fa.type";
+        }
+
+        $sql .= " ORDER BY period DESC, account_name ASC";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        return collect($results);
+    }
+
+    /**
+     * Get total cash in (combined) by period using raw SQL
+     * 
+     * -----------------------------------------------------------
+     *
+     * @param  Carbon  $startDate  Start date for period
+     * @param  Carbon  $endDate  End date for period
+     * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumCashInByPeriodCombined(
+        Carbon $startDate,
+        Carbon $endDate,
+        string $periodFormat = 'month'
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction', 'transactions');
+
+        // Determine database driver and date format function
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        // Generate appropriate date format expression based on period and driver
+        if ($driver === 'sqlite') {
+            $periodExpressions = [
+                'day' => "DATE(t.created_at)",
+                'week' => "strftime('%Y-W%W', t.created_at)",
+                'month' => "strftime('%Y-%m', t.created_at)",
+                'quarter' => "strftime('%Y', t.created_at) || '-Q' || CAST((CAST(strftime('%m', t.created_at) AS INTEGER) - 1) / 3 + 1 AS TEXT)",
+                'year' => "strftime('%Y', t.created_at)",
+            ];
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodExpressions = [
+                'day' => "DATE(t.created_at)",
+                'week' => "to_char(t.created_at, 'YYYY-IW')",
+                'month' => "to_char(t.created_at, 'YYYY-MM')",
+                'quarter' => "to_char(t.created_at, 'YYYY-Q')",
+                'year' => "to_char(t.created_at, 'YYYY')",
+            ];
+        } else {
+            // MySQL/MariaDB
+            $periodExpressions = [
+                'day' => "DATE(t.created_at)",
+                'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
+                'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
+                'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
+                'year' => "YEAR(t.created_at)",
+            ];
+        }
+
+        // Use selected period format, default to 'month'
+        $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
+
+        // Build SQL without account details (combined total)
+        $sql = "
+            SELECT 
+                {$periodExpr} AS period,
+                COALESCE(SUM(t.amount), 0) AS total_cash_in,
+                COUNT(t.id) AS transaction_count
+            FROM {$transactionTable} t
+            WHERE t.entry_type = 'credit'
+                AND t.balance_effect = 'increase'
+                AND t.created_at BETWEEN ? AND ?
+        ";
+
+        $bindings = [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ];
+
+        // Add GROUP BY and ORDER BY
+        if ($periodFormat === 'week' && $driver === 'mysql') {
+            $sql .= " GROUP BY YEAR(t.created_at), WEEK(t.created_at, 1)";
+        } else {
+            $sql .= " GROUP BY {$periodExpr}";
+        }
+
+        $sql .= " ORDER BY period DESC";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        return collect($results);
+    }
 }
