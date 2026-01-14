@@ -713,7 +713,7 @@ class Transaction extends Model
         return collect(DB::select($sql, $bindings));
     }
 
-    public static function getLatestActivitiesRaw()
+    public static function getLatestActivitiesRaw(): array
     {
         $query = "
             SELECT
@@ -741,13 +741,17 @@ class Transaction extends Model
         return DB::select($query);
     }
 
-    /***
+    /**
      * ADMIN REPORT
      * Sum total spending per user account in a given period
+     *
+     * @param Carbon $startDate
+     * @param Carbon $endDate
+     * @return \Illuminate\Support\Collection
      */
     public static function getTotalSpendingByUserAccountAdmin(
         Carbon $startDate,
-        Carbon $endDate)
+        Carbon $endDate): \Illuminate\Support\Collection
     {
         $sql = "
             SELECT
@@ -895,9 +899,14 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
-}
 
-    public static function InsertTransactionRaw(array $data)
+    /**
+     * Insert transaction using raw SQL
+     *
+     * @param array $data
+     * @return int Last inserted ID
+     */
+    public static function InsertTransactionRaw(array $data): int
     {
         // Use provided transaction_date as created/updated timestamps; fall back to now
         $timestamp = isset($data['transaction_date'])
