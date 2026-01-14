@@ -240,6 +240,15 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get sum of all users' financial accounts grouped by type
+     */
+    public function sumFinancialAccountsByType()
+    {
+        $result = UserFinancialAccount::sumAllUsersFinancialAccountsByType();
+        return response()->json($result);
+    }
     
         /**
      * Surplus / Defisit user berdasarkan periode
