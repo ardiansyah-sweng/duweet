@@ -8,9 +8,10 @@ use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
-use App\Http\Controllers\TransactionController;
+// Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
 
 Route::get('/user', function (Request $request) {
@@ -23,7 +24,7 @@ Route::get('/user', function (Request $request) {
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
-Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
+Route::get('/transactions/monthly-expense', [\App\Http\Controllers\TransactionController::class, 'monthlyExpense']);
 
 
 // Transaction detail
@@ -44,7 +45,7 @@ Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'f
 
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::class, 'show'])->whereNumber('id');
 
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -74,9 +75,11 @@ Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 // Transaction API Routes
 Route::prefix('transactions')->group(function () {
-    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
-    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
-    Route::delete('/group/{groupId}/hard', [TransactionController::class, 'hardDeleteByGroupId']);
+    Route::get('/', [\App\Http\Controllers\TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
+    Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
+    Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
 });
 
 // Financial Account API Routes
@@ -109,8 +112,7 @@ Route::prefix('reports')->group(function () {
 // =============================================================
 // 4. TRANSACTION (Tambahan dari Incoming Change)
 // =============================================================
-Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
+Route::get('/getLatestActivities', [\App\Http\Controllers\TransactionController::class, 'getLatestActivities']);
 
 Route::get(
     '/admin/reports/spending-summary',

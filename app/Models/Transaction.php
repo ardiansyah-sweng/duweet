@@ -389,6 +389,33 @@ class Transaction extends Model
     }
 
     /**
+     * Ambil transaksi berdasarkan user_account_id dengan opsional filter rentang tanggal.
+     * Tidak ada filter entry_type (debit/credit).
+     */
+    public static function getTransactionsByUserAccount(
+        int $userAccountId,
+        ?string $startDate = null,
+        ?string $endDate = null
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction');
+
+        // Hanya filter berdasarkan user_account_id dan (opsional) rentang tanggal; entry_type diabaikan (tidak ada debit/credit filter)
+        $sql = "SELECT * FROM {$transactionTable} WHERE " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
+        $bindings = [$userAccountId];
+
+        // Rentang tanggal (butuh start & end)
+        if ($startDate !== null && $endDate !== null) {
+            $sql .= " AND created_at BETWEEN ? AND ?";
+            $bindings[] = $startDate . ' 00:00:00';
+            $bindings[] = $endDate . ' 23:59:59';
+        }
+
+        $sql .= " ORDER BY created_at DESC";
+
+        return collect(DB::select($sql, $bindings));
+    }
+
+    /**
      * Filter transactions by period using raw SQL
      * 
      * @param  string  $startDate  Date in format Y-m-d
@@ -682,5 +709,35 @@ class Transaction extends Model
         ]);
 
         return collect($rows)->toArray();
+    }
+
+    public static function InsertTransactionRaw(array $data)
+    {
+        // Use provided transaction_date as created/updated timestamps; fall back to now
+        $timestamp = isset($data['transaction_date'])
+            ? Carbon::parse($data['transaction_date'])->toDateTimeString()
+            : Carbon::now()->toDateTimeString();
+
+        $insertQuery = "INSERT INTO transactions 
+            (transaction_group_id, user_account_id, financial_account_id, amount, entry_type, balance_effect, is_balance, description, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        DB::insert(
+            $insertQuery,
+            [
+                $data['transaction_group_id'] ?? (string) Str::uuid(),
+                $data['user_account_id'],
+                $data['financial_account_id'],
+                $data['amount'],
+                $data['entry_type'],
+                $data['balance_effect'],
+                $data['is_balance'] ?? false,
+                $data['description'] ?? null,
+                $timestamp,
+                $timestamp
+            ]
+        );
+
+        return (int) DB::getPdo()->lastInsertId();
     }
 }
