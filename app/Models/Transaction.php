@@ -656,6 +656,7 @@ class Transaction extends Model
         return collect($rows)->toArray();
     }
 
+
     public static function deleteByGroupIdRaw(int $id)
     {
         $query = "
@@ -665,5 +666,35 @@ class Transaction extends Model
                 transaction_group_id = ?
         ";
         return DB::delete($query, [$id]);
+
+    public static function InsertTransactionRaw(array $data)
+    {
+        // Use provided transaction_date as created/updated timestamps; fall back to now
+        $timestamp = isset($data['transaction_date'])
+            ? Carbon::parse($data['transaction_date'])->toDateTimeString()
+            : Carbon::now()->toDateTimeString();
+
+        $insertQuery = "INSERT INTO transactions 
+            (transaction_group_id, user_account_id, financial_account_id, amount, entry_type, balance_effect, is_balance, description, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        DB::insert(
+            $insertQuery,
+            [
+                $data['transaction_group_id'] ?? (string) Str::uuid(),
+                $data['user_account_id'],
+                $data['financial_account_id'],
+                $data['amount'],
+                $data['entry_type'],
+                $data['balance_effect'],
+                $data['is_balance'] ?? false,
+                $data['description'] ?? null,
+                $timestamp,
+                $timestamp
+            ]
+        );
+
+        return (int) DB::getPdo()->lastInsertId();
+
     }
 }

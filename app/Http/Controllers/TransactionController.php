@@ -221,3 +221,38 @@ class TransactionController extends Controller
     }
 }
 }
+
+
+    public function Insert(Request $request)
+    {
+        $validated = $request->validate([
+            'user_account_id' => 'required|integer',
+            'financial_account_id' => 'required|integer',
+            'entry_type' => 'required|in:debit,credit',
+            'amount' => 'required|numeric|min:0',
+            'description' => 'nullable|string|max:255',
+            'transaction_date' => 'required|date|date_format:Y-m-d H:i:s',
+        ]);
+
+       
+        $validated['balance_effect'] = $validated['entry_type'] === 'debit' ? 'decrease' : 'increase';
+        $validated['is_balance'] = $request->boolean('is_balance', false);
+
+        try {
+            $transactionId = Transaction::insertTransactionRaw($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil disimpan.',
+                'transaction_id' => $transactionId
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan transaksi: ' . $e->getMessage()
+            ], 500);
+        }
+
+    }
+}
+
