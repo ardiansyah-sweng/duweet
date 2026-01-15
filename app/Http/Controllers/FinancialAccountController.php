@@ -143,5 +143,26 @@ class FinancialAccountController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Admin liquid assets summary: total, per user_account, per financial account
+     */
+    public function adminLiquidAssetsSummary()
+    {
+        try {
+            $summary = UserFinancialAccount::getAdminLiquidAssetsSummary();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin liquid assets summary',
+                'data' => $summary,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
         
