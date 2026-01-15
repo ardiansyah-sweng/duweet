@@ -656,6 +656,18 @@ class Transaction extends Model
         return collect($rows)->toArray();
     }
 
+
+
+    public static function deleteByGroupIdRaw(int $id)
+    {
+        $query = "
+            DELETE FROM 
+                transactions 
+            WHERE 
+                transaction_group_id = ?
+        ";
+        return DB::delete($query, [$id]);
+
 /**
      * ADMIN REPORT
      * Sum total cash-in (income) grouped by period (YYYY-MM) across all users
@@ -706,6 +718,7 @@ class Transaction extends Model
         return collect($rows);
     }
     
+
     public static function InsertTransactionRaw(array $data)
     {
         // Use provided transaction_date as created/updated timestamps; fall back to now
@@ -734,5 +747,6 @@ class Transaction extends Model
         );
 
         return (int) DB::getPdo()->lastInsertId();
+
     }
 }
