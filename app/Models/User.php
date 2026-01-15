@@ -173,4 +173,77 @@ class User extends Authenticatable
             ];
         }, $results);
     }
+
+    public static function AmbilDataUserYangLogin($userAccountId)
+    {
+        
+        $query = "SELECT 
+                    u.id as user_id,
+                    u.email as user_email,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    ua.id as user_account_id,
+                    ua.username,
+                    ua.email as account_email,
+                    ua.is_active,
+                    ua.verified_at
+                  FROM users u
+                  INNER JOIN user_accounts ua ON u.id = ua.id_user
+                  WHERE ua.id = ?
+                  AND ua.is_active = 1
+                  LIMIT 1";
+
+        $userData = DB::selectOne($query, [$userAccountId]);
+
+        if (!$userData) {
+            return null;
+        }
+
+        
+        $telephonesQuery = "SELECT number 
+                   FROM user_telephones 
+                   WHERE user_id = ?";
+        $telephones = DB::select($telephonesQuery, [$userData->user_id]);
+
+        return [
+            'user_id' => $userData->user_id,
+            'user_account_id' => $userData->user_account_id,
+            'username' => $userData->username,
+            'email' => $userData->account_email,
+            'profile' => [
+                'name' => $userData->name,
+                'first_name' => $userData->first_name,
+                'middle_name' => $userData->middle_name,
+                'last_name' => $userData->last_name,
+                'tanggal_lahir' => $userData->tanggal_lahir,
+                'bulan_lahir' => $userData->bulan_lahir,
+                'tahun_lahir' => $userData->tahun_lahir,
+                'usia' => $userData->usia,
+            ],
+            'address' => [
+                'provinsi' => $userData->provinsi,
+                'kabupaten' => $userData->kabupaten,
+                'kecamatan' => $userData->kecamatan,
+                'jalan' => $userData->jalan,
+                'kode_pos' => $userData->kode_pos,
+            ],
+            'telephones' => array_map(fn($t) => $t->number, $telephones),
+            'account_status' => [
+                'is_active' => (bool) $userData->is_active,
+                'verified_at' => $userData->verified_at,
+            ]
+        ];
+    }
+
 }
