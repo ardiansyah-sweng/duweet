@@ -5,6 +5,7 @@ use App\Http\Controllers\FinancialAccountController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountBalanceController;
 
 Route::get('/test/liquid-assets', function () {
     try {
@@ -43,6 +44,9 @@ Route::get('/accounts/{id}', [AccountController::class, 'show']);
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Balance route from feature branch
+Route::get('/balance/total/{userId}', [AccountBalanceController::class, 'totalBalanceUser']);
 
 // Financial Accounts
 Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
