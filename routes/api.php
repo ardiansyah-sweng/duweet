@@ -11,6 +11,7 @@ use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
+use App\Http\Controllers\UserAccountTestController;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
 
@@ -67,8 +68,6 @@ Route::get('/ping', fn () => response()->json(['pong' => true]));
 Route::get('/accounts', function () {
     return response()->json(['ok' => true]);
 });
-
-
 Route::post('/financial_accounts', [AccountController::class, 'store']);
 Route::get('/financial_accounts', [AccountController::class, 'index']);
 Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
@@ -107,7 +106,7 @@ Route::prefix('reports')->group(function () {
 });
 
 // =============================================================
-// 4. TRANSACTION (Tambahan dari Incoming Change)
+// 4. TRANSACTION
 // =============================================================
 Route::get('/getLatestActivities', [\App\Http\Controllers\TransactionController::class, 'getLatestActivities']);
 
@@ -117,6 +116,11 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+
+/**
+ * BAGIAN LOGIN BARU (Query cari user email/username & password)
+ */
+Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
 
 Route::get(
     '/admin/reports/cashin-by-period',

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
+
 class UserAccount extends Model
 {
     use HasFactory;
@@ -165,7 +166,7 @@ class UserAccount extends Model
     /**
      * DML: Reset password by email (RAW UPDATE)
      */
-    public static function resetPasswordByEmail($email, $newPassword)
+    public static function resetPasswordEmail($email, $newPassword)
     {
         $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
 
@@ -176,5 +177,48 @@ class UserAccount extends Model
         ";
 
         return DB::update($query, [$hashed, $email]);
+    }
+    /**
+     * DML: Cari user berdasarkan email dan password (LOGIKA FIX)
+     */
+    public static function cariUserByEmailLogin(string $email, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
+            [$email]
+        );
+
+        if (!empty($user)) {
+            $userData = $user[0];
+
+            // Hash::check untuk membandingkan input dengan bcrypt di DB
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
+     */
+    public static function cariUserByUsernameLogin(string $username, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+            [$username]
+        );
+
+        // Hash::check
+        if (!empty($user)) {
+            $userData = $user[0];
+
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
+        }
+
+        return null;
     }
 }
