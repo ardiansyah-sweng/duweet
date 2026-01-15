@@ -728,4 +728,84 @@ class Transaction extends Model
 
         return collect($rows)->toArray();
     }
+
+/**
+     * ADMIN REPORT
+     * Sum total cash-in (income) grouped by period (YYYY-MM) across all users
+     * using raw SQL.
+     *
+     * @param Carbon $startDate
+     * @param Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getTotalCashinByPeriodAdmin (Carbon $startDate, Carbon $endDate)
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_cashin
+            FROM {$transactionsTable} t
+            INNER JOIN {$financialAccountsTable} fa ON fa.id = t.financial_account_id
+            WHERE
+                fa.type = 'IN'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+    
+    public static function InsertTransactionRaw(array $data)
+    {
+        // Use provided transaction_date as created/updated timestamps; fall back to now
+        $timestamp = isset($data['transaction_date'])
+            ? Carbon::parse($data['transaction_date'])->toDateTimeString()
+            : Carbon::now()->toDateTimeString();
+
+        $insertQuery = "INSERT INTO transactions 
+            (transaction_group_id, user_account_id, financial_account_id, amount, entry_type, balance_effect, is_balance, description, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        DB::insert(
+            $insertQuery,
+            [
+                $data['transaction_group_id'] ?? (string) Str::uuid(),
+                $data['user_account_id'],
+                $data['financial_account_id'],
+                $data['amount'],
+                $data['entry_type'],
+                $data['balance_effect'],
+                $data['is_balance'] ?? false,
+                $data['description'] ?? null,
+                $timestamp,
+                $timestamp
+            ]
+        );
+
+        return (int) DB::getPdo()->lastInsertId();
+    }
 }
