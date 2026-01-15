@@ -8,8 +8,10 @@ use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use Illuminate\Http\Request as HttpRequest;
+use App\Http\Controllers\UserAccountTestController;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
 
@@ -76,6 +78,7 @@ Route::prefix('transactions')->group(function () {
     Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
+    Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
 });
 
 // Financial Account API Routes
@@ -103,7 +106,7 @@ Route::prefix('reports')->group(function () {
 });
 
 // =============================================================
-// 4. TRANSACTION (Tambahan dari Incoming Change)
+// 4. TRANSACTION
 // =============================================================
 Route::get('/getLatestActivities', [\App\Http\Controllers\TransactionController::class, 'getLatestActivities']);
 
@@ -113,6 +116,13 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
-//Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
-use App\Http\Controllers\UserAccountTestController;
+
+/**
+ * BAGIAN LOGIN BARU (Query cari user email/username & password)
+ */
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+Route::get(
+    '/admin/reports/cashin-by-period',
+    [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
+);
