@@ -123,7 +123,6 @@ class ReportController extends Controller
                 'period' => [
                     'start_date' => $startDate->toDateString(),
                     'end_date' => $endDate->toDateString(),
-                    'group_by' => 'month',
                 ],
                 'summary' => $summary,
             ]);
