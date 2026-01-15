@@ -78,6 +78,46 @@ class FinancialAccount extends Model
         return $this->hasMany(UserFinancialAccount::class);
     }
 
+    /**
+     * Scope: Filter financial accounts by user ID
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $userId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->whereHas('userFinancialAccounts', function($q) use ($userId) {
+            $q->where('user_id', $userId);
+        });
+    }
+
+    /**
+     * Scope: Filter financial accounts by account type
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|array $type Account type(s): AS, IN, EX, SP, LI
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByType($query, $type)
+    {
+        if (is_array($type)) {
+            return $query->whereIn(FinancialAccountColumns::TYPE, $type);
+        }
+        return $query->where(FinancialAccountColumns::TYPE, $type);
+    }
+
+    /**
+     * Scope: Filter only active accounts
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where(FinancialAccountColumns::IS_ACTIVE, true);
+    }
+
 
     /**
      * Aturan dasar sebelum delete (mencegah kehilangan data penting)
