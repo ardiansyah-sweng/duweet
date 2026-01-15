@@ -104,6 +104,9 @@ Route::prefix('reports')->group(function () {
     Route::get(
         '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
         ->name('api.reports.surplus-defisit');
+    // Account counts per user (user accounts + financial accounts)
+    Route::get('/account-counts', [\App\Http\Controllers\Reports\AccountReportController::class, 'index'])
+        ->name('api.reports.account-counts');
 });
 
 // =============================================================
