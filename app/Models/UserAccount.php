@@ -177,4 +177,18 @@ class UserAccount extends Model
 
         return DB::update($query, [$hashed, $email]);
     }
+
+    /**
+ * DML: Ambil user yang tidak login dalam periode hari tertentu 
+ */
+public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
+{
+    $query = "
+        SELECT * FROM user_accounts 
+        WHERE (last_login_at < datetime('now', '-' || ? || ' days') 
+               OR last_login_at IS NULL)
+        AND is_active = 1
+    ";
+    return DB::select($query, [$days]);
+}
 }
