@@ -143,5 +143,72 @@ class FinancialAccountController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update Financial Account
+     * 
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            // Validasi input
+            $validated = $request->validate([
+                'name' => 'nullable|string|max:255',
+                'type' => 'nullable|in:IN,EX,SP,LI,AS',
+                'balance' => 'nullable|integer',
+                'is_active' => 'nullable|boolean',
+                'initial_balance' => 'nullable|integer',
+                'description' => 'nullable|string',
+                'sort_order' => 'nullable|integer',
+                'level' => 'nullable|integer',
+                'is_liquid' => 'nullable|boolean'
+            ]);
+
+            // Filter hanya field yang ada di request dan tidak null
+            $data = array_filter($validated, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
+            // Jika request kosong
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data untuk diupdate. Minimal kirim satu field yang ingin diubah.',
+                    'available_fields' => [
+                        'name', 'type', 'balance', 'is_active', 
+                        'initial_balance', 'description', 'sort_order', 
+                        'level', 'is_liquid'
+                    ]
+                ], 400);
+            }
+
+            // Panggil method update dari model
+            $result = FinancialAccount::updateFinancialAccount($id, $data);
+
+            if ($result) {
+                // Ambil data terbaru setelah update
+                $model = new FinancialAccount();
+                $updatedData = $model->getById($id);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Financial Account berhasil diupdate',
+                    'data' => $updatedData
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengupdate Financial Account'
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
-        
