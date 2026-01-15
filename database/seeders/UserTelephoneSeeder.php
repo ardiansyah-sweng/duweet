@@ -14,9 +14,7 @@ class UserTelephoneSeeder extends Seeder
     {
         // Nonaktifkan FK sementara
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        
         UserTelephone::truncate();
-        
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Ambil semua id user

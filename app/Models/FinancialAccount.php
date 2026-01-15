@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class FinancialAccount extends Model
 {
     use HasFactory;
+    use HasFactory; // Diletakkan di awal body class
 
     protected $table;
 

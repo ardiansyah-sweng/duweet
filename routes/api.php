@@ -77,8 +77,6 @@ Route::prefix('transactions')->group(function () {
     Route::get('/', [\App\Http\Controllers\TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
-    Route::put('/{id}', [\App\Http\Controllers\TransactionController::class, 'update'])->name('api.transactions.update');
-    Route::patch('/{id}', [\App\Http\Controllers\TransactionController::class, 'update'])->name('api.transactions.patch');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
 });
 
