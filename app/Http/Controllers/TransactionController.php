@@ -226,4 +226,57 @@ class TransactionController extends Controller
         }
 
     }
+
+    /**
+     * API: Get spending summary (sum of spending) grouped by period for a user account
+     * Query params (GET): user_account_id (int), start_date (Y-m-d), end_date (Y-m-d)
+     */
+    public function spendingSummaryByPeriod(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'user_account_id' => 'required|integer',
+                'start_date' => 'required|date|date_format:Y-m-d',
+                'end_date' => 'required|date|date_format:Y-m-d|after_or_equal:start_date',
+            ]);
+
+            $start = Carbon::parse($request->query('start_date'))->startOfDay();
+            $end = Carbon::parse($request->query('end_date'))->endOfDay();
+
+            $results = Transaction::getSpendingSummaryByPeriod(
+                (int) $request->query('user_account_id'),
+                $start,
+                $end
+            );
+
+            $data = collect($results)->map(function ($row) {
+                return [
+                    'period' => $row->periode,
+                    'total_spending' => (int) $row->total_spending,
+                ];
+            })->values();
+
+            $payload = [
+                'success' => true,
+                'period' => [
+                    'start_date' => $start->toDateString(),
+                    'end_date' => $end->toDateString(),
+                ],
+                'data' => $data,
+            ];
+
+            return response()->json($payload, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+                } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil spending summary: ' . $e->getMessage()
+            ], 500);
+        }
+    } 
 }
