@@ -143,5 +143,114 @@ class FinancialAccountController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get financial accounts for specific user filtered by account type
+     * 
+     * Query params:
+     * - user_id: required, ID user
+     * - type: optional, account type (AS/IN/EX/SP/LI) or comma-separated types
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getByUserAndType(Request $request)
+    {
+        try {
+            // Validasi input
+            $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'type' => 'nullable|string'
+            ]);
+
+            $userId = $request->input('user_id');
+            $type = $request->input('type');
+
+            // Query dasar dengan scope
+            $query = FinancialAccount::forUser($userId)->active();
+
+            // Filter by type jika ada
+            if ($type) {
+                // Support multiple types separated by comma
+                $types = str_contains($type, ',') 
+                    ? array_map('trim', explode(',', $type))
+                    : $type;
+                
+                // Validasi type values
+                $validTypes = ['AS', 'IN', 'EX', 'SP', 'LI'];
+                $typesToValidate = is_array($types) ? $types : [$types];
+                
+                foreach ($typesToValidate as $t) {
+                    if (!in_array($t, $validTypes)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Invalid account type: {$t}. Valid types: " . implode(', ', $validTypes)
+                        ], 400);
+                    }
+                }
+                
+                $query->byType($types);
+            }
+
+            // Load relasi dengan user balance
+            $financialAccounts = $query->with(['userFinancialAccounts' => function($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }])->get();
+
+            // Format response
+            $data = $financialAccounts->map(function($account) {
+                $userAccount = $account->userFinancialAccounts->first();
+                return [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'type' => $account->type,
+                    'type_label' => $this->getTypeLabel($account->type),
+                    'description' => $account->description,
+                    'is_group' => (bool) $account->is_group,
+                    'is_active' => (bool) $account->is_active,
+                    'user_balance' => $userAccount ? (int) $userAccount->balance : 0,
+                    'user_initial_balance' => $userAccount ? (int) $userAccount->initial_balance : 0,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Financial accounts retrieved successfully',
+                'count' => $data->count(),
+                'data' => $data
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper: Get type label in Indonesian
+     * 
+     * @param string $type
+     * @return string
+     */
+    private function getTypeLabel($type)
+    {
+        $labels = [
+            'AS' => 'Asset (Aset)',
+            'IN' => 'Income (Pendapatan)',
+            'EX' => 'Expenses (Pengeluaran)',
+            'SP' => 'Spending (Belanja)',
+            'LI' => 'Liability (Kewajiban)'
+        ];
+        
+        return $labels[$type] ?? $type;
+    }
 }
         
