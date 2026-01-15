@@ -21,6 +21,7 @@ return new class extends Migration
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();
             $table->string(FinancialAccountColumns::NAME, 100);
             $table->enum(FinancialAccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
@@ -38,10 +39,12 @@ return new class extends Migration
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
             
-            // Foreign key constraint
+            // Foreign key constraints
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign(FinancialAccountColumns::PARENT_ID)->references(FinancialAccountColumns::ID)->on($this->table)->onDelete('cascade');
 
             // Indexes for performance
+            $table->index('user_id');
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
             $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
