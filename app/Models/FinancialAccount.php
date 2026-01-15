@@ -86,12 +86,12 @@ class FinancialAccount extends Model
     {
         static::deleting(function ($account) {
             // Tidak boleh menghapus akun grup jika masih punya anak
-            if ($account->{AccountColumns::IS_GROUP} && $account->children()->exists()) {
+            if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
             }
 
             // Tidak boleh menghapus akun leaf yang masih punya transaksi
-            if (!$account->{AccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
             }
         });
@@ -158,6 +158,76 @@ public static function getActiveAccounts()
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
         return !empty($result) ? $result[0] : null;
+    }
+
+    /**
+     * DML Query UPDATE untuk update Financial Account menggunakan Query Builder.
+     * Method ini mendemonstrasikan penggunaan raw DML query update.
+     * 
+     * @param int $id ID dari financial account yang akan diupdate
+     * @param array $data Data untuk update financial account
+     * @return bool Status update berhasil atau tidak
+     */
+    public static function updateFinancialAccount(int $id, array $data): bool
+    {
+        // Validasi ID
+        if (!$id || $id <= 0) {
+            throw new \InvalidArgumentException("Invalid ID: {$id}");
+        }
+
+        // Cek apakah record dengan ID tersebut ada
+        $existing = DB::select("SELECT id FROM financial_accounts WHERE id = ?", [$id]);
+        if (empty($existing)) {
+            throw new \Exception("Financial Account dengan ID {$id} tidak ditemukan");
+        }
+
+        // Validasi type jika ada di data update
+        if (isset($data['type'])) {
+            $validTypes = ['IN', 'EX', 'SP', 'LI', 'AS'];
+            if (!in_array($data['type'], $validTypes, true)) {
+                throw new \InvalidArgumentException('Invalid account type: ' . $data['type']);
+            }
+        }
+
+        // Build array untuk query update
+        $updates = [];
+        $values = [];
+
+        // Field yang boleh diupdate
+        $allowedFields = [
+            'name',
+            'type',
+            'balance',
+            'is_active',
+            'initial_balance',
+            'description',
+            'sort_order',
+            'level',
+            'is_liquid'
+        ];
+
+        // Loop dan tambahkan ke array jika field ada di data dan valid
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $updates[] = "{$field} = ?";
+                $values[] = $data[$field];
+            }
+        }
+
+        // Jika tidak ada field yang akan diupdate, return false
+        if (empty($updates)) {
+            throw new \InvalidArgumentException("Tidak ada field yang valid untuk diupdate");
+        }
+
+        // Tambahkan updated_at
+        $updates[] = "updated_at = ?";
+        $values[] = now();
+        $values[] = $id;
+
+        // DML Query UPDATE menggunakan raw SQL
+        $sql = "UPDATE financial_accounts SET " . implode(', ', $updates) . " WHERE id = ?";
+        
+        return DB::update($sql, $values);
     }
 
 }

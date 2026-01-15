@@ -85,12 +85,14 @@ Route::prefix('transactions')->group(function () {
 // Financial Account API Routes
 Route::prefix('financial-account')->group(function () {
     Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
-    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
-
-    // Liquid Assets Route - per user_account_id
-    Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
-    // Liquid Assets Route - semua user
+    
+    // Liquid Assets Routes - HARUS DIDULU sebelum {id}
     Route::get('/liquid-assets/all-users', [FinancialAccountController::class, 'getAllUsersLiquidAssets'])->name('api.financial-account.liquid-assets.all-users');
+    Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
+    
+    // Generic routes - HARUS DIAKHIR
+    Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+    Route::put('/{id}', [FinancialAccountController::class, 'update'])->name('api.financial-account.update');
 });
 
 // =============================================================
