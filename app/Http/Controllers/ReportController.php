@@ -73,6 +73,67 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Ringkasan surplus/defisit per periode (ADMIN: agregat seluruh user).
+     *
+     * GET /api/reports/surplus-deficit
+     * Query params:
+     * - start_date (optional, format: Y-m-d)
+     * - end_date   (optional, format: Y-m-d)
+     */
+    public function surplusDeficitByPeriod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'end_date' => 'nullable|date|date_format:Y-m-d',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+        $defaultEndDate = Carbon::create(2025, 12, 31)->endOfDay();
+
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : $defaultStartDate;
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : $defaultEndDate;
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.',
+            ], 400);
+        }
+
+        try {
+            $summary = Transaction::getSurplusDeficitSummaryByPeriod($startDate, $endDate);
+
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                ],
+                'summary' => $summary,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil ringkasan surplus/defisit.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
     
     /**
      * Helper privat untuk mengambil data dasar User dan User Account.
