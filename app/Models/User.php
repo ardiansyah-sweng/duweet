@@ -197,11 +197,17 @@ class User extends Authenticatable
                     ua.username,
                     ua.email as account_email,
                     ua.is_active,
-                    ua.verified_at
+                    ua.verified_at,
+                    GROUP_CONCAT(ut.number SEPARATOR ',') as telephones
                   FROM users u
                   INNER JOIN user_accounts ua ON u.id = ua.id_user
+                  LEFT JOIN user_telephones ut ON u.id = ut.user_id
                   WHERE ua.id = ?
                   AND ua.is_active = 1
+                  GROUP BY u.id, u.email, u.name, u.first_name, u.middle_name, u.last_name,
+                           u.provinsi, u.kabupaten, u.kecamatan, u.jalan, u.kode_pos,
+                           u.tanggal_lahir, u.bulan_lahir, u.tahun_lahir, u.usia,
+                           ua.id, ua.username, ua.email, ua.is_active, ua.verified_at
                   LIMIT 1";
 
         $userData = DB::selectOne($query, [$userAccountId]);
@@ -210,11 +216,9 @@ class User extends Authenticatable
             return null;
         }
 
-        
-        $telephonesQuery = "SELECT number 
-                   FROM user_telephones 
-                   WHERE user_id = ?";
-        $telephones = DB::select($telephonesQuery, [$userData->user_id]);
+        $telephonesArray = $userData->telephones 
+            ? explode(',', $userData->telephones) 
+            : [];
 
         return [
             'user_id' => $userData->user_id,
@@ -238,7 +242,7 @@ class User extends Authenticatable
                 'jalan' => $userData->jalan,
                 'kode_pos' => $userData->kode_pos,
             ],
-            'telephones' => array_map(fn($t) => $t->number, $telephones),
+            'telephones' => $telephonesArray,
             'account_status' => [
                 'is_active' => (bool) $userData->is_active,
                 'verified_at' => $userData->verified_at,

@@ -3,38 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function ProsesLogin(Request $request)
+   public function ProsesLogin(Request $request)
     {
         $request->validate([
             'username' => 'required|string',
+            'password' => 'required|string',
         ], [
             'username.required' => 'Username harus diisi.',
+            'password.required' => 'Password harus diisi.',
         ]);
 
         try {
             
-            $query = "SELECT 
-                        ua.id as user_account_id,
-                        ua.id_user,
-                        ua.username,
-                        ua.email,
-                        ua.is_active,
-                        ua.verified_at,
-                        u.name as user_name
-                      FROM user_accounts ua
-                      INNER JOIN users u ON ua.id_user = u.id
-                      WHERE ua.username = ?
-                      LIMIT 1";
-
-            $userAccount = DB::selectOne($query, [$request->username]);
+            $userAccount = Auth::loginByUsername($request->username);
 
             if (!$userAccount) {
                 return response()->json([
@@ -50,8 +41,8 @@ class AuthController extends Controller
                 ], 403);
             }
 
+            // Generate token
             $token = hash('sha256', Str::random(60) . time() . $userAccount->user_account_id);
-
             $expiresAt = now()->addHours(24);
             
             Log::info('Token Created', [
@@ -60,6 +51,7 @@ class AuthController extends Controller
                 'expires_at' => $expiresAt,
             ]);
 
+            // Simpan ke cache
             Cache::put('auth_token_' . $token, [
                 'user_account_id' => $userAccount->user_account_id,
                 'id_user' => $userAccount->id_user,
@@ -91,5 +83,4 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
 }
