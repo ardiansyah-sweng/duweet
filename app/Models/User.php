@@ -129,7 +129,38 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
-    
+
+
+
+/**
+ * DML Murni: Get users dengan status setup account (Optimized version)
+ * @param string|null $status - 'belum_setup', 'sudah_setup', atau null untuk semua
+ */
+public static function getUsersWithStatus($status = null)
+{
+    $sql = "
+        SELECT
+            u.id,
+            u.name AS nama,
+            u.email,
+            IF(ua.id_user IS NOT NULL, 1, 0) AS setup_account,
+            IF(ua.id_user IS NOT NULL, 'Sudah Setup', 'Belum Setup') AS status_account
+        FROM users u
+        LEFT JOIN (SELECT DISTINCT id_user FROM user_accounts) ua ON u.id = ua.id_user
+    ";
+
+    if ($status === 'belum_setup') {
+        $sql .= " WHERE ua.id_user IS NULL";
+    } elseif ($status === 'sudah_setup') {
+        $sql .= " WHERE ua.id_user IS NOT NULL";
+    }
+
+    $sql .= " ORDER BY u.id";
+
+    return collect(DB::select($sql));
+}
+  
+
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
@@ -147,7 +178,6 @@ class User extends Authenticatable
 
     public static function getUserAccounts($userId)
     {
-
         $query = "SELECT 
                     ua.id as user_account_id,
                     ua.id_user,
@@ -161,7 +191,6 @@ class User extends Authenticatable
         
         $results = DB::select($query, [$userId]);
         
-      
         return array_map(function($row) {
             return [
                 'user_account_id' => $row->user_account_id,
@@ -174,3 +203,5 @@ class User extends Authenticatable
         }, $results);
     }
 }
+
+

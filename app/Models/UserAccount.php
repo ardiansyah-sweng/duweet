@@ -72,6 +72,18 @@ class UserAccount extends Model
     }
 
     /**
+
+     * Query users yang belum setup account
+     * Static method untuk mendapatkan users yang belum punya user_accounts record
+     */
+    public static function usersWithoutAccount()
+    {
+        return User::whereDoesntHave('userAccounts')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+
      * Insert UserAccount baru menggunakan MURNI SQL (INSERT INTO)
      * Logika hashing dan default value dilakukan di sini.
      * * @param array $data Data yang sudah divalidasi dari controller
@@ -120,6 +132,7 @@ class UserAccount extends Model
      * Hapus satu UserAccount berdasarkan ID dengan raw query (DELETE FROM)
      * * @param int $id
      * @return array
+
      * RAW DELETE USER ACCOUNT (DML)
      */
     public static function deleteUserAccountRaw($id)
