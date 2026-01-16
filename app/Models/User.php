@@ -173,4 +173,27 @@ class User extends Authenticatable
             ];
         }, $results);
     }
+
+    public static function GetUser(){
+        $query = "SELECT * FROM users  ORDER BY id";
+        return DB::select($query);
+
+        return array_map(function($row) {
+            return [
+                'id' => $row->id,
+                'name' => $row->name,
+                'email' => $row->email,
+                'provinsi' => $row->provinsi,
+                'kabupaten' => $row->kabupaten,
+                'kecamatan' => $row->kecamatan,
+                'jalan' => $row->jalan,
+                'kode_pos' => $row->kode_pos,
+                'tanggal_lahir' => $row->tanggal_lahir,
+                'bulan_lahir' => $row->bulan_lahir,
+                'tahun_lahir' => $row->tahun_lahir,
+                'usia' => $row->usia,        
+            ];
+        }, $results);
+
+    }
 }
