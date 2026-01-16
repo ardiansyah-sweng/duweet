@@ -178,7 +178,7 @@ class UserAccount extends Model
         return DB::update($query, [$hashed, $email]);
     }
      /**
-     * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
+     * DML: Cari user berdasarkan username dan password 
      */
     public static function cariUserByUsernameLogin(string $username, string $password)
     {
