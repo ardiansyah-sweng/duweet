@@ -735,4 +735,57 @@ class Transaction extends Model
 
         return (int) DB::getPdo()->lastInsertId();
     }
+
+    /**
+     * Update transaction and adjust balance
+     * 
+     * @param int $id
+     * @param array $data
+     * @return array
+     */
+    public static function updateTransactionRaw(int $id, array $data): array
+    {
+        try {
+            return DB::transaction(function () use ($id, $data) {
+                $transactionTable = config('db_tables.transaction', 'transactions');
+                
+                // 1. Get existing transaction
+                $oldTrx = DB::table($transactionTable)->where('id', $id)->lockForUpdate()->first();
+
+                if (!$oldTrx) {
+                    throw new \Exception('Transaction not found');
+                }
+
+                // 2. Prepare new values
+                // TUGAS: Hanya update description dan transaction_date. Amount tidak boleh berubah.
+                $newDescription = $data['description'] ?? $oldTrx->description;
+                $newDate = isset($data['transaction_date']) ? Carbon::parse($data['transaction_date']) : Carbon::parse($oldTrx->created_at);
+                
+                // 3. Update Transaction
+                DB::table($transactionTable)
+                    ->where('id', $id)
+                    ->update([
+                        'description' => $newDescription,
+                        'created_at' => $newDate,
+                        'updated_at' => now(),
+                    ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Transaction updated successfully (Description & Date only)',
+                    'data' => [
+                        'id' => $id,
+                        'description' => $newDescription,
+                        'transaction_date' => $newDate->toDateTimeString(),
+                        'amount_status' => 'unchanged' // Info bahwa amount tidak berubah
+                    ]
+                ];
+            });
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ];
+        }
+    }
 }
