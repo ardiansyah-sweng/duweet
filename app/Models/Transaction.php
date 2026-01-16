@@ -735,4 +735,98 @@ class Transaction extends Model
 
         return (int) DB::getPdo()->lastInsertId();
     }
+
+    /**
+     * Update transaction and adjust balance
+     * 
+     * @param int $id
+     * @param array $data
+     * @return array
+     */
+    public static function updateTransactionRaw(int $id, array $data): array
+    {
+        try {
+            return DB::transaction(function () use ($id, $data) {
+                $transactionTable = config('db_tables.transaction', 'transactions');
+                $ufaTable = config('db_tables.user_financial_account', 'user_financial_accounts');
+
+                // 1. Get existing transaction
+                // Use lock for update to prevent race conditions
+                $oldTrx = DB::table($transactionTable)->where('id', $id)->lockForUpdate()->first();
+
+                if (!$oldTrx) {
+                    throw new \Exception('Transaction not found');
+                }
+
+                // 2. Prepare new values (fallback to old values if not provided)
+                $newAmount = $data['amount'] ?? $oldTrx->amount;
+                $newDescription = $data['description'] ?? $oldTrx->description;
+                $newDate = isset($data['transaction_date']) ? Carbon::parse($data['transaction_date']) : Carbon::parse($oldTrx->created_at);
+                
+                // Note: Changing account or entry_type is complex, 
+                // for this implementation we focus on Amount, Description, Date updates.
+                // If amount changed, we need to adjust balance.
+                
+                if ($newAmount != $oldTrx->amount) {
+                    $ufa = DB::table($ufaTable)
+                        ->where('user_account_id', $oldTrx->user_account_id)
+                        ->where('financial_account_id', $oldTrx->financial_account_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($ufa) {
+                        $currentBalance = $ufa->balance;
+                        
+                        // Revert old effect
+                        if ($oldTrx->balance_effect === 'increase') {
+                            $revertedBalance = $currentBalance - $oldTrx->amount;
+                        } else { // decrease
+                            $revertedBalance = $currentBalance + $oldTrx->amount;
+                        }
+
+                        // Apply new effect
+                        // Assuming balance_effect stays same as we don't allow changing entry_type easily here yet
+                        if ($oldTrx->balance_effect === 'increase') {
+                            $finalBalance = $revertedBalance + $newAmount;
+                        } else {
+                            $finalBalance = $revertedBalance - $newAmount;
+                        }
+
+                        // Update Balance
+                        DB::table($ufaTable)
+                            ->where('id', $ufa->id)
+                            ->update([
+                                'balance' => $finalBalance,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+                // 3. Update Transaction
+                DB::table($transactionTable)
+                    ->where('id', $id)
+                    ->update([
+                        'amount' => $newAmount,
+                        'description' => $newDescription,
+                        'created_at' => $newDate,
+                        'updated_at' => now(),
+                    ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Transaction updated successfully',
+                    'data' => [
+                        'id' => $id,
+                        'amount' => $newAmount,
+                        'previous_amount' => $oldTrx->amount
+                    ]
+                ];
+            });
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ];
+        }
+    }
 }
