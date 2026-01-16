@@ -10,6 +10,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
@@ -17,6 +18,11 @@ use App\Http\Controllers\FinancialAccountController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+Route::post('/login', [AuthController::class, 'ProsesLogin']);
+Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
+
 
 // =============================================================
 // 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
