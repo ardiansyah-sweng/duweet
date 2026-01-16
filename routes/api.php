@@ -80,6 +80,7 @@ Route::prefix('transactions')->group(function () {
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
+    Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
 });
 
 // Financial Account API Routes
