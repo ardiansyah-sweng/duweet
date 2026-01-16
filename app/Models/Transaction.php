@@ -5,8 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
+use App\Constants\FinancialAccountColumns;
+use App\Enums\AccountType;
+use Illuminate\Support\Str;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
@@ -14,18 +16,46 @@ use Carbon\Carbon; // Import Carbon untuk type hinting
 class Transaction extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        TransactionColumns::TRANSACTION_GROUP_ID,
+        TransactionColumns::USER_ACCOUNT_ID,
+        TransactionColumns::FINANCIAL_ACCOUNT_ID,
+        TransactionColumns::ENTRY_TYPE,
+        TransactionColumns::AMOUNT,
+        TransactionColumns::BALANCE_EFFECT,
+        TransactionColumns::DESCRIPTION,
+        TransactionColumns::IS_BALANCE,
+    ];
     
     // Nama tabel yang sesuai dengan konfigurasi
     protected $table = 'transactions';
 
-    // protected static function booted()
-    // {
-    //     static::creating(function ($transaction) {
-    //         if (empty($transaction->transaction_group_id)) {
-    //             $transaction->transaction_group_id = (string) Str::uuid();
-    //         }
-    //     });
-    // }
+    protected $casts = [
+        TransactionColumns::AMOUNT => 'integer',
+        TransactionColumns::IS_BALANCE => 'boolean',
+    ];
+
+    /**
+     * Constructor
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->fillable = TransactionColumns::getFillable();
+    }
+
+    /**
+     * Boot method untuk auto-generate transaction_group_id
+     */
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
+                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
+            }
+        });
+    }
 
 
     /**
@@ -113,9 +143,13 @@ class Transaction extends Model
             return 0;
         }
 
-        return DB::table((new self)->getTable())
-            ->whereIn('user_account_id', $userAccountIds)
-            ->delete();
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $ids = is_array($userAccountIds) ? $userAccountIds : $userAccountIds->toArray();
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        
+        $sql = "DELETE FROM {$transactionTable} WHERE user_account_id IN ({$placeholders})";
+        
+        return DB::delete($sql, $ids);
     }
 
     /**
@@ -126,11 +160,14 @@ class Transaction extends Model
      */ 
     public static function deleteByUserId(int $userId): int
     {
-        $userAccountIds = DB::table('user_accounts')
-            ->where('id_user', $userId)
-            ->pluck('id');
-
-        return self::deleteByUserAccountIds($userAccountIds);
+        $userAccountTable = config('db_tables.user_account', 'user_accounts');
+        
+        $sql = "SELECT id FROM {$userAccountTable} WHERE id_user = ?";
+        $userAccountIds = DB::select($sql, [$userId]);
+        
+        $ids = array_map(fn($row) => $row->id, $userAccountIds);
+        
+        return self::deleteByUserAccountIds($ids);
     }
     /**
      * Get total transactions per user account using raw SQL query.
@@ -186,36 +223,238 @@ class Transaction extends Model
         return collect($results);
     }
 
-    protected $fillable = [];
-
-    protected $casts = [
-        TransactionColumns::AMOUNT => 'integer',
-        TransactionColumns::IS_BALANCE => 'boolean',
-    ];
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->fillable = TransactionColumns::getFillable();
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($transaction) {
-            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
-                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
-            }
-        });
-    }
-
+    /**
+     * Relationship to UserAccount
+     */
     public function userAccount()
     {
         return $this->belongsTo(UserAccount::class, TransactionColumns::USER_ACCOUNT_ID);
     }
 
+    /**
+     * Relationship to FinancialAccount
+     */
     public function financialAccount()
     {
         return $this->belongsTo(FinancialAccount::class, TransactionColumns::FINANCIAL_ACCOUNT_ID);
+    }
+
+    /**
+     * Sum income by period for admin
+     * Implementasi dengan DML SQL murni
+     * 
+     * @param string $period - 'daily', 'weekly', 'monthly', 'yearly'
+     * @param string|null $startDate - Start date filter (Y-m-d format)
+     * @param string|null $endDate - End date filter (Y-m-d format)
+     * @param int|null $userId - Optional user filter
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumIncomeByPeriod(
+        string $period = 'monthly',
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $userId = null
+    ) {
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+        $userAccountTable = config('db_tables.user_account', 'user_accounts');
+
+        // Tentukan fungsi format tanggal berdasarkan driver database
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        // Define date format based on period dan driver database
+        $periodExpr = match($period) {
+            'daily' => $driver === 'sqlite' 
+                ? "strftime('%Y-%m-%d', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY-MM-DD')"
+                    : "DATE_FORMAT(t.created_at, '%Y-%m-%d')"),
+            'weekly' => $driver === 'sqlite'
+                ? "strftime('%Y-W%W', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY-IW')"
+                    : "DATE_FORMAT(t.created_at, '%Y-W%u')"),
+            'yearly' => $driver === 'sqlite'
+                ? "strftime('%Y', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY')"
+                    : "DATE_FORMAT(t.created_at, '%Y')"),
+            default => $driver === 'sqlite'
+                ? "strftime('%Y-%m', t.created_at)"
+                : ($driver === 'pgsql' || $driver === 'postgres'
+                    ? "to_char(t.created_at, 'YYYY-MM')"
+                    : "DATE_FORMAT(t.created_at, '%Y-%m')"),
+        };
+
+        // Build WHERE clause for filtering
+        $whereClause = "WHERE fa.type = 'IN' AND t.entry_type = 'credit'";
+        $bindings = [];
+
+        if ($startDate) {
+            $whereClause .= " AND t.created_at >= ?";
+            $bindings[] = $startDate . ' 00:00:00';
+        }
+
+        if ($endDate) {
+            $whereClause .= " AND t.created_at <= ?";
+            $bindings[] = $endDate . ' 23:59:59';
+        }
+
+        if ($userId) {
+            $whereClause .= " AND u.id = ?";
+            $bindings[] = $userId;
+        }
+
+        // Tentukan JOIN clause untuk user filter
+        $joinClause = $userId 
+            ? "LEFT JOIN {$userAccountTable} AS ua ON t.user_account_id = ua.id 
+               LEFT JOIN users AS u ON ua.user_id = u.id"
+            : "LEFT JOIN {$userAccountTable} AS ua ON t.user_account_id = ua.id";
+
+        // DML SQL murni
+        $sql = "
+            SELECT 
+                {$periodExpr} AS period,
+                SUM(t.amount) AS total_income,
+                COUNT(DISTINCT t.transaction_group_id) AS transaction_count,
+                COUNT(DISTINCT t.user_account_id) AS user_count
+            FROM {$transactionTable} AS t
+            JOIN {$financialAccountTable} AS fa ON t.financial_account_id = fa.id
+            {$joinClause}
+            {$whereClause}
+            GROUP BY {$periodExpr}
+            ORDER BY period DESC
+        ";
+
+        $rows = DB::select($sql, $bindings);
+
+        return collect($rows);
+    }
+
+    /**
+     * Sum income by financial account category
+     * 
+     * @param string|null $startDate - Start date filter (Y-m-d format)
+     * @param string|null $endDate - End date filter (Y-m-d format)
+     * @param int|null $userId - Optional user filter
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumIncomeByCategory(
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $userId = null
+    ) {
+        $financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $userAccountTable = config('db_tables.user_account', 'user_accounts');
+
+        $sql = "
+            SELECT 
+                fa.id as account_id,
+                fa.name as account_name,
+                fa.parent_id,
+                SUM(t.amount) as total_income,
+                COUNT(DISTINCT t.transaction_group_id) as transaction_count
+            FROM {$transactionTable} AS t
+            INNER JOIN {$financialAccountTable} AS fa ON t.financial_account_id = fa.id
+            LEFT JOIN {$userAccountTable} AS ua ON t.user_account_id = ua.id
+        ";
+
+        $whereClause = "WHERE fa.type = 'IN' AND t.entry_type = 'credit'";
+        $bindings = [];
+
+        if ($startDate) {
+            $whereClause .= " AND t.created_at >= ?";
+            $bindings[] = $startDate . ' 00:00:00';
+        }
+
+        if ($endDate) {
+            $whereClause .= " AND t.created_at <= ?";
+            $bindings[] = $endDate . ' 23:59:59';
+        }
+
+        if ($userId) {
+            $sql .= " INNER JOIN users AS u ON ua.user_id = u.id";
+            $whereClause .= " AND u.id = ?";
+            $bindings[] = $userId;
+        }
+
+        $sql .= " {$whereClause} GROUP BY fa.id, fa.name, fa.parent_id ORDER BY total_income DESC";
+
+        $rows = DB::select($sql, $bindings);
+
+        return collect($rows);
+    }
+
+    /**
+     * Get income summary with detailed breakdown
+     * 
+     * @param string|null $startDate - Start date filter (Y-m-d format)
+     * @param string|null $endDate - End date filter (Y-m-d format)
+     * @param int|null $userId - Optional user filter
+     * @return array
+     */
+    public static function getIncomeSummary(
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $userId = null
+    ): array {
+        $financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $userAccountTable = config('db_tables.user_account', 'user_accounts');
+
+        $sql = "
+            SELECT 
+                COALESCE(SUM(t.amount), 0) as total_income,
+                COUNT(DISTINCT t.transaction_group_id) as total_transactions,
+                COUNT(DISTINCT t.user_account_id) as total_users,
+                COALESCE(AVG(t.amount), 0) as average_income,
+                COALESCE(MAX(t.amount), 0) as max_income,
+                COALESCE(MIN(t.amount), 0) as min_income
+            FROM {$transactionTable} AS t
+            INNER JOIN {$financialAccountTable} AS fa ON t.financial_account_id = fa.id
+            LEFT JOIN {$userAccountTable} AS ua ON t.user_account_id = ua.id
+        ";
+
+        $whereClause = "WHERE fa.type = 'IN' AND t.entry_type = 'credit'";
+        $bindings = [];
+
+        if ($startDate) {
+            $whereClause .= " AND t.created_at >= ?";
+            $bindings[] = $startDate . ' 00:00:00';
+        }
+
+        if ($endDate) {
+            $whereClause .= " AND t.created_at <= ?";
+            $bindings[] = $endDate . ' 23:59:59';
+        }
+
+        if ($userId) {
+            $sql .= " INNER JOIN users AS u ON ua.user_id = u.id";
+            $whereClause .= " AND u.id = ?";
+            $bindings[] = $userId;
+        }
+
+        $sql .= " {$whereClause}";
+
+        $summary = DB::selectOne($sql, $bindings);
+
+        return [
+            'total_income' => $summary->total_income ?? 0,
+            'total_transactions' => $summary->total_transactions ?? 0,
+            'total_users' => $summary->total_users ?? 0,
+            'average_income' => $summary->average_income ?? 0,
+            'max_income' => $summary->max_income ?? 0,
+            'min_income' => $summary->min_income ?? 0,
+            'period' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+        ];
     }
 
     /**
@@ -223,30 +462,37 @@ class Transaction extends Model
      */
     public static function getDetailById($id)
     {
-        return self::query()
-        ->from('transactions as t')
-        ->join('user_accounts as ua', 'ua.id', '=', 't.user_account_id')
-        ->join('users as u', 'u.id', '=', 'ua.id_user')
-        ->join('financial_accounts as fa', 'fa.id', '=', 't.financial_account_id')
-        ->select(
-            't.id as transaction_id',
-            't.transaction_group_id',
-            't.amount',
-            't.entry_type',
-            't.balance_effect',
-            't.is_balance',
-            't.description',
-            't.created_at as transaction_date',
-            'ua.id as user_account_id',
-            'ua.username as user_account_username',
-            'ua.email as user_account_email',
-            'u.id as id_user',
-            'u.name as user_name',
-            'fa.id as financial_account_id',
-            'fa.name as financial_account_name'
-        )
-        ->where('t.id', $id)
-        ->first();
+        $transactionTable = config('db_tables.transaction', 'transactions');
+        $userAccountTable = config('db_tables.user_account', 'user_accounts');
+        $financialAccountTable = config('db_tables.financial_account', 'financial_accounts');
+
+        $sql = "
+            SELECT 
+                t.id as transaction_id,
+                t.transaction_group_id,
+                t.amount,
+                t.entry_type,
+                t.balance_effect,
+                t.is_balance,
+                t.description,
+                t.created_at as transaction_date,
+                ua.id as user_account_id,
+                ua.username as user_account_username,
+                ua.email as user_account_email,
+                u.id as id_user,
+                u.name as user_name,
+                fa.id as financial_account_id,
+                fa.name as financial_account_name
+            FROM {$transactionTable} AS t
+            INNER JOIN {$userAccountTable} AS ua ON ua.id = t.user_account_id
+            INNER JOIN users AS u ON u.id = ua.id_user
+            INNER JOIN {$financialAccountTable} AS fa ON fa.id = t.financial_account_id
+            WHERE t.id = ?
+        ";
+
+        $result = DB::selectOne($sql, [$id]);
+
+        return $result;
     }
 
     /**
@@ -473,7 +719,7 @@ class Transaction extends Model
         return collect(DB::select($sql, $bindings));
     }
 
-    public static function getLatestActivitiesRaw()
+    public static function getLatestActivitiesRaw(): array
     {
         $query = "
             SELECT
@@ -501,13 +747,17 @@ class Transaction extends Model
         return DB::select($query);
     }
 
-    /***
+    /**
      * ADMIN REPORT
      * Sum total spending per user account in a given period
+     *
+     * @param Carbon $startDate
+     * @param Carbon $endDate
+     * @return \Illuminate\Support\Collection
      */
     public static function getTotalSpendingByUserAccountAdmin(
         Carbon $startDate,
-        Carbon $endDate)
+        Carbon $endDate): \Illuminate\Support\Collection
     {
         $sql = "
             SELECT
@@ -656,7 +906,7 @@ class Transaction extends Model
         return collect($rows)->toArray();
     }
 
-/**
+    /**
      * ADMIN REPORT
      * Sum total cash-in (income) grouped by period (YYYY-MM) across all users
      * using raw SQL.
@@ -665,7 +915,7 @@ class Transaction extends Model
      * @param Carbon $endDate
      * @return \Illuminate\Support\Collection
      */
-    public static function getTotalCashinByPeriodAdmin (Carbon $startDate, Carbon $endDate)
+    public static function getTotalCashinByPeriodAdmin(Carbon $startDate, Carbon $endDate)
     {
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
@@ -705,8 +955,14 @@ class Transaction extends Model
 
         return collect($rows);
     }
-    
-    public static function InsertTransactionRaw(array $data)
+
+    /**
+     * Insert transaction using raw SQL
+     *
+     * @param array $data
+     * @return int Last inserted ID
+     */
+    public static function insertTransactionRaw(array $data): int
     {
         // Use provided transaction_date as created/updated timestamps; fall back to now
         $timestamp = isset($data['transaction_date'])
