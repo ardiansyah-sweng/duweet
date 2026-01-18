@@ -102,6 +102,61 @@ class Transaction extends Model
     }
 
     /**
+        * Ambil ringkasan surplus/defisit dalam rentang tanggal (ADMIN: agregat semua user).
+     *
+     * Definisi (mengikuti pola query di project ini):
+     * - Income  : financial_accounts.type = 'IN' dan transactions.balance_effect = 'increase'
+     * - Expense : financial_accounts.type IN ('EX','SP') dan transactions.balance_effect = 'increase'
+     *
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getSurplusDeficitSummaryByPeriod(
+        Carbon $startDate,
+        Carbon $endDate
+    ): \Illuminate\Support\Collection {
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(CASE
+                    WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
+                    ELSE 0
+                END), 0) AS total_income,
+                COALESCE(SUM(CASE
+                    WHEN fa.type IN ('EX','SP') AND t.balance_effect = 'increase' THEN t.amount
+                    ELSE 0
+                END), 0) AS total_expense,
+                (
+                    COALESCE(SUM(CASE
+                        WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
+                        ELSE 0
+                    END), 0)
+                    -
+                    COALESCE(SUM(CASE
+                        WHEN fa.type IN ('EX','SP') AND t.balance_effect = 'increase' THEN t.amount
+                        ELSE 0
+                    END), 0)
+                ) AS surplus_deficit
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON fa.id = t.financial_account_id
+            WHERE
+                fa.is_group = 0
+                AND fa.type IN ('IN','EX','SP')
+                AND t.created_at BETWEEN ? AND ?
+        ";
+
+        $rows = DB::select($sql, [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+
+    /**
      * Hard delete semua transaksi berdasarkan kumpulan user_account_id
      *
      * @param \Illuminate\Support\Collection|array $userAccountIds
@@ -624,7 +679,7 @@ class Transaction extends Model
         $sql = "
             SELECT
                 {$periodeExpr} AS periode,
-                SUM(CASE 
+                SUM(CASE
                     WHEN fa.type = 'IN' THEN t.amount
                     ELSE 0
                 END) AS total_income,
