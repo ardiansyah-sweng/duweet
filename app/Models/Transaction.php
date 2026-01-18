@@ -813,42 +813,16 @@ class Transaction extends Model
         $transactionTable = config('db_tables.transaction', 'transactions');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
-        // Determine database driver and date format function
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
+        // Period expressions 
+        $periodExpressions = [
+            'day' => "DATE(t.created_at)",
+            'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
+            'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
+            'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
+            'year' => "YEAR(t.created_at)",
+        ];
 
-        // Generate appropriate date format expression based on period and driver
-        if ($driver === 'sqlite') {
-            $periodExpressions = [
-                'day' => "DATE(t.created_at)",
-                'week' => "strftime('%Y-W%W', t.created_at)",
-                'month' => "strftime('%Y-%m', t.created_at)",
-                'quarter' => "strftime('%Y', t.created_at) || '-Q' || CAST((CAST(strftime('%m', t.created_at) AS INTEGER) - 1) / 3 + 1 AS TEXT)",
-                'year' => "strftime('%Y', t.created_at)",
-            ];
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodExpressions = [
-                'day' => "DATE(t.created_at)",
-                'week' => "to_char(t.created_at, 'YYYY-IW')",
-                'month' => "to_char(t.created_at, 'YYYY-MM')",
-                'quarter' => "to_char(t.created_at, 'YYYY-Q')",
-                'year' => "to_char(t.created_at, 'YYYY')",
-            ];
-        } else {
-            // MySQL/MariaDB
-            $periodExpressions = [
-                'day' => "DATE(t.created_at)",
-                'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
-                'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
-                'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
-                'year' => "YEAR(t.created_at)",
-            ];
-        }
-
-        // Use selected period format, default to 'month'
+        // Use selected period format, default to 'month')
         $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
 
         // Build base SQL with JOIN using aliases for consistency
@@ -883,8 +857,8 @@ class Transaction extends Model
             $bindings[] = $financialAccountId;
         }
 
-        // Add GROUP BY and ORDER BY
-        if ($periodFormat === 'week' && $driver === 'mysql') {
+        // Add GROUP BY and ORDER BY (MySQL)
+        if ($periodFormat === 'week') {
             $sql .= " GROUP BY YEAR(t.created_at), WEEK(t.created_at, 1), fa.id, fa.name, fa.type";
         } else {
             $sql .= " GROUP BY {$periodExpr}, fa.id, fa.name, fa.type";
@@ -915,42 +889,16 @@ class Transaction extends Model
     ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction', 'transactions');
 
-        // Determine database driver and date format function
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
+        // Period expressions untuk berbagai driver (MySQL)
+        $periodExpressions = [
+            'day' => "DATE(t.created_at)",
+            'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
+            'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
+            'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
+            'year' => "YEAR(t.created_at)",
+        ];
 
-        // Generate appropriate date format expression based on period and driver
-        if ($driver === 'sqlite') {
-            $periodExpressions = [
-                'day' => "DATE(t.created_at)",
-                'week' => "strftime('%Y-W%W', t.created_at)",
-                'month' => "strftime('%Y-%m', t.created_at)",
-                'quarter' => "strftime('%Y', t.created_at) || '-Q' || CAST((CAST(strftime('%m', t.created_at) AS INTEGER) - 1) / 3 + 1 AS TEXT)",
-                'year' => "strftime('%Y', t.created_at)",
-            ];
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodExpressions = [
-                'day' => "DATE(t.created_at)",
-                'week' => "to_char(t.created_at, 'YYYY-IW')",
-                'month' => "to_char(t.created_at, 'YYYY-MM')",
-                'quarter' => "to_char(t.created_at, 'YYYY-Q')",
-                'year' => "to_char(t.created_at, 'YYYY')",
-            ];
-        } else {
-            // MySQL/MariaDB
-            $periodExpressions = [
-                'day' => "DATE(t.created_at)",
-                'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
-                'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
-                'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
-                'year' => "YEAR(t.created_at)",
-            ];
-        }
-
-        // Use selected period format, default to 'month'
+        // Use selected period format, default to 'month' (MySQL only)
         $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
 
         // Build SQL without account details (combined total)
@@ -970,8 +918,8 @@ class Transaction extends Model
             $endDate->toDateTimeString(),
         ];
 
-        // Add GROUP BY and ORDER BY
-        if ($periodFormat === 'week' && $driver === 'mysql') {
+        // Add GROUP BY and ORDER BY (MySQL)
+        if ($periodFormat === 'week') {
             $sql .= " GROUP BY YEAR(t.created_at), WEEK(t.created_at, 1)";
         } else {
             $sql .= " GROUP BY {$periodExpr}";
