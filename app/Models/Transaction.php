@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
 
 class Transaction extends Model
@@ -471,5 +472,160 @@ class Transaction extends Model
         ";
 
         return DB::select($query);
+    }
+
+    /***
+     * ADMIN REPORT
+     * Sum total spending per user account in a given period
+     */
+    public static function getTotalSpendingByUserAccountAdmin(
+        Carbon $startDate,
+        Carbon $endDate)
+    {
+        $sql = "
+            SELECT
+                ua.id AS user_account_id,
+                ua.username,
+                COALESCE(SUM(t.amount), 0) AS total_spending
+            FROM transactions t
+            INNER JOIN financial_accounts fa
+                ON fa.id = t.financial_account_id
+            INNER JOIN user_accounts ua
+                ON ua.id = t.user_account_id
+            WHERE
+                fa.type = 'SP'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY ua.id, ua.username
+            ORDER BY total_spending DESC
+        ";
+
+        return collect(DB::select($sql, [
+            $startDate->startOfDay(),
+            $endDate->endOfDay(),
+        ]));
+    }
+
+    
+    /**
+     * Hard delete semua transaksi dalam satu transaction_group_id dan
+     * sesuaikan saldo di tabel `user_financial_accounts`.
+     *
+     * @param string $groupId
+     * @return array{success:bool,message:string,deleted_count:int}
+     */
+    public static function hardDeleteByGroupId(string $groupId): array
+    {
+        try {
+            $deletedCount = 0;
+
+            DB::transaction(function () use ($groupId, &$deletedCount) {
+                $transactions = DB::select("SELECT * FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::TRANSACTION_GROUP_ID . " = ?", [$groupId]);
+
+                if (empty($transactions)) {
+                    throw new \Exception('No transactions found for group: ' . $groupId);
+                }
+
+                foreach ($transactions as $t) {
+                    $userAccountId = $t->{TransactionColumns::USER_ACCOUNT_ID};
+                    $financialAccountId = $t->{TransactionColumns::FINANCIAL_ACCOUNT_ID};
+
+                    // Ambil dan lock baris user_financial_accounts dengan FOR UPDATE
+                    $ufaRows = DB::select(
+                        "SELECT * FROM " . UserFinancialAccountColumns::TABLE . " WHERE " . UserFinancialAccountColumns::USER_ACCOUNT_ID . " = ? AND " . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . " = ? FOR UPDATE",
+                        [$userAccountId, $financialAccountId]
+                    );
+
+                    $ufa = $ufaRows[0] ?? null;
+
+                    if ($ufa) {
+                        $current = $ufa->{UserFinancialAccountColumns::BALANCE};
+
+                        if ($t->{TransactionColumns::BALANCE_EFFECT} === 'increase') {
+                            $new = $current - $t->{TransactionColumns::AMOUNT};
+                        } else {
+                            $new = $current + $t->{TransactionColumns::AMOUNT};
+                        }
+
+                        DB::update(
+                            "UPDATE " . UserFinancialAccountColumns::TABLE . " SET " . UserFinancialAccountColumns::BALANCE . " = ? WHERE " . UserFinancialAccountColumns::ID . " = ?",
+                            [$new, $ufa->{UserFinancialAccountColumns::ID}]
+                        );
+                    }
+
+                    // Hapus baris transaksi (hard delete)
+                    DB::delete("DELETE FROM " . (new self)->getTable() . " WHERE " . TransactionColumns::ID . " = ?", [$t->{TransactionColumns::ID}]);
+
+                    $deletedCount++;
+                }
+            });
+
+            return ['success' => true, 'message' => 'Transactions deleted', 'deleted_count' => $deletedCount];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Failed: ' . $e->getMessage(), 'deleted_count' => 0];
+        }
+    }
+    
+            /**
+     * Surplus / Defisit user berdasarkan periode
+     *
+     * Surplus  = total income - total expense
+     */
+    public static function getSurplusDefisitByPeriod(
+        int $userAccountId,
+        Carbon $startDate,
+        Carbon $endDate
+    ): array {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // Tentukan format periode (MySQL / SQLite / PostgreSQL)
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
+        }
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                SUM(CASE 
+                    WHEN fa.type = 'IN' THEN t.amount
+                    ELSE 0
+                END) AS total_income,
+                SUM(CASE 
+                    WHEN fa.type = 'EX' THEN t.amount
+                    ELSE 0
+                END) AS total_expense,
+                (
+                    SUM(CASE WHEN fa.type = 'IN' THEN t.amount ELSE 0 END)
+                    -
+                    SUM(CASE WHEN fa.type = 'EX' THEN t.amount ELSE 0 END)
+                ) AS surplus_defisit
+            FROM {$transactionsTable} t
+            JOIN {$financialAccountsTable} fa
+                ON fa.id = t.financial_account_id
+            WHERE
+                t.user_account_id = ?
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows)->toArray();
     }
 }
