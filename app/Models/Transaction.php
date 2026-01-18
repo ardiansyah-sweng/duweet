@@ -102,6 +102,61 @@ class Transaction extends Model
     }
 
     /**
+        * Ambil ringkasan surplus/defisit dalam rentang tanggal (ADMIN: agregat semua user).
+     *
+     * Definisi (mengikuti pola query di project ini):
+     * - Income  : financial_accounts.type = 'IN' dan transactions.balance_effect = 'increase'
+     * - Expense : financial_accounts.type IN ('EX','SP') dan transactions.balance_effect = 'increase'
+     *
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getSurplusDeficitSummaryByPeriod(
+        Carbon $startDate,
+        Carbon $endDate
+    ): \Illuminate\Support\Collection {
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(CASE
+                    WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
+                    ELSE 0
+                END), 0) AS total_income,
+                COALESCE(SUM(CASE
+                    WHEN fa.type IN ('EX','SP') AND t.balance_effect = 'increase' THEN t.amount
+                    ELSE 0
+                END), 0) AS total_expense,
+                (
+                    COALESCE(SUM(CASE
+                        WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
+                        ELSE 0
+                    END), 0)
+                    -
+                    COALESCE(SUM(CASE
+                        WHEN fa.type IN ('EX','SP') AND t.balance_effect = 'increase' THEN t.amount
+                        ELSE 0
+                    END), 0)
+                ) AS surplus_deficit
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON fa.id = t.financial_account_id
+            WHERE
+                fa.is_group = 0
+                AND fa.type IN ('IN','EX','SP')
+                AND t.created_at BETWEEN ? AND ?
+        ";
+
+        $rows = DB::select($sql, [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+
+    /**
      * Hard delete semua transaksi berdasarkan kumpulan user_account_id
      *
      * @param \Illuminate\Support\Collection|array $userAccountIds
@@ -331,6 +386,33 @@ class Transaction extends Model
         $results = DB::select($sql, $bindings);
 
         return collect($results);
+    }
+
+    /**
+     * Ambil transaksi berdasarkan user_account_id dengan opsional filter rentang tanggal.
+     * Tidak ada filter entry_type (debit/credit).
+     */
+    public static function getTransactionsByUserAccount(
+        int $userAccountId,
+        ?string $startDate = null,
+        ?string $endDate = null
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction');
+
+        // Hanya filter berdasarkan user_account_id dan (opsional) rentang tanggal; entry_type diabaikan (tidak ada debit/credit filter)
+        $sql = "SELECT * FROM {$transactionTable} WHERE " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
+        $bindings = [$userAccountId];
+
+        // Rentang tanggal (butuh start & end)
+        if ($startDate !== null && $endDate !== null) {
+            $sql .= " AND created_at BETWEEN ? AND ?";
+            $bindings[] = $startDate . ' 00:00:00';
+            $bindings[] = $endDate . ' 23:59:59';
+        }
+
+        $sql .= " ORDER BY created_at DESC";
+
+        return collect(DB::select($sql, $bindings));
     }
 
     /**
@@ -597,7 +679,7 @@ class Transaction extends Model
         $sql = "
             SELECT
                 {$periodeExpr} AS periode,
-                SUM(CASE 
+                SUM(CASE
                     WHEN fa.type = 'IN' THEN t.amount
                     ELSE 0
                 END) AS total_income,
@@ -627,5 +709,85 @@ class Transaction extends Model
         ]);
 
         return collect($rows)->toArray();
+    }
+
+/**
+     * ADMIN REPORT
+     * Sum total cash-in (income) grouped by period (YYYY-MM) across all users
+     * using raw SQL.
+     *
+     * @param Carbon $startDate
+     * @param Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getTotalCashinByPeriodAdmin (Carbon $startDate, Carbon $endDate)
+    {
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_cashin
+            FROM {$transactionsTable} t
+            INNER JOIN {$financialAccountsTable} fa ON fa.id = t.financial_account_id
+            WHERE
+                fa.type = 'IN'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+    
+    public static function InsertTransactionRaw(array $data)
+    {
+        // Use provided transaction_date as created/updated timestamps; fall back to now
+        $timestamp = isset($data['transaction_date'])
+            ? Carbon::parse($data['transaction_date'])->toDateTimeString()
+            : Carbon::now()->toDateTimeString();
+
+        $insertQuery = "INSERT INTO transactions 
+            (transaction_group_id, user_account_id, financial_account_id, amount, entry_type, balance_effect, is_balance, description, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        DB::insert(
+            $insertQuery,
+            [
+                $data['transaction_group_id'] ?? (string) Str::uuid(),
+                $data['user_account_id'],
+                $data['financial_account_id'],
+                $data['amount'],
+                $data['entry_type'],
+                $data['balance_effect'],
+                $data['is_balance'] ?? false,
+                $data['description'] ?? null,
+                $timestamp,
+                $timestamp
+            ]
+        );
+
+        return (int) DB::getPdo()->lastInsertId();
     }
 }

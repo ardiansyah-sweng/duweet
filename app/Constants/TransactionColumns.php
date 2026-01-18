@@ -13,6 +13,7 @@ class TransactionColumns
     public const FINANCIAL_ACCOUNT_ID = 'financial_account_id'; // Foreign Key ke tabel financial_accounts.id
 
     // Informasi transaksi
+    public const TRANSACTION_DATE = 'transaction_date'; // Tanggal dan waktu transaksi
     public const ENTRY_TYPE = 'entry_type'; // Jenis transaksi: 'debit' atau 'kredit'
     public const AMOUNT = 'amount'; // Jumlah nominal transaksi (bilangan besar, selalu positif)
     public const BALANCE_EFFECT = 'balance_effect'; // Efek terhadap saldo: 'increase' atau 'decrease'
@@ -32,6 +33,7 @@ class TransactionColumns
             self::TRANSACTION_GROUP_ID,
             self::USER_ACCOUNT_ID,
             self::FINANCIAL_ACCOUNT_ID,
+            self::TRANSACTION_DATE,
             self::ENTRY_TYPE,
             self::AMOUNT,
             self::BALANCE_EFFECT,
