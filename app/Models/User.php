@@ -18,7 +18,6 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $table = 'users';
-    
 
     /**
      * Insert user 
@@ -29,18 +28,14 @@ class User extends Authenticatable
             return 'Email harus diisi.';
         }
 
-        // Pindahkan validasi email ke sini
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return 'Format email tidak valid.';
         }
 
         try {
-            // memulai transaksi database
             DB::beginTransaction();
-            $now = now();
-            $nowString = $now->toDateTimeString();
+            $now = now()->toDateTimeString();
 
-            // Validasi email jika sudah ada
             $existingUser = DB::selectOne(
                 "SELECT id FROM users WHERE email = ?",
                 [$data['email']]
@@ -51,25 +46,15 @@ class User extends Authenticatable
                 return 'Email sudah digunakan.';
             }
 
-            // Menghitung usia
             $usia = null;
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
                 $carbonDate = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR]);
-                $tanggal = $carbonDate->day;
-                $bulan = $carbonDate->month;
-                $tahun = $carbonDate->year;
                 $usia = $carbonDate->age;
-            } else {
-                // Jika terpisah, ambil langsung dari data
-                $tanggal = $data[UserColumns::TANGGAL_LAHIR] ?? null;
-                $bulan = $data[UserColumns::BULAN_LAHIR] ?? null;
-                $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
-            // INSERT user - Perbaikan: jumlah placeholder (14) harus sama dengan jumlah value
             DB::insert(
                 "INSERT INTO users (name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $data[UserColumns::NAME] ?? null,
                     $data[UserColumns::FIRST_NAME] ?? null,
@@ -90,46 +75,104 @@ class User extends Authenticatable
 
             $userId = (int) DB::getPdo()->lastInsertId();
 
-            // INSERT telepon 
             if (!empty($data['telephones'])) {
-                $telephones = is_array($data['telephones']) ? $data['telephones'] : [$data['telephones']];
-
-                foreach ($telephones as $telephone) {
+                foreach ((array) $data['telephones'] as $telephone) {
                     $trimmed = trim((string) $telephone);
                     if ($trimmed !== '') {
                         DB::insert(
-                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at) VALUES (?, ?, ?, ?)",
-                            [$userId, $trimmed, $nowString, $nowString]
+                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at)
+                             VALUES (?, ?, ?, ?)",
+                            [$userId, $trimmed, $now, $now]
                         );
                     }
                 }
             }
 
             DB::commit();
-            return $userId; // Mengembalikan ID user yang berhasil dibuat
+            return $userId;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            if (str_contains($e->getMessage(), 'Duplicate entry') || 
-                str_contains($e->getMessage(), '1062') ||
-                str_contains($e->getMessage(), 'unique')) {
-                return 'Email sudah digunakan.';
-            }
-            
             return 'Gagal menyimpan user ke database: ' . $e->getMessage();
         }
     }
-    
-    public function accounts() {
-        return $this->hasMany(\App\Models\UserAccount::class);
+
+    /**
+     * UPDATE user (name, email, password, photo, preference)
+     */
+    public static function updateUserRaw(int $userId, array $data)
+    {
+        if (empty($data)) {
+            return 'Tidak ada data yang diperbarui.';
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $fields = [];
+            $values = [];
+
+            // Name
+            if (array_key_exists(UserColumns::NAME, $data)) {
+                $fields[] = UserColumns::NAME . ' = ?';
+                $values[] = $data[UserColumns::NAME];
+            }
+
+            // Email
+            if (array_key_exists(UserColumns::EMAIL, $data)) {
+                $fields[] = UserColumns::EMAIL . ' = ?';
+                $values[] = $data[UserColumns::EMAIL];
+            }
+
+            // Password (hash)
+            if (!empty($data['password'])) {
+                $fields[] = 'password = ?';
+                $values[] = bcrypt($data['password']);
+            }
+
+            // Photo
+            if (array_key_exists(UserColumns::PHOTO, $data)) {
+                $fields[] = UserColumns::PHOTO . ' = ?';
+                $values[] = $data[UserColumns::PHOTO];
+            }
+
+            // Preference (JSON)
+            if (array_key_exists(UserColumns::PREFERENCE, $data)) {
+                $fields[] = UserColumns::PREFERENCE . ' = ?';
+                $values[] = json_encode($data[UserColumns::PREFERENCE]);
+            }
+
+            if (empty($fields)) {
+                DB::rollBack();
+                return 'Tidak ada field valid untuk diperbarui.';
+            }
+
+            $values[] = $userId;
+
+            DB::update(
+                "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?",
+                $values
+            );
+
+            DB::commit();
+            return true;
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return 'Gagal update user: ' . $e->getMessage();
+        }
+    }
+
+    public function accounts()
+    {
+        return $this->hasMany(UserAccount::class);
     }
 
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
     }
-    
+
     public function financialAccounts()
     {
         return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
@@ -137,9 +180,6 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
-    /**
-     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
-     */
     public function userFinancialAccounts()
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
@@ -147,22 +187,15 @@ class User extends Authenticatable
 
     public static function getUserAccounts($userId)
     {
+        $results = DB::select(
+            "SELECT ua.id AS user_account_id, ua.id_user, ua.username, ua.email, ua.verified_at, ua.is_active
+             FROM user_accounts ua
+             WHERE ua.id_user = ?
+             ORDER BY ua.id",
+            [$userId]
+        );
 
-        $query = "SELECT 
-                    ua.id as user_account_id,
-                    ua.id_user,
-                    ua.username,
-                    ua.email,
-                    ua.verified_at,
-                    ua.is_active
-                  FROM user_accounts ua
-                  WHERE ua.id_user = ?
-                  ORDER BY ua.id";
-        
-        $results = DB::select($query, [$userId]);
-        
-      
-        return array_map(function($row) {
+        return array_map(function ($row) {
             return [
                 'user_account_id' => $row->user_account_id,
                 'id_user' => $row->id_user,
