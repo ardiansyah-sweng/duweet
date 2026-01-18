@@ -3,21 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Constants\FinancialAccountColumns; // Constant yang Anda berikan
+use App\Constants\FinancialAccountColumns;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
 
 class FinancialAccount extends Model
 {
     use HasFactory;
-    use HasFactory; // Diletakkan di awal body class
 
     protected $table;
 
-    /**
-     * Nama tabel diambil dari config/db_tables.php
-     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -25,6 +20,7 @@ class FinancialAccount extends Model
     }
 
     protected $fillable = [
+        FinancialAccountColumns::USER_ID,
         FinancialAccountColumns::PARENT_ID,
         FinancialAccountColumns::NAME,
         FinancialAccountColumns::TYPE,
@@ -38,7 +34,6 @@ class FinancialAccount extends Model
     ];
 
     protected $casts = [
-        // Menggunakan Constant untuk 'is_active' dan menambahkan casts yang umum (misal: balance)
         FinancialAccountColumns::BALANCE => 'integer',
         FinancialAccountColumns::INITIAL_BALANCE => 'integer',
         FinancialAccountColumns::IS_GROUP => 'boolean',
@@ -47,66 +42,41 @@ class FinancialAccount extends Model
 
     public $timestamps = true;
 
-    /**
-     * Relasi ke Parent Account
-     * Relasi ke parent account
-     */
     public function parent()
     {
         return $this->belongsTo(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
-    /**
-     * Relasi ke child accounts
-     */
     public function children()
     {
         return $this->hasMany(self::class, FinancialAccountColumns::PARENT_ID);
     }
 
-    /**
-     * Relasi ke transaksi (leaf accounts)
-     */
     public function transactions()
     {
         return $this->hasMany(Transaction::class, FinancialAccountColumns::ID);
     }
 
-    // Relasi ke UserFinancialAccount
     public function userFinancialAccounts()
     {
         return $this->hasMany(UserFinancialAccount::class);
     }
 
-
-    /**
-     * Aturan dasar sebelum delete (mencegah kehilangan data penting)
-     */
     protected static function booted()
     {
         static::deleting(function ($account) {
-            // Tidak boleh menghapus akun grup jika masih punya anak
-            if ($account->{AccountColumns::IS_GROUP} && $account->children()->exists()) {
+            if ($account->{FinancialAccountColumns::IS_GROUP} && $account->children()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun grup yang masih memiliki akun turunan.');
             }
 
-            // Tidak boleh menghapus akun leaf yang masih punya transaksi
-            if (!$account->{AccountColumns::IS_GROUP} && $account->transactions()->exists()) {
+            if (!$account->{FinancialAccountColumns::IS_GROUP} && $account->transactions()->exists()) {
                 throw new \Exception('Tidak dapat menghapus akun yang masih memiliki transaksi.');
             }
         });
     }
 
-    /**
-     * DML Query INSERT untuk membuat Financial Account menggunakan Query Builder.
-     * Method ini mendemonstrasikan penggunaan raw DML query insert.
-     * 
-     * @param array $data Data untuk insert financial account
-     * @return int ID dari financial account yang baru dibuat
-     */
     public static function insertFinancialAccount(array $data): int
     {
-        // Validasi required fields
         $required = ['name', 'type', 'initial_balance'];
         foreach ($required as $field) {
             if (!array_key_exists($field, $data)) {
@@ -114,7 +84,6 @@ class FinancialAccount extends Model
             }
         }
 
-        // Validasi type
         $validTypes = ['IN', 'EX', 'SP', 'LI', 'AS'];
         if (!in_array($data['type'], $validTypes, true)) {
             throw new \InvalidArgumentException('Invalid account type: ' . $data['type']);
@@ -123,7 +92,6 @@ class FinancialAccount extends Model
         $isGroup = (bool)($data['is_group'] ?? false);
         $balance = $isGroup ? 0 : (int)$data['initial_balance'];
 
-        // DML Query INSERT menggunakan raw SQL
         $now = now();
         DB::insert(
             "INSERT INTO financial_accounts (name, type, balance, initial_balance, is_group, description, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -143,18 +111,16 @@ class FinancialAccount extends Model
         return (int) DB::getPdo()->lastInsertId();
     }
 
-public static function getActiveAccounts()
-{
-    $instance = new self();
-    $tableName = $instance->getTable();
-    
-    // Gunakan query SQL biasa sesuai tugas Anda
-    $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
-    
-    return DB::select($sql, [1]); 
-}
+    public static function getActiveAccounts()
+    {
+        $instance = new self();
+        $tableName = $instance->getTable();
+        $sql = "SELECT * FROM {$tableName} WHERE is_active = ?";
+        return DB::select($sql, [1]);
+    }
 
-    public function getById($id){
+    public function getById($id)
+    {
         $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
         $result = DB::select($sql, [$id]);
         return !empty($result) ? $result[0] : null;

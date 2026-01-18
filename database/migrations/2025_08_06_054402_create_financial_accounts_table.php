@@ -14,13 +14,11 @@ return new class extends Migration
         $this->table = config('db_tables.financial_account');
     }
     
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create($this->table, function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger(FinancialAccountColumns::USER_ID)->nullable();
             $table->unsignedBigInteger(FinancialAccountColumns::PARENT_ID)->nullable();
             $table->string(FinancialAccountColumns::NAME, 100);
             $table->enum(FinancialAccountColumns::TYPE, ['IN', 'EX', 'SP', 'LI', 'AS']);
@@ -38,10 +36,12 @@ return new class extends Migration
             $table->tinyInteger(FinancialAccountColumns::LEVEL)->default(0); // 0 = root, 1 = child, 2 = grandchild
             $table->timestamps();
             
-            // Foreign key constraint
+            // Foreign key constraints
+            $table->foreign(FinancialAccountColumns::USER_ID)->references('id')->on('users')->onDelete('cascade');
             $table->foreign(FinancialAccountColumns::PARENT_ID)->references(FinancialAccountColumns::ID)->on($this->table)->onDelete('cascade');
 
             // Indexes for performance
+            $table->index(FinancialAccountColumns::USER_ID);
             $table->index([FinancialAccountColumns::PARENT_ID, FinancialAccountColumns::SORT_ORDER]);
             $table->index([FinancialAccountColumns::TYPE,FinancialAccountColumns::IS_ACTIVE]);
             $table->index(FinancialAccountColumns::LEVEL);
@@ -53,6 +53,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table($this->table, function (Blueprint $table) {
+            $table->dropForeign([FinancialAccountColumns::USER_ID]);
+            $table->dropIndex([FinancialAccountColumns::USER_ID]);
+            $table->dropColumn(FinancialAccountColumns::USER_ID);
+        });
         Schema::dropIfExists($this->table);
     }
 };
