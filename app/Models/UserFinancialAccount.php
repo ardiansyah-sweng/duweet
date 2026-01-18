@@ -97,6 +97,61 @@ class UserFinancialAccount extends Model
             $bindings[] = $user_account_id;
         }
         $query .= " GROUP BY ufa.user_account_id ORDER BY total_liquid_assets DESC ";
-        return \DB::select($query, $bindings);
+        return DB::select($query, $bindings);
+    }
+
+    /**
+     * Ringkasan liquid asset untuk admin.
+     * - total_all: total seluruh liquid asset aktif
+     * - by_user: total per user_account_id
+     * - by_account: total per akun keuangan (leaf, liquid)
+     */
+    public static function getAdminLiquidAssetsSummary(): array
+    {
+        $baseWhere = "fa.is_liquid = 1 AND fa.is_active = 1 AND ufa.is_active = 1 AND fa.type = 'AS'";
+
+        $totalAll = DB::selectOne(
+            "SELECT COALESCE(SUM(ufa.balance), 0) AS total_all FROM user_financial_accounts ufa
+             INNER JOIN financial_accounts fa ON ufa.financial_account_id = fa.id
+             WHERE {$baseWhere}"
+        );
+
+        $byUser = DB::select(
+            "SELECT ufa.user_account_id, SUM(ufa.balance) AS total_liquid_assets
+             FROM user_financial_accounts ufa
+             INNER JOIN financial_accounts fa ON ufa.financial_account_id = fa.id
+             WHERE {$baseWhere}
+             GROUP BY ufa.user_account_id
+             ORDER BY total_liquid_assets DESC"
+        );
+
+        $byAccount = DB::select(
+            "SELECT fa.id AS financial_account_id, fa.name, fa.type, SUM(ufa.balance) AS total_liquid_assets
+             FROM user_financial_accounts ufa
+             INNER JOIN financial_accounts fa ON ufa.financial_account_id = fa.id
+             WHERE {$baseWhere}
+             GROUP BY fa.id, fa.name, fa.type
+             ORDER BY total_liquid_assets DESC"
+        );
+
+        return [
+            'total_all' => (int) ($totalAll->total_all ?? 0),
+            'by_user' => array_map(function ($row) {
+                return [
+                    'user_account_id' => (int) $row->user_account_id,
+                    'total_liquid_assets' => (int) $row->total_liquid_assets,
+                    'formatted' => 'Rp ' . number_format($row->total_liquid_assets, 0, ',', '.'),
+                ];
+            }, $byUser),
+            'by_account' => array_map(function ($row) {
+                return [
+                    'financial_account_id' => (int) $row->financial_account_id,
+                    'name' => $row->name,
+                    'type' => $row->type,
+                    'total_liquid_assets' => (int) $row->total_liquid_assets,
+                    'formatted' => 'Rp ' . number_format($row->total_liquid_assets, 0, ',', '.'),
+                ];
+            }, $byAccount),
+        ];
     }
 }
