@@ -143,10 +143,15 @@ public static function getUsersWithStatus($status = null)
             u.id,
             u.name AS nama,
             u.email,
-            IF(ua.id_user IS NOT NULL, 1, 0) AS setup_account,
-            IF(ua.id_user IS NOT NULL, 'Sudah Setup', 'Belum Setup') AS status_account
+            CASE
+                WHEN ua.id_user IS NOT NULL THEN 'Sudah Setup'
+                ELSE 'Belum Setup'
+            END AS status_account
         FROM users u
-        LEFT JOIN (SELECT DISTINCT id_user FROM user_accounts) ua ON u.id = ua.id_user
+        LEFT JOIN (
+            SELECT DISTINCT id_user
+            FROM user_accounts
+        ) ua ON u.id = ua.id_user
     ";
 
     if ($status === 'belum_setup') {
@@ -159,6 +164,8 @@ public static function getUsersWithStatus($status = null)
 
     return collect(DB::select($sql));
 }
+
+
   
 
     public function financialAccounts()
