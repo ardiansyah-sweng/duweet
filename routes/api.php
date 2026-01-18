@@ -24,7 +24,7 @@ Route::get('/user', function (Request $request) {
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
 // Monthly expenses
-Route::get('/transactions/monthly-expense', [\App\Http\Controllers\TransactionController::class, 'monthlyExpense']);
+Route::get('/transactions/monthly-expense', [TransactionController::class, 'monthlyExpense']);
 
 
 // Transaction detail
@@ -41,11 +41,11 @@ Route::get('/health', function () {
 Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 
 // GET endpoint to find user by email (safe response, no password)
-Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
+Route::get('/user/find', [UserAccountController::class, 'findByEmail']);
 
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::class, 'show'])->whereNumber('id');
+Route::get('/transactions/{id}', [TransactionController::class, 'show'])->whereNumber('id');
 
 
 // UserAccount API Routes (no CSRF protection needed)
@@ -75,10 +75,10 @@ Route::get('/financial_accounts/{id}', [AccountController::class, 'show']);
 
 // Transaction API Routes
 Route::prefix('transactions')->group(function () {
-    Route::get('/', [\App\Http\Controllers\TransactionController::class, 'index'])->name('api.transactions.index');
-    Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
-    Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
-    Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
+    Route::get('/by-user-account', [TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::delete('/group/{groupId}/hard', [TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
 });
 
@@ -89,6 +89,8 @@ Route::prefix('financial-account')->group(function () {
     // Liquid Assets Routes - HARUS DIDULU sebelum {id}
     Route::get('/liquid-assets/all-users', [FinancialAccountController::class, 'getAllUsersLiquidAssets'])->name('api.financial-account.liquid-assets.all-users');
     Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
+    // Liquid Assets Summary untuk admin
+    Route::get('/liquid-assets/admin/summary', [FinancialAccountController::class, 'adminLiquidAssetsSummary'])->name('api.financial-account.liquid-assets.admin-summary');
     
     // Generic routes - HARUS DIAKHIR
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
@@ -101,6 +103,9 @@ Route::prefix('financial-account')->group(function () {
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
+
+    Route::get('/surplus-deficit', [ReportController::class, 'surplusDeficitByPeriod'])
+        ->name('api.reports.surplus-deficit');
     Route::get('/sum-by-type', [ReportController::class, 'sumFinancialAccountsByType'])
         ->name('api.reports.sum-by-type');
     Route::get(
@@ -111,16 +116,16 @@ Route::prefix('reports')->group(function () {
 // =============================================================
 // 4. TRANSACTION (Tambahan dari Incoming Change)
 // =============================================================
-Route::get('/getLatestActivities', [\App\Http\Controllers\TransactionController::class, 'getLatestActivities']);
+Route::get('/getLatestActivities', [TransactionController::class, 'getLatestActivities']);
 
 Route::get(
     '/admin/reports/spending-summary',
-    [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
+    [ReportController::class, 'adminSpendingSummary']
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 
 Route::get(
     '/admin/reports/cashin-by-period',
-    [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
+    [ReportController::class, 'adminCashinByPeriod']
 );

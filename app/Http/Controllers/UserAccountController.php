@@ -241,7 +241,4 @@ class UserAccountController extends Controller
     //         'data' => $user
     //     ]);
     // }
-
 }
-
-
