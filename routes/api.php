@@ -91,6 +91,8 @@ Route::prefix('financial-account')->group(function () {
     Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
     // Liquid Assets Route - semua user
     Route::get('/liquid-assets/all-users', [FinancialAccountController::class, 'getAllUsersLiquidAssets'])->name('api.financial-account.liquid-assets.all-users');
+    // Liquid Assets Summary untuk admin
+    Route::get('/liquid-assets/admin/summary', [FinancialAccountController::class, 'adminLiquidAssetsSummary'])->name('api.financial-account.liquid-assets.admin-summary');
 });
 
 // =============================================================
@@ -99,6 +101,9 @@ Route::prefix('financial-account')->group(function () {
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
+
+    Route::get('/surplus-deficit', [ReportController::class, 'surplusDeficitByPeriod'])
+        ->name('api.reports.surplus-deficit');
     Route::get('/sum-by-type', [ReportController::class, 'sumFinancialAccountsByType'])
         ->name('api.reports.sum-by-type');
     Route::get(
