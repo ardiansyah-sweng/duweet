@@ -1,17 +1,60 @@
 <?php
 
-use App\Http\Controllers\AccountController;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\FinancialAccountController;
 use App\Http\Controllers\MonthlyExpenseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CountUserPerTanggalBulan;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
+// Homepage
+Route::get('/', function () {
+    return view('welcome');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Expense
+|--------------------------------------------------------------------------
+*/
 Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
 
-use App\Http\Controllers\FinancialAccountController; 
-use App\Http\Controllers\ReportController; // PENTING: Import Controller
+/*
+|--------------------------------------------------------------------------
+| Account
+|--------------------------------------------------------------------------
+*/
+Route::post('/accounts', [AccountController::class, 'store']);
+Route::get('/accounts', [AccountController::class, 'index']);
+Route::get('/accounts/{id}', [AccountController::class, 'show']);
 
+/*
+|--------------------------------------------------------------------------
+| Financial Account
+|--------------------------------------------------------------------------
+*/
+Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
+
+/*
+|--------------------------------------------------------------------------
+| Report
+|--------------------------------------------------------------------------
+*/
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
+
+/*
+|--------------------------------------------------------------------------
+| Test / Debug Route
+|--------------------------------------------------------------------------
+*/
 Route::get('/test/liquid-assets', function () {
     try {
         $rows = DB::table('users as u')
@@ -20,8 +63,12 @@ Route::get('/test/liquid-assets', function () {
                 $join->on('fa.id', '=', 'ufa.financial_account_id')
                      ->where('fa.type', 'AS');
             })
-            ->select('u.id as user_id','u.name as user_name', DB::raw('COALESCE(SUM(ufa.balance),0) as total_asset'))
-            ->groupBy('u.id','u.name')
+            ->select(
+                'u.id as user_id',
+                'u.name as user_name',
+                DB::raw('COALESCE(SUM(ufa.balance),0) as total_asset')
+            )
+            ->groupBy('u.id', 'u.name')
             ->orderByDesc('total_asset')
             ->get();
 
@@ -31,42 +78,10 @@ Route::get('/test/liquid-assets', function () {
     }
 });
 
-Route::post('/accounts', [AccountController::class, 'store']);
-Route::get('/accounts', [AccountController::class, 'index']);
-Route::get('/accounts/{id}', [AccountController::class, 'show']);
-
-
-
-
 /*
 |--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-// Web-only routes (no API routes here). API routes live in routes/api.php.
-
-// Route GET yang Benar untuk endpoint incomeSummary
-// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
-Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
-
-// Tambahkan route lain di sini jika ada...
-Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
-
-/*
-|--------------------------------------------------------------------------
-| (COUNT USER PER TANGGAL DAN BULAN)
+| COUNT USER PER TANGGAL & BULAN
 |--------------------------------------------------------------------------
 */
-
 Route::get('/user/per-tanggal', [CountUserPerTanggalBulan::class, 'countUserPerTanggal']);
 Route::get('/user/per-bulan', [CountUserPerTanggalBulan::class, 'countUserPerBulan']);
