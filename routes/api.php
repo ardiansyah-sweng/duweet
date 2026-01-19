@@ -117,12 +117,9 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
-
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
-
 
 Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
-
