@@ -65,15 +65,18 @@ Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 |--------------------------------------------------------------------------
 */
 Route::prefix('transactions')->group(function () {
-    Route::get('/', [TransactionController::class, 'index']);
+    Route::get('/', [TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/{id}', [TransactionController::class, 'show'])->whereNumber('id');
 
-    Route::get('/by-user-account', [TransactionController::class, 'byUserAccount']);
-    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod']);
+    Route::get('/by-user-account', [TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
+    Route::get('/filter/period', [TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::get('/monthly-expense', [TransactionController::class, 'monthlyExpense']);
     Route::get('/latest', [TransactionController::class, 'getLatestActivities']);
+    Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
 
     Route::post('/', [TransactionController::class, 'Insert']);
+    Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
+
     Route::delete('/group/{groupId}/hard', [TransactionController::class, 'hardDeleteByGroupId']);
 });
 
