@@ -192,10 +192,16 @@ class User extends Authenticatable
                     u.tahun_lahir,
                     u.usia,
                     ut.id as telephone_id,
-                    ut.number as telephone_number
+                    ut.number as telephone_number,
+                    ua.id as user_account_id,
+                    ua.username,
+                    ua.email as account_email,
+                    ua.verified_at,
+                    ua.is_active
                   FROM users u
                   LEFT JOIN user_telephones ut ON u.id = ut.user_id
-                  ORDER BY u.id, ut.id";
+                  LEFT JOIN user_accounts ua ON u.id = ua.id_user
+                  ORDER BY u.id, ut.id, ua.id";
         
         $results = DB::select($query);
 
@@ -220,15 +226,35 @@ class User extends Authenticatable
                     'bulan_lahir' => $row->bulan_lahir,
                     'tahun_lahir' => $row->tahun_lahir,
                     'usia' => $row->usia,
-                    'telephones' => []
+                    'telephones' => [],
+                    'accounts' => []
                 ];
             }
             
 
             if ($row->telephone_id !== null) {
-                $users[$userId]['telephones'][] = $row->telephone_number;
-                
-            
+                $telephoneExists = false;
+                foreach ($users[$userId]['telephones'] as $tel) {
+                    if ($tel['number'] === $row->telephone_number) {
+                        $telephoneExists = true;
+                        break;
+                    }
+                }
+                if (!$telephoneExists) {
+                    $users[$userId]['telephones'][] = [
+                        'number' => $row->telephone_number
+                    ];
+                }
+            }
+
+            if ($row->user_account_id !== null) {
+                $users[$userId]['accounts'][] = [
+                    'user_account_id' => $row->user_account_id,
+                    'username' => $row->username,
+                    'email' => $row->account_email,
+                    'verified_at' => $row->verified_at,
+                    'is_active' => (bool) $row->is_active
+                ];
             }
         }
 
