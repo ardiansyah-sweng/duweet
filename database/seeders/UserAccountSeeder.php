@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Constants\UserAccountColumns;
+use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\UserAccount;
-use Illuminate\Database\Seeder;
+use App\Constants\UserAccountColumns; // Wajib import ini
 
 class UserAccountSeeder extends Seeder
 {
@@ -14,12 +14,16 @@ class UserAccountSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create sample users first (idempotent)
+        // ==========================================
+        // 1. BUAT DATA USER UTAMA (MANUAL)
+        // ==========================================
+        
         $user1 = User::firstOrCreate(
             ['email' => 'john@example.com'],
             [
                 'name' => 'John Doe',
                 'first_name' => 'John',
+                'middle_name' => null,
                 'last_name' => 'Doe',
                 'provinsi' => 'DKI Jakarta',
                 'kabupaten' => 'Jakarta Selatan',
@@ -38,6 +42,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'Jane Smith',
                 'first_name' => 'Jane',
+                'middle_name' => null,
                 'last_name' => 'Smith',
                 'provinsi' => 'Jawa Barat',
                 'kabupaten' => 'Bandung',
@@ -56,6 +61,7 @@ class UserAccountSeeder extends Seeder
             [
                 'name' => 'Bob Johnson',
                 'first_name' => 'Bob',
+                'middle_name' => null,
                 'last_name' => 'Johnson',
                 'provinsi' => 'Jawa Timur',
                 'kabupaten' => 'Surabaya',
@@ -69,18 +75,11 @@ class UserAccountSeeder extends Seeder
             ]
         );
 
-        // Create user accounts
-        UserAccount::updateOrCreate(
-            [UserAccountColumns::USERNAME => 'johndoe'],
-            [
-                UserAccountColumns::ID_USER => $user1->id,
-                UserAccountColumns::EMAIL => 'johndoe@duweet.com',
-                UserAccountColumns::PASSWORD => bcrypt('password123'),
-                UserAccountColumns::VERIFIED_AT => now(),
-                UserAccountColumns::IS_ACTIVE => true,
-            ]
-        );
+        // ==========================================
+        // 2. BUAT AKUN MANUAL (Login Credentials Tetap)
+        // ==========================================
 
+        // Akun Jane (Password: skibidi)
         UserAccount::updateOrCreate(
             [UserAccountColumns::USERNAME => 'janesmith'],
             [
@@ -92,17 +91,19 @@ class UserAccountSeeder extends Seeder
             ]
         );
 
+        // Akun Bob (Password: mewing)
         UserAccount::updateOrCreate(
             [UserAccountColumns::USERNAME => 'bobjohnson'],
             [
                 UserAccountColumns::ID_USER => $user3->id,
                 UserAccountColumns::EMAIL => 'bobjohnson@duweet.com',
                 UserAccountColumns::PASSWORD => bcrypt('mewing'),
-                UserAccountColumns::VERIFIED_AT => null, // Not verified yet
-                UserAccountColumns::IS_ACTIVE => false, // Inactive account
+                UserAccountColumns::VERIFIED_AT => now(),
+                UserAccountColumns::IS_ACTIVE => false,
             ]
         );
 
+        // Akun John Alt (Password: bombaclat)
         UserAccount::updateOrCreate(
             [UserAccountColumns::USERNAME => 'johndoe_alt'],
             [
@@ -114,6 +115,32 @@ class UserAccountSeeder extends Seeder
             ]
         );
 
-        $this->command->info('UserAccount seeder completed! Created 3 users and 4 user accounts.');
+        // ==========================================
+        // 3. GENERATE AKUN TAMBAHAN VIA FACTORY
+        //    (Logic dari Incoming Change / Teman)
+        // ==========================================
+
+        // Loop ke semua user yang ada (termasuk John, Jane, Bob)
+        User::all()->each(function (User $user) {
+            $count = rand(1, 3);
+
+            $willCopyEmail = (bool) rand(0, 1);
+            $copyIndex = $willCopyEmail ? rand(0, $count - 1) : null;
+
+            for ($i = 0; $i < $count; $i++) {
+                // Inisialisasi factory untuk user ini
+                $factory = UserAccount::factory()->for($user, 'user');
+
+                // Logic copy email (menggunakan method di Factory kamu)
+                if ($copyIndex !== null && $i === $copyIndex) {
+                    $factory = $factory->useUserEmail($user->email);
+                }
+
+                // Eksekusi create
+                $factory->create();
+            }
+        });
+
+        $this->command->info('UserAccount seeder completed (Manual + Factory merged)!');
     }
 }
