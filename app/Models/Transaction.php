@@ -56,8 +56,8 @@ class Transaction extends Model
      */
     public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
-        $transactionsTable = config('db_tables.transaction', 'transactions');
+        // Gunakan nama tabel dari config bila ada
+        $transactionsTable = config('db_tables.transaction');
         $accountsTable = config('db_tables.financial_account', 'financial_accounts');
 
         // Tentukan fungsi format tanggal berdasarkan driver database
@@ -358,7 +358,7 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
         $sql = "SELECT * FROM {$transactionTable} WHERE 1=1";
@@ -433,7 +433,7 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
         $sql = "SELECT * FROM {$transactionTable} WHERE created_at BETWEEN ? AND ?";
@@ -494,7 +494,7 @@ class Transaction extends Model
         string $endDate,
         ?int $userId = null
     ): \Illuminate\Support\Collection {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $transactionsTable = config('db_tables.transaction');
         $userAccountsTable = config('db_tables.user_account', 'user_accounts');
         $usersTable = config('db_tables.user', 'users');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
@@ -659,7 +659,7 @@ class Transaction extends Model
         Carbon $startDate,
         Carbon $endDate
     ): array {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $transactionsTable = config('db_tables.transaction');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
 
         // Tentukan format periode (MySQL / SQLite / PostgreSQL)
@@ -723,7 +723,7 @@ class Transaction extends Model
      */
     public static function getTotalCashinByPeriodAdmin (Carbon $startDate, Carbon $endDate)
     {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $transactionsTable = config('db_tables.transaction');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
 
         try {
@@ -804,7 +804,7 @@ class Transaction extends Model
     {
         try {
             return DB::transaction(function () use ($id, $data) {
-                $transactionTable = config('db_tables.transaction', 'transactions');
+                $transactionTable = config('db_tables.transaction');
                 
                 // 1. Get existing transaction
                 $oldTrx = DB::table($transactionTable)->where('id', $id)->lockForUpdate()->first();
