@@ -6,7 +6,8 @@ use App\Constants\UserAccountColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB; // Pastikan DB di-import
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserAccount extends Model
 {
@@ -14,11 +15,6 @@ class UserAccount extends Model
 
     protected $table = 'user_accounts';
 
-    /**
-     * This table does not use created_at/updated_at timestamps.
-     *
-     * @var bool
-     */
     public $timestamps = false;
 
     protected $casts = [
@@ -30,44 +26,144 @@ class UserAccount extends Model
         UserAccountColumns::PASSWORD,
     ];
 
-    /**
-     * Get the fillable attributes for the model.
-     * Uses centralized definition from UserAccountColumns constant class.
-     *
-     * @return array<string>
-     */
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
     }
 
+    public function getKeyName()
+    {
+        return UserAccountColumns::getPrimaryKey();
+    }
+
     /**
-     * Relasi ke User
+     * Relasi ke tabel users.
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_account_id');
+    }
+
     /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query
-     * * @param int $id
-     * @return array
+     * Relasi ke UserFinancialAccounts
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Insert UserAccount baru menggunakan MURNI SQL (INSERT INTO)
+     */
+    public static function insertUserAccountRaw(array $data)
+    {
+        $idUser     = $data[UserAccountColumns::ID_USER];
+        $username   = $data[UserAccountColumns::USERNAME];
+        $email      = $data[UserAccountColumns::EMAIL];
+        
+        $password   = Hash::make($data[UserAccountColumns::PASSWORD]);
+        
+        $verifiedAt = now(); 
+        $isActive   = 1; 
+
+        $tableName = 'user_accounts'; 
+        
+        $query = "INSERT INTO $tableName (
+                    " . UserAccountColumns::ID_USER . ", 
+                    " . UserAccountColumns::USERNAME . ", 
+                    " . UserAccountColumns::EMAIL . ", 
+                    " . UserAccountColumns::PASSWORD . ", 
+                    " . UserAccountColumns::VERIFIED_AT . ", 
+                    " . UserAccountColumns::IS_ACTIVE . "
+                  ) VALUES (?, ?, ?, ?, ?, ?)";
+        
+        return DB::insert($query, [
+            $idUser, 
+            $username, 
+            $email, 
+            $password, 
+            $verifiedAt, 
+            $isActive
+        ]);
+    }
+
+    /**
+     * ==========================================
+     * UPDATE RAW QUERY <-
+     * ==========================================
+     */
+    public static function updateUserAccountRaw($id, array $data)
+    {
+        // 1. Cek existence
+        $existsQuery = "SELECT 1 FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+        $exists = DB::select($existsQuery, [$id]);
+
+        if (empty($exists)) {
+            return ['success' => false, 'message' => 'UserAccount tidak ditemukan'];
+        }
+
+        // 2. Cek empty data
+        if (empty($data)) {
+            $selectQuery = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            $userAccount = DB::selectOne($selectQuery, [$id]);
+            return ['success' => true, 'message' => 'Tidak ada data untuk diupdate', 'data' => $userAccount];
+        }
+
+        // 3. Build Query
+        $setClauses = [];
+        $bindings = [];
+
+        foreach ($data as $column => $value) {
+            if (in_array($column, UserAccountColumns::getFillable())) {
+                $setClauses[] = "`$column` = ?";
+                $bindings[] = $value;
+            }
+        }
+
+        if (empty($setClauses)) {
+             $selectQuery = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+             $userAccount = DB::selectOne($selectQuery, [$id]);
+             return ['success' => true, 'message' => 'Tidak ada data valid untuk diupdate', 'data' => $userAccount];
+        }
+
+        $bindings[] = $id; 
+        $setString = implode(', ', $setClauses);
+
+        $query = "UPDATE user_accounts SET $setString WHERE " . UserAccountColumns::ID . " = ?";
+
+        try {
+            DB::update($query, $bindings);
+
+            $selectQuery = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            $updatedAccount = DB::selectOne($selectQuery, [$id]);
+
+            return [
+                'success' => true,
+                'message' => 'UserAccount berhasil diupdate',
+                'data' => $updatedAccount
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal mengupdate UserAccount: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Hapus satu UserAccount
      */
     public static function deleteUserAccountRaw($id)
     {
         try {
-            // Menggunakan konstanta untuk nama kolom ID
             $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            
-            $deletedRows = DB::delete($deleteQuery, [$id]);
-
-            if ($deletedRows === 0) {
-                 return [
-                    'success' => false,
-                    'message' => 'UserAccount tidak ditemukan'
-                ];
-            }
+            DB::delete($deleteQuery, [$id]);
 
             return [
                 'success' => true,
@@ -81,77 +177,78 @@ class UserAccount extends Model
         }
     }
 
-    // --- TAMBAHAN BARU DI SINI ---
+    /**
+     * DML: Cari user account by ID
+     */
+    public static function cariUserById($id)
+    {
+        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+        $result = DB::select($query, [$id]);
+
+        return $result[0] ?? null;
+    }
 
     /**
-     * Update user account using raw SQL query.
-     *
-     * @param int $id
-     * @param array $data Data yang sudah divalidasi dan siap update
-     * @return array
+     * DML: Cari user by email
      */
-    public static function updateUserAccountRaw($id, array $data)
+    public static function cariUserByEmail($email)
     {
-        // 1. Cek dulu apakah user dengan ID tersebut ada
-        $existsQuery = "SELECT 1 FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-        $exists = DB::select($existsQuery, [$id]);
-        
-        if (empty($exists)) {
-            return ['success' => false, 'message' => 'UserAccount tidak ditemukan'];
-        }
+        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
+        $result = DB::select($query, [$email]);
 
-        // 2. Jika tidak ada data untuk diupdate, kembalikan sukses (opsional)
-        if (empty($data)) {
-            $selectQuery = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            $userAccount = DB::selectOne($selectQuery, [$id]);
-            return ['success' => true, 'message' => 'Tidak ada data untuk diupdate', 'data' => $userAccount];
-        }
+        return $result[0] ?? null;
+    }
 
-        // 3. Bangun query UPDATE secara dinamis
-        $setClauses = [];
-        $bindings = [];
+    /**
+     * DML: Reset password
+     */
+    public static function resetPasswordByEmail($email, $newPassword)
+    {
+        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
 
-        foreach ($data as $column => $value) {
-            // Pastikan kolom valid (meskipun sudah divalidasi di controller)
-            if (in_array($column, UserAccountColumns::getFillable())) {
-                $setClauses[] = "`$column` = ?";
-                $bindings[] = $value;
+        $query = "
+            UPDATE user_accounts 
+            SET password = ?
+            WHERE email = ?
+        ";
+
+        return DB::update($query, [$hashed, $email]);
+    }
+
+    /**
+     * Login Logic
+     */
+    public static function cariUserByEmailLogin(string $email, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
+            [$email]
+        );
+
+        if (!empty($user)) {
+            $userData = $user[0];
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
             }
         }
 
-        // Jika setelah filtering tidak ada kolom valid
-        if (empty($setClauses)) {
-             $selectQuery = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-             $userAccount = DB::selectOne($selectQuery, [$id]);
-             return ['success' => true, 'message' => 'Tidak ada data valid untuk diupdate', 'data' => $userAccount];
+        return null;
+    }
+
+    public static function cariUserByUsernameLogin(string $username, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+            [$username]
+        );
+
+        if (!empty($user)) {
+            $userData = $user[0];
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
         }
 
-        // Tambahkan ID untuk WHERE clause
-        $bindings[] = $id; 
-        $setString = implode(', ', $setClauses);
-
-        $query = "UPDATE user_accounts SET $setString WHERE " . UserAccountColumns::ID . " = ?";
-
-        try {
-            // 4. Eksekusi query
-            DB::update($query, $bindings);
-
-            // 5. Ambil data terbaru setelah diupdate untuk dikembalikan
-            $selectQuery = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            $updatedAccount = DB::selectOne($selectQuery, [$id]);
-
-            return [
-                'success' => true,
-                'message' => 'UserAccount berhasil diupdate',
-                'data' => $updatedAccount
-            ];
-
-        } catch (\Exception $e) {
-            // 6. Tangani jika ada error database
-            return [
-                'success' => false,
-                'message' => 'Gagal mengupdate UserAccount: ' . $e->getMessage()
-            ];
-        }
+        return null;
     }
 }
