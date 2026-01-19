@@ -175,25 +175,63 @@ class User extends Authenticatable
     }
 
     public static function GetUser(){
-        $query = "SELECT * FROM users  ORDER BY id";
-        return DB::select($query);
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    ut.id as telephone_id,
+                    ut.number as telephone_number
+                  FROM users u
+                  LEFT JOIN user_telephones ut ON u.id = ut.user_id
+                  ORDER BY u.id, ut.id";
+        
+        $results = DB::select($query);
 
-        return array_map(function($row) {
-            return [
-                'id' => $row->id,
-                'name' => $row->name,
-                'email' => $row->email,
-                'provinsi' => $row->provinsi,
-                'kabupaten' => $row->kabupaten,
-                'kecamatan' => $row->kecamatan,
-                'jalan' => $row->jalan,
-                'kode_pos' => $row->kode_pos,
-                'tanggal_lahir' => $row->tanggal_lahir,
-                'bulan_lahir' => $row->bulan_lahir,
-                'tahun_lahir' => $row->tahun_lahir,
-                'usia' => $row->usia,        
-            ];
-        }, $results);
+        $users = [];
+        foreach ($results as $row) {
+            $userId = $row->id;
+            
+            if (!isset($users[$userId])) {
+                $users[$userId] = [
+                    'id' => $row->id,
+                    'name' => $row->name,
+                    'first_name' => $row->first_name,
+                    'middle_name' => $row->middle_name,
+                    'last_name' => $row->last_name,
+                    'email' => $row->email,
+                    'provinsi' => $row->provinsi,
+                    'kabupaten' => $row->kabupaten,
+                    'kecamatan' => $row->kecamatan,
+                    'jalan' => $row->jalan,
+                    'kode_pos' => $row->kode_pos,
+                    'tanggal_lahir' => $row->tanggal_lahir,
+                    'bulan_lahir' => $row->bulan_lahir,
+                    'tahun_lahir' => $row->tahun_lahir,
+                    'usia' => $row->usia,
+                    'telephones' => []
+                ];
+            }
+            
 
+            if ($row->telephone_id !== null) {
+                $users[$userId]['telephones'][] = $row->telephone_number;
+                
+            
+            }
+        }
+
+        return array_values($users);
     }
 }
