@@ -865,8 +865,8 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         string $periodFormat = 'month'
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         // Period expressions 
         $periodExpressions = [
@@ -942,7 +942,7 @@ class Transaction extends Model
         Carbon $endDate,
         string $periodFormat = 'month'
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Period expressions untuk berbagai driver (MySQL)
         $periodExpressions = [
