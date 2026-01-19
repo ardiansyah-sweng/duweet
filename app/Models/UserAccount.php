@@ -76,11 +76,14 @@ class UserAccount extends Model
      * Query users yang belum setup account
      * Static method untuk mendapatkan users yang belum punya user_accounts record
      */
-    public static function usersWithoutAccount()
-    {
-        return User::whereDoesntHave('userAccounts')
-            ->orderBy('created_at', 'desc');
-    }
+   public static function usersWithoutAccount()
+{
+    return User::select('users.*')
+        ->leftJoin('user_accounts', 'users.id', '=', 'user_accounts.id_user')
+        ->whereNull('user_accounts.id_user')
+        ->orderBy('users.created_at', 'desc');
+}
+
 
     /**
 
