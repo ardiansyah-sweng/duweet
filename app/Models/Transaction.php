@@ -17,17 +17,6 @@ use Illuminate\Support\Facades\Schema;
 class Transaction extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        TransactionColumns::TRANSACTION_GROUP_ID,
-        TransactionColumns::USER_ACCOUNT_ID,
-        TransactionColumns::FINANCIAL_ACCOUNT_ID,
-        TransactionColumns::ENTRY_TYPE,
-        TransactionColumns::AMOUNT,
-        TransactionColumns::BALANCE_EFFECT,
-        TransactionColumns::DESCRIPTION,
-        TransactionColumns::IS_BALANCE,
-    ];
     
     // Nama tabel yang sesuai dengan konfigurasi
     protected $table = 'transactions';
