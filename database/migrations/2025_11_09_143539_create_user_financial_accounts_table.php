@@ -25,30 +25,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create($this->table, function (Blueprint $table) {
-            $table->id(UserFinancialAccountColumns::ID);
+        Schema::create('user_financial_accounts', function (Blueprint $table) {
+    $table->id();
 
-            $table->foreignId(UserFinancialAccountColumns::USER_ACCOUNT_ID)
-                ->constrained($this->userTable)
-                ->onDelete('cascade');
+    $table->foreignId('user_id')
+          ->constrained()
+          ->cascadeOnDelete();
 
-            $table->foreignId(UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID)
-                ->constrained($this->financialAccountTable)
-                ->onDelete('restrict');
+    $table->foreignId('financial_account_id')
+          ->constrained()
+          ->cascadeOnDelete();
 
-            $table->bigInteger(UserFinancialAccountColumns::INITIAL_BALANCE)->default(0);
-            $table->bigInteger(UserFinancialAccountColumns::BALANCE)->default(0);
+    $table->integer('balance')->default(0);
+    $table->integer('initial_balance')->default(0);
+    $table->boolean('is_active')->default(true);
 
-            $table->boolean(UserFinancialAccountColumns::IS_ACTIVE)->default(true);
-            $table->timestamps();
+    $table->timestamps();
+});
 
-            $table->index([
-                UserFinancialAccountColumns::USER_ACCOUNT_ID,
-                UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID,
-            ], 'idx_user_financial_account');
-
-            $table->index(UserFinancialAccountColumns::IS_ACTIVE);
-        });
     }
 
     /**

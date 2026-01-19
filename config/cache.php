@@ -15,7 +15,8 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'driver' => env('SESSION_DRIVER', 'file'),
+
 
     /*
     |--------------------------------------------------------------------------

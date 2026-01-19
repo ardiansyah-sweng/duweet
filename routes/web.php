@@ -3,8 +3,9 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return 'Laravel OK';
 });
+
 
 // API endpoint: grouped user balances by account type
 Route::get('/api/users/{user}/balances-by-type', [UserBalanceController::class, 'index']);
