@@ -52,6 +52,7 @@ Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::c
 // UserAccount API Routes (no CSRF protection needed)
 Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
+Route::get('/user-accounts/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
 
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
