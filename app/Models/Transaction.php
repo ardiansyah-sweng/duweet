@@ -1047,9 +1047,8 @@ class Transaction extends Model
 
         return (int) DB::getPdo()->lastInsertId();
     }
-}
 
-     /** Spending summary by period */
+    /** Spending summary by period */
     public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
         $transactionsTable = config('db_tables.transaction');
