@@ -178,12 +178,13 @@ class UserAccount extends Model
         return DB::update($query, [$hashed, $email]);
     }
 
-    /**
+
+   /**
  * DML: Ambil user yang tidak login dalam periode hari tertentu 
  */
 public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
 {
-     $sql = "
+    $sql = "
         SELECT ua.*
         FROM user_accounts ua
         LEFT JOIN user_login ul
@@ -195,4 +196,47 @@ public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
 
     return DB::select($sql, [$days]);
 }
+
+/**
+ * DML: Cari user berdasarkan email dan password (LOGIKA FIX)
+ */
+public static function cariUserByEmailLogin(string $email, string $password)
+{
+    $user = DB::select(
+        "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
+        [$email]
+    );
+
+    if (!empty($user)) {
+        $userData = $user[0];
+
+        if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+            return $userData;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
+ */
+public static function cariUserByUsernameLogin(string $username, string $password)
+{
+    $user = DB::select(
+        "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+        [$username]
+    );
+
+    if (!empty($user)) {
+        $userData = $user[0];
+
+        if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+            return $userData;
+        }
+    }
+
+    return null;
+}
+
 }
