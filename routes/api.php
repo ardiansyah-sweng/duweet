@@ -82,6 +82,7 @@ Route::prefix('transactions')->group(function () {
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
+    Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
 });
 
 // Financial Account API Routes
