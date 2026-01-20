@@ -183,10 +183,16 @@ class UserAccount extends Model
  */
 public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
 {
-    $sql = "SELECT * FROM user_accounts 
-            WHERE (last_login_at < DATE_SUB(NOW(), INTERVAL ? DAY) OR last_login_at IS NULL) 
-            AND is_active = 1";
+     $sql = "
+        SELECT ua.*
+        FROM user_accounts ua
+        LEFT JOIN user_login ul
+            ON ua.id = ul.user_account_id
+        WHERE (ul.last_login_at IS NULL
+               OR ul.last_login_at < DATE_SUB(NOW(), INTERVAL ? DAY))
+          AND ua.is_active = 1
+    ";
 
-    return \DB::select($sql, [$days]);
+    return DB::select($sql, [$days]);
 }
 }

@@ -262,4 +262,23 @@ class UserAccountController extends Controller
     //     ]);
     // }
 
+    
+    /**
+ * ======================================================
+ * GET USERS WHO HAVE NOT LOGGED IN PERIOD– (DML VERSION)
+ * ======================================================
+ */
+public function notLoggedIn($days = 7): JsonResponse
+{
+    $users = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu($days);
+
+    return response()->json([
+        'success' => true,
+        'days_threshold' => $days,
+        'total_found' => count($users),
+        'data' => $users
+    ]);
+}
+
+
 }

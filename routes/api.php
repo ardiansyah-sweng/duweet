@@ -54,6 +54,7 @@ Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 
 Route::prefix('user-account')->group(function () {
      Route::get('/inactive-users', [UserAccountController::class, 'inactiveByPeriod'])->name('api.user-account.inactive-users');
+      Route::get('/not-logged-in/{days?}', [UserAccountController::class, 'notLoggedIn'])->name('api.user-account.not-logged-in');
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/find-by-id/{id}', [UserAccountController::class, 'findById'])->name('api.user-account.find-by-id');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
