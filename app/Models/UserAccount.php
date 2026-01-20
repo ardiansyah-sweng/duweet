@@ -71,11 +71,6 @@ class UserAccount extends Model
         return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
     }
 
-    /**
-
-     * Query users yang belum setup account
-     * Static method untuk mendapatkan users yang belum punya user_accounts record
-     */
    public static function usersWithoutAccount()
 {
     return User::select('users.*')
