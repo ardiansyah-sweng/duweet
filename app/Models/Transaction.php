@@ -845,6 +845,17 @@ class Transaction extends Model
 
         return collect($rows);
     }
+    public static function deleteByGroupIdRaw($id)
+    {
+        $query = "
+            DELETE FROM 
+                transactions 
+            WHERE 
+                transaction_group_id = ?
+        ";
+
+        return DB::delete($query, [$id]);
+    }
 
     /**
      * Get sum of cash in (credit transactions) by period using raw SQL
