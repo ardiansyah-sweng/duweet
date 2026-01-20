@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserAccountTestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
@@ -80,6 +81,7 @@ Route::prefix('transactions')->group(function () {
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
+    Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
 });
 
 // Financial Account API Routes
@@ -122,8 +124,12 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
 
 Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
+Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+//Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
