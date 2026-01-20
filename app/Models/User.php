@@ -173,4 +173,91 @@ class User extends Authenticatable
             ];
         }, $results);
     }
+
+    public static function GetUser(){
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    ut.id as telephone_id,
+                    ut.number as telephone_number,
+                    ua.id as user_account_id,
+                    ua.username,
+                    ua.email as account_email,
+                    ua.verified_at,
+                    ua.is_active
+                  FROM users u
+                  LEFT JOIN user_telephones ut ON u.id = ut.user_id
+                  LEFT JOIN user_accounts ua ON u.id = ua.id_user
+                  ORDER BY u.id, ut.id, ua.id";
+        
+        $results = DB::select($query);
+
+        $users = [];
+        foreach ($results as $row) {
+            $userId = $row->id;
+            
+            if (!isset($users[$userId])) {
+                $users[$userId] = [
+                    'id' => $row->id,
+                    'name' => $row->name,
+                    'first_name' => $row->first_name,
+                    'middle_name' => $row->middle_name,
+                    'last_name' => $row->last_name,
+                    'email' => $row->email,
+                    'provinsi' => $row->provinsi,
+                    'kabupaten' => $row->kabupaten,
+                    'kecamatan' => $row->kecamatan,
+                    'jalan' => $row->jalan,
+                    'kode_pos' => $row->kode_pos,
+                    'tanggal_lahir' => $row->tanggal_lahir,
+                    'bulan_lahir' => $row->bulan_lahir,
+                    'tahun_lahir' => $row->tahun_lahir,
+                    'usia' => $row->usia,
+                    'telephones' => [],
+                    'accounts' => []
+                ];
+            }
+            
+
+            if ($row->telephone_id !== null) {
+                $telephoneExists = false;
+                foreach ($users[$userId]['telephones'] as $tel) {
+                    if ($tel['number'] === $row->telephone_number) {
+                        $telephoneExists = true;
+                        break;
+                    }
+                }
+                if (!$telephoneExists) {
+                    $users[$userId]['telephones'][] = [
+                        'number' => $row->telephone_number
+                    ];
+                }
+            }
+
+            if ($row->user_account_id !== null) {
+                $users[$userId]['accounts'][] = [
+                    'user_account_id' => $row->user_account_id,
+                    'username' => $row->username,
+                    'email' => $row->account_email,
+                    'verified_at' => $row->verified_at,
+                    'is_active' => (bool) $row->is_active
+                ];
+            }
+        }
+
+        return array_values($users);
+    }
 }
