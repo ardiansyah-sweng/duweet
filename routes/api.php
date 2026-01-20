@@ -121,6 +121,32 @@ Route::prefix('reports')->group(function () {
 });
 
 // =============================================================
+// FINANCIAL ACCOUNT - SOFT DELETE / SET INACTIVE
+// =============================================================
+Route::prefix('financial-accounts')->controller(FinancialAccountController::class)->group(function () {
+    // Get all active accounts
+    Route::get('/', 'getActiveAccounts');
+    
+    // Get account detail by ID
+    Route::get('/{id}', 'show')->whereNumber('id');
+    
+    // Soft delete single account
+    Route::delete('/{id}/soft-delete', 'softDelete')->whereNumber('id');
+    
+    // Restore soft-deleted account
+    Route::post('/{id}/restore', 'restore')->whereNumber('id');
+    
+    // Get all inactive accounts (trash/recycle bin)
+    Route::get('/trash/all', 'getInactiveAccounts');
+    
+    // Soft delete multiple accounts
+    Route::post('/batch/soft-delete', 'softDeleteMultiple');
+    
+    // Get statistics
+    Route::get('/stats/summary', 'getStatistics');
+});
+
+// =============================================================
 // 4. TRANSACTION (Tambahan dari Incoming Change)
 // =============================================================
 Route::get('/getLatestActivities', [\App\Http\Controllers\TransactionController::class, 'getLatestActivities']);
