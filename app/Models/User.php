@@ -18,6 +18,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $table = 'users';
+    
 
     /**
      * Insert user 
@@ -28,14 +29,18 @@ class User extends Authenticatable
             return 'Email harus diisi.';
         }
 
+        // Pindahkan validasi email ke sini
         if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return 'Format email tidak valid.';
         }
 
         try {
+            // memulai transaksi database
             DB::beginTransaction();
-            $now = now()->toDateTimeString();
+            $now = now();
+            $nowString = $now->toDateTimeString();
 
+            // Validasi email jika sudah ada
             $existingUser = DB::selectOne(
                 "SELECT id FROM users WHERE email = ?",
                 [$data['email']]
@@ -46,15 +51,25 @@ class User extends Authenticatable
                 return 'Email sudah digunakan.';
             }
 
+            // Menghitung usia
             $usia = null;
             if (!empty($data[UserColumns::TANGGAL_LAHIR])) {
                 $carbonDate = \Carbon\Carbon::parse($data[UserColumns::TANGGAL_LAHIR]);
+                $tanggal = $carbonDate->day;
+                $bulan = $carbonDate->month;
+                $tahun = $carbonDate->year;
                 $usia = $carbonDate->age;
+            } else {
+                // Jika terpisah, ambil langsung dari data
+                $tanggal = $data[UserColumns::TANGGAL_LAHIR] ?? null;
+                $bulan = $data[UserColumns::BULAN_LAHIR] ?? null;
+                $tahun = $data[UserColumns::TAHUN_LAHIR] ?? null;
             }
 
+            // INSERT user - Perbaikan: jumlah placeholder (14) harus sama dengan jumlah value
             DB::insert(
                 "INSERT INTO users (name, first_name, middle_name, last_name, email, provinsi, kabupaten, kecamatan, jalan, kode_pos, tanggal_lahir, bulan_lahir, tahun_lahir, usia)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $data[UserColumns::NAME] ?? null,
                     $data[UserColumns::FIRST_NAME] ?? null,
@@ -75,76 +90,227 @@ class User extends Authenticatable
 
             $userId = (int) DB::getPdo()->lastInsertId();
 
+            // INSERT telepon 
             if (!empty($data['telephones'])) {
-                foreach ((array) $data['telephones'] as $telephone) {
+                $telephones = is_array($data['telephones']) ? $data['telephones'] : [$data['telephones']];
+
+                foreach ($telephones as $telephone) {
                     $trimmed = trim((string) $telephone);
                     if ($trimmed !== '') {
                         DB::insert(
-                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at)
-                             VALUES (?, ?, ?, ?)",
-                            [$userId, $trimmed, $now, $now]
+                            "INSERT INTO user_telephones (user_id, number, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                            [$userId, $trimmed, $nowString, $nowString]
                         );
                     }
                 }
             }
 
             DB::commit();
-            return $userId;
+            return $userId; // Mengembalikan ID user yang berhasil dibuat
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            if (str_contains($e->getMessage(), 'Duplicate entry') || 
+                str_contains($e->getMessage(), '1062') ||
+                str_contains($e->getMessage(), 'unique')) {
+                return 'Email sudah digunakan.';
+            }
+            
             return 'Gagal menyimpan user ke database: ' . $e->getMessage();
         }
     }
+    
+    public function accounts() {
+        return $this->hasMany(\App\Models\UserAccount::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+    
+    public function financialAccounts()
+    {
+        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
+                    ->withPivot(['initial_balance', 'balance', 'is_active'])
+                    ->withTimestamps();
+    }
 
     /**
-     * UPDATE user (name, email, password, photo, preference)
+     * Setiap user memiliki satu atau beberapa akun keuangan (UserFinancialAccount)
+     */
+    public function userFinancialAccounts()
+    {
+        return $this->hasMany(UserFinancialAccount::class, 'user_id');
+    }
+
+    public static function getUserAccounts($userId)
+    {
+
+        $query = "SELECT 
+                    ua.id as user_account_id,
+                    ua.id_user,
+                    ua.username,
+                    ua.email,
+                    ua.verified_at,
+                    ua.is_active
+                  FROM user_accounts ua
+                  WHERE ua.id_user = ?
+                  ORDER BY ua.id";
+        
+        $results = DB::select($query, [$userId]);
+        
+      
+        return array_map(function($row) {
+            return [
+                'user_account_id' => $row->user_account_id,
+                'id_user' => $row->id_user,
+                'username' => $row->username,
+                'email' => $row->email,
+                'verified_at' => $row->verified_at,
+                'is_active' => (bool) $row->is_active
+            ];
+        }, $results);
+    }
+
+    public static function GetUser(){
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    ut.id as telephone_id,
+                    ut.number as telephone_number,
+                    ua.id as user_account_id,
+                    ua.username,
+                    ua.email as account_email,
+                    ua.verified_at,
+                    ua.is_active
+                  FROM users u
+                  LEFT JOIN user_telephones ut ON u.id = ut.user_id
+                  LEFT JOIN user_accounts ua ON u.id = ua.id_user
+                  ORDER BY u.id, ut.id, ua.id";
+        
+        $results = DB::select($query);
+
+        $users = [];
+        foreach ($results as $row) {
+            $userId = $row->id;
+            
+            if (!isset($users[$userId])) {
+                $users[$userId] = [
+                    'id' => $row->id,
+                    'name' => $row->name,
+                    'first_name' => $row->first_name,
+                    'middle_name' => $row->middle_name,
+                    'last_name' => $row->last_name,
+                    'email' => $row->email,
+                    'provinsi' => $row->provinsi,
+                    'kabupaten' => $row->kabupaten,
+                    'kecamatan' => $row->kecamatan,
+                    'jalan' => $row->jalan,
+                    'kode_pos' => $row->kode_pos,
+                    'tanggal_lahir' => $row->tanggal_lahir,
+                    'bulan_lahir' => $row->bulan_lahir,
+                    'tahun_lahir' => $row->tahun_lahir,
+                    'usia' => $row->usia,
+                    'telephones' => [],
+                    'accounts' => []
+                ];
+            }
+            
+
+            if ($row->telephone_id !== null) {
+                $telephoneExists = false;
+                foreach ($users[$userId]['telephones'] as $tel) {
+                    if ($tel['number'] === $row->telephone_number) {
+                        $telephoneExists = true;
+                        break;
+                    }
+                }
+                if (!$telephoneExists) {
+                    $users[$userId]['telephones'][] = [
+                        'number' => $row->telephone_number
+                    ];
+                }
+            }
+
+            if ($row->user_account_id !== null) {
+                $users[$userId]['accounts'][] = [
+                    'user_account_id' => $row->user_account_id,
+                    'username' => $row->username,
+                    'email' => $row->account_email,
+                    'verified_at' => $row->verified_at,
+                    'is_active' => (bool) $row->is_active
+                ];
+            }
+        }
+
+        return array_values($users);
+    }
+        /**
+     * Update user: name, email, password, photo, preference
      */
     public static function updateUserRaw(int $userId, array $data)
     {
-        if (empty($data)) {
-            return 'Tidak ada data yang diperbarui.';
-        }
-
         try {
             DB::beginTransaction();
 
             $fields = [];
             $values = [];
 
-            // Name
-            if (array_key_exists(UserColumns::NAME, $data)) {
-                $fields[] = UserColumns::NAME . ' = ?';
-                $values[] = $data[UserColumns::NAME];
+            if (isset($data['name'])) {
+                $fields[] = "name = ?";
+                $values[] = $data['name'];
             }
 
-            // Email
-            if (array_key_exists(UserColumns::EMAIL, $data)) {
-                $fields[] = UserColumns::EMAIL . ' = ?';
-                $values[] = $data[UserColumns::EMAIL];
+            if (isset($data['email'])) {
+                if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    return 'Format email tidak valid.';
+                }
+
+                $existing = DB::selectOne(
+                    "SELECT id FROM users WHERE email = ? AND id != ?",
+                    [$data['email'], $userId]
+                );
+
+                if ($existing) {
+                    return 'Email sudah digunakan.';
+                }
+
+                $fields[] = "email = ?";
+                $values[] = $data['email'];
             }
 
-            // Password (hash)
-            if (!empty($data['password'])) {
-                $fields[] = 'password = ?';
+            if (isset($data['password'])) {
+                $fields[] = "password = ?";
                 $values[] = bcrypt($data['password']);
             }
 
-            // Photo
-            if (array_key_exists(UserColumns::PHOTO, $data)) {
-                $fields[] = UserColumns::PHOTO . ' = ?';
-                $values[] = $data[UserColumns::PHOTO];
+            if (isset($data['photo'])) {
+                $fields[] = "photo = ?";
+                $values[] = $data['photo'];
             }
 
-            // Preference (JSON)
-            if (array_key_exists(UserColumns::PREFERENCE, $data)) {
-                $fields[] = UserColumns::PREFERENCE . ' = ?';
-                $values[] = json_encode($data[UserColumns::PREFERENCE]);
+            if (isset($data['preference'])) {
+                $fields[] = "preference = ?";
+                $values[] = $data['preference'];
             }
 
             if (empty($fields)) {
-                DB::rollBack();
-                return 'Tidak ada field valid untuk diperbarui.';
+                return 'Tidak ada data yang diupdate.';
             }
 
             $values[] = $userId;
@@ -157,53 +323,10 @@ class User extends Authenticatable
             DB::commit();
             return true;
 
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return 'Gagal update user: ' . $e->getMessage();
         }
     }
 
-    public function accounts()
-    {
-        return $this->hasMany(UserAccount::class);
-    }
-
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
-
-    public function financialAccounts()
-    {
-        return $this->belongsToMany(FinancialAccount::class, 'user_financial_accounts')
-                    ->withPivot(['initial_balance', 'balance', 'is_active'])
-                    ->withTimestamps();
-    }
-
-    public function userFinancialAccounts()
-    {
-        return $this->hasMany(UserFinancialAccount::class, 'user_id');
-    }
-
-    public static function getUserAccounts($userId)
-    {
-        $results = DB::select(
-            "SELECT ua.id AS user_account_id, ua.id_user, ua.username, ua.email, ua.verified_at, ua.is_active
-             FROM user_accounts ua
-             WHERE ua.id_user = ?
-             ORDER BY ua.id",
-            [$userId]
-        );
-
-        return array_map(function ($row) {
-            return [
-                'user_account_id' => $row->user_account_id,
-                'id_user' => $row->id_user,
-                'username' => $row->username,
-                'email' => $row->email,
-                'verified_at' => $row->verified_at,
-                'is_active' => (bool) $row->is_active
-            ];
-        }, $results);
-    }
 }
