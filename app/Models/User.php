@@ -132,10 +132,7 @@ class User extends Authenticatable
 
 
 
-/**
- * DML Murni: Get users dengan status setup account (Optimized version)
- * @param string|null $status - 'belum_setup', 'sudah_setup', atau null untuk semua
- */
+
 public static function getUsersWithStatus($status = null)
 {
     $sql = "
