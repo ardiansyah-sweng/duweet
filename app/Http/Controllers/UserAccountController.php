@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\UserAccountColumns;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash; // Masih dibutuhkan untuk method update
 use Illuminate\Http\JsonResponse;
 
 class UserAccountController extends Controller
@@ -67,12 +68,16 @@ class UserAccountController extends Controller
     }
 
     /**
+     * Store a new user account (RAW QUERY - Via Model)
+     * Controller sekarang hanya validasi dan memanggil Model.
      * ============================
      * CREATE USER ACCOUNT
      * ============================
      */
     public function store(Request $request)
     {
+        // 1. Validasi Input
+        // Menggunakan Constant agar nama field validasi sinkron dengan database
         $validated = $request->validate([
             UserAccountColumns::ID_USER => 'required|exists:users,id',
             UserAccountColumns::USERNAME => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME . '|max:255',
@@ -84,7 +89,6 @@ class UserAccountController extends Controller
         $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
 
         $userAccount = UserAccount::create($validated);
-
         return response()->json([
             'success' => true,
             'message' => 'UserAccount berhasil dibuat',
@@ -93,6 +97,7 @@ class UserAccountController extends Controller
     }
 
     /**
+     * Update a user account (Standard Eloquent)
      * ============================
      * UPDATE USER ACCOUNT
      * ============================
@@ -197,6 +202,28 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ======================================================
+     * FIND USER ACCOUNT BY ID – (DML VERSION)
+     * ======================================================
+     */
+    public function findById($id): JsonResponse
+    {
+        $user = UserAccount::cariUserById($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User account tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
+
     // public function findByEmail(Request $request): JsonResponse
     // {
     //     $request->validate([
@@ -215,4 +242,5 @@ class UserAccountController extends Controller
     //     ]);
     // }
 
-}
+}   
+

@@ -1,15 +1,10 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\FinancialAccountController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\MonthlyExpenseController;
-
-
-Route::get('/expenses/monthly', [MonthlyExpenseController::class, 'monthly']);
-
-use App\Http\Controllers\FinancialAccountController; 
-use App\Http\Controllers\ReportController; // PENTING: Import Controller
 
 Route::get('/test/liquid-assets', function () {
     try {
@@ -34,9 +29,6 @@ Route::post('/accounts', [AccountController::class, 'store']);
 Route::get('/accounts', [AccountController::class, 'index']);
 Route::get('/accounts/{id}', [AccountController::class, 'show']);
 
-
-
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -52,10 +44,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Web-only routes (no API routes here). API routes live in routes/api.php.
-
-// Route GET yang Benar untuk endpoint incomeSummary
-// FIX: Menggantikan syntax lama dengan syntax array [Controller::class, 'method']
-Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);
-
+// Financial Accounts
 Route::get('/financial-accounts/active', [FinancialAccountController::class, 'getActiveAccounts']);
+
+// Reports
+Route::get('/report/income-summary', [ReportController::class, 'incomeSummary']);

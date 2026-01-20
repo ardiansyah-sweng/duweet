@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Cache;
+use App\Models\User;
 use App\Models\Transaction;
 
 // Import constants
@@ -14,8 +16,49 @@ use App\Constants\UserTelephoneColumns;
 use App\Constants\UserFinancialAccountColumns;
 use App\Constants\TransactionColumns;
 
+
 class UserController extends Controller
 {
+    /**
+     * Terima request, validasi, dan delegasikan insert ke model (createUserRaw).
+     */
+    public function createUserRaw(Request $request): JsonResponse
+    {
+        // Validasi input dasar di controller — biar model tetap bertanggung jawab atas query
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'name' => 'sometimes|string|max:255',
+            'first_name' => 'sometimes|string|max:255',
+            'middle_name' => 'sometimes|string|max:255',
+            'last_name' => 'sometimes|string|max:255',
+            'provinsi' => 'sometimes|string|max:255',
+            'kabupaten' => 'sometimes|string|max:255',
+            'kecamatan' => 'sometimes|string|max:255',
+            'jalan' => 'sometimes|string',
+            'kode_pos' => 'sometimes|string|max:20',
+            'tanggal_lahir' => 'sometimes|integer|min:1|max:31',
+            'bulan_lahir' => 'sometimes|integer|min:1|max:12',
+            'tahun_lahir' => 'sometimes|integer|min:1900|max:' . date('Y'),
+            'usia' => 'sometimes|integer|min:0',
+            'telephones' => 'sometimes|array',
+            'telephones.*' => 'string',
+        ]);
+
+        $result = User::createUserRaw($validated);
+
+        if (is_string($result)) {
+            return response()->json([
+                'success' => false,
+                'message' => $result
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User berhasil dibuat.',
+        ], 201);
+    }
+
     public function destroy($id)
     {
         $user = DB::table('users')
@@ -43,10 +86,7 @@ class UserController extends Controller
              * Kolom relasi tetap didefinisikan oleh TransactionColumns
              */
             if ($userAccountIds->isNotEmpty()) {
-                Transaction::deleteByUserAccountIds(
-                    $userAccountIds,
-                    TransactionColumns::USER_ACCOUNT_ID
-                );
+                Transaction::deleteByUserAccountIds($userAccountIds);
             }
 
             // 3️⃣ Hapus user_financial_accounts
@@ -60,7 +100,7 @@ class UserController extends Controller
             // 4️⃣ Hapus user_telephones
             DB::table('user_telephones')
                 ->where(
-                    UserTelephoneColumns::ID_USER,
+                    UserTelephoneColumns::USER_ID,
                     $id
                 )
                 ->delete();
@@ -91,5 +131,93 @@ class UserController extends Controller
                 'error'   => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function getUserAccounts($id): JsonResponse
+    {
+        
+        $user = DB::table('users')
+            ->where(UserColumns::ID, $id)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan.'
+            ], 404);
+        }
+
+        $accounts = User::getUserAccounts($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil data accounts.',
+            'data' => [
+                'user_id' => (int) $id,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'accounts' => $accounts,
+                'total_accounts' => count($accounts)
+            ]
+        ], 200);
+    }
+
+    public function AmbilDataUserYangLogin(Request $request)
+    {
+        try {
+            
+            $token = $request->bearerToken();
+
+            if (!$token) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token tidak ditemukan. Silakan login terlebih dahulu.'
+                ], 401);
+            }
+
+            $authData = Cache::get('auth_token_' . $token);
+
+            if (!$authData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token tidak valid atau sudah expired. Silakan login kembali.'
+                ], 401);
+            }
+
+            $userData = User::AmbilDataUserYangLogin($authData['user_account_id']);
+
+            if (!$userData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak ditemukan atau akun tidak aktif.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data user berhasil diambil.',
+                'data' => $userData
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUsers(): JsonResponse
+    {
+        $users = User::GetUser();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil data users.',
+            'data' =>[
+                'users' => $users,
+                'total_users' => count($users)
+            ]
+        ], 200);
     }
 }

@@ -73,6 +73,67 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Ringkasan surplus/defisit per periode (ADMIN: agregat seluruh user).
+     *
+     * GET /api/reports/surplus-deficit
+     * Query params:
+     * - start_date (optional, format: Y-m-d)
+     * - end_date   (optional, format: Y-m-d)
+     */
+    public function surplusDeficitByPeriod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'end_date' => 'nullable|date|date_format:Y-m-d',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+        $defaultEndDate = Carbon::create(2025, 12, 31)->endOfDay();
+
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : $defaultStartDate;
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : $defaultEndDate;
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.',
+            ], 400);
+        }
+
+        try {
+            $summary = Transaction::getSurplusDeficitSummaryByPeriod($startDate, $endDate);
+
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                ],
+                'summary' => $summary,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil ringkasan surplus/defisit.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
     
     /**
      * Helper privat untuk mengambil data dasar User dan User Account.
@@ -193,5 +254,201 @@ class ReportController extends Controller
             'count' => $data->count(),
             'data' => $data,
         ]);
+    }
+    
+    public function adminSpendingSummary(Request $request)
+    {
+        // 1. Ambil periode (query params)
+        $startDate = $request->query('start_date')
+            ? Carbon::parse($request->query('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->query('end_date')
+            ? Carbon::parse($request->query('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        // 2. Validasi periode
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 3. Panggil Model (ADMIN REPORT)
+        try {
+            $data = Transaction::getTotalSpendingByUserAccountAdmin(
+                $startDate,
+                $endDate
+            );
+
+            return response()->json([
+                'success' => true,
+                'type' => 'ADMIN_SPENDING_REPORT',
+                'period' => [
+                    'from' => $startDate->toDateString(),
+                    'to'   => $endDate->toDateString(),
+                ],
+                'total_user_accounts' => $data->count(),
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil laporan pengeluaran admin',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get sum of all users' financial accounts grouped by type
+     */
+    public function sumFinancialAccountsByType()
+    {
+        $result = UserFinancialAccount::sumAllUsersFinancialAccountsByType();
+        return response()->json($result);
+    }
+    
+        /**
+     * Surplus / Defisit user berdasarkan periode
+     *
+     * GET /api/reports/surplus-defisit
+     */
+    public function surplusDefisitByPeriod(Request $request)
+    {
+        // 1. Ambil data dasar user & user account
+        $baseData = $this->getReportBaseData($request);
+
+        if ($baseData instanceof \Illuminate\Http\JsonResponse) {
+            return $baseData;
+        }
+
+        ['user' => $user, 'userAccount' => $userAccount, 'userData' => $userData, 'userAccountData' => $userAccountData] = $baseData;
+
+        // 2. Periode
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 3. Query ke model
+        $summary = Transaction::getSurplusDefisitByPeriod(
+            $userAccount->id,
+            $startDate,
+            $endDate
+        );
+
+        // 4. Response
+        return response()->json([
+            'user' => $userData,
+            'user_account' => $userAccountData,
+            'period' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+            ],
+            'summary' => $summary
+        ]);
+    }
+
+    /**
+     * ADMIN REPORT
+     * Sum cash-in grouped by period for admin view
+     * GET /api/admin/reports/cashin-by-period
+     */
+    public function adminCashinByPeriod(Request $request)
+    {
+        $startDate = $request->query('start_date')
+            ? Carbon::parse($request->query('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth();
+
+        $endDate = $request->query('end_date')
+            ? Carbon::parse($request->query('end_date'))->endOfDay()
+            : Carbon::now()->endOfMonth();
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal awal tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        try {
+            // Query using transaction_date to include backdated transactions created by factories
+            $transactionsTable = config('db_tables.transaction', 'transactions');
+            $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+            try {
+                $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+            } catch (\Exception $e) {
+                $driver = 'mysql';
+            }
+
+            if ($driver === 'sqlite') {
+                $periodeExpr = "strftime('%Y-%m', t.transaction_date)";
+            } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+                $periodeExpr = "to_char(t.transaction_date, 'YYYY-MM')";
+            } else {
+                $periodeExpr = "DATE_FORMAT(t.transaction_date, '%Y-%m')"; // MySQL/MariaDB
+            }
+
+            $sql = "
+                SELECT
+                    {$periodeExpr} AS periode,
+                    COALESCE(SUM(t.amount), 0) AS total_cashin
+                FROM {$transactionsTable} t
+                INNER JOIN {$financialAccountsTable} fa ON fa.id = t.financial_account_id
+                WHERE
+                    fa.type = 'IN'
+                    AND fa.is_group = 0
+                    AND t.transaction_date BETWEEN ? AND ?
+                GROUP BY {$periodeExpr}
+                ORDER BY periode ASC
+            ";
+
+            $rows = DB::select($sql, [
+                $startDate->toDateTimeString(),
+                $endDate->toDateTimeString(),
+            ]);
+
+            $data = collect($rows);
+
+            $grandTotal = (int) $data->sum('total_cashin');
+
+            // filter metadata
+            $filterUserAccount = $request->query('user_account_id') ?? 'all';
+
+            // monthly_breakdown removed per request; response will only include totals
+
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                ],
+                'filter' => [
+                    'user_account_id' => $filterUserAccount,
+                ],
+                'total_cash_in' => $grandTotal,
+                'total_cash_in_formatted' => (new self)->rupiah($grandTotal),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil laporan cash-in',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

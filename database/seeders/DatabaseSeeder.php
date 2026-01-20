@@ -57,12 +57,10 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             UserAccountSeeder::class,
             AccountSeeder::class,
-            FinancialAccountSeeder::class,
-            // AccountSeeder::class,
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
-            //AccountSeeder::class,
+            UserTelephoneSeeder::class,
         ]);
     }
 }
