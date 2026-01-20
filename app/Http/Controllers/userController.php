@@ -234,4 +234,18 @@ class UserController extends Controller
             ]
         ], 200);
     }
+
+    public function getUsers(): JsonResponse
+    {
+        $users = User::GetUser();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil data users.',
+            'data' =>[
+                'users' => $users,
+                'total_users' => count($users)
+            ]
+        ], 200);
+    }
 }
