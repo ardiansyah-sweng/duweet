@@ -184,10 +184,50 @@ class TransactionSeeder extends Seeder
             }
         }
 
-        // Tambahan: Membuat beberapa data transaksi random menggunakan TransactionFactory
-        // untuk variasi data selain transaksi balanced dengan variasi waktu
-        Transaction::factory(15)->daysAgo(90)->create(); // 1-90 hari lalu
-        Transaction::factory(10)->between('-1 year', '-6 months')->create(); // 6 bulan - 1 tahun lalu
-        Transaction::factory(5)->today()->create(); // Hari ini
+        // ===== CREATE ADDITIONAL TRANSACTIONS WITH HISTORICAL DATA =====
+        // Buat data transaksi untuk berbagai periode bulan (12 bulan terakhir)
+        $now = now();
+        $userAccountIds = DB::table($userAccountsTable)->pluck('id')->toArray();
+        
+        // Pastikan ada income accounts
+        if (empty($incomeAccounts)) {
+            $incomeAccounts = $financialAccounts->get('IN', collect())->pluck('id')->toArray();
+        }
+        
+        for ($monthsAgo = 0; $monthsAgo < 12; $monthsAgo++) {
+            $periodDate = $now->copy()->subMonths($monthsAgo);
+            
+            foreach ($userAccountIds as $uaId) {
+                // Buat 5-8 transaksi per user per bulan
+                $txCount = random_int(5, 8);
+                
+                for ($i = 0; $i < $txCount; $i++) {
+                    // Pilih akun debit (asset) dan credit (income)
+                    $debitAccId = !empty($assetAccounts) ? $assetAccounts[array_rand($assetAccounts)] : null;
+                    $creditAccId = !empty($incomeAccounts) ? $incomeAccounts[array_rand($incomeAccounts)] : null;
+                    
+                    if (!$debitAccId || !$creditAccId) {
+                        continue;
+                    }
+                    
+                    $amount = random_int(500000, 8000000);
+                    $dayOfMonth = random_int(1, min(28, $periodDate->daysInMonth));
+                    $txDate = $periodDate->copy()->setDay($dayOfMonth)->startOfDay();
+                    
+                    DB::table($transactionsTable)->insert([
+                        'transaction_group_id' => \Illuminate\Support\Str::uuid(),
+                        'user_account_id' => $uaId,
+                        'financial_account_id' => $creditAccId,
+                        'amount' => $amount,
+                        'entry_type' => 'credit',
+                        'balance_effect' => 'increase',
+                        'is_balance' => false,
+                        'description' => 'Income ' . $txDate->format('Y-m'),
+                        'created_at' => $txDate,
+                        'updated_at' => $txDate,
+                    ]);
+                }
+            }
+        }
     }
 }

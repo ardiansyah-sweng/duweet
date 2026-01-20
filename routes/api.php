@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserAccountTestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use App\Http\Controllers\AuthController;
@@ -52,6 +53,23 @@ Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
 
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+// Admin API Routes - Income Reports
+Route::prefix('admin')->group(function () {
+    Route::prefix('income')->group(function () {
+        // Sum income by period (daily, weekly, monthly, yearly)
+        Route::get('/by-period', [AdminController::class, 'getIncomeByPeriod'])->name('api.admin.income.by-period');
+
+        // Sum income by financial account category
+        Route::get('/by-category', [AdminController::class, 'getIncomeByCategory'])->name('api.admin.income.by-category');
+
+        // Get income summary
+        Route::get('/summary', [AdminController::class, 'getIncomeSummary'])->name('api.admin.income.summary');
+
+        // Get comprehensive income report
+        Route::get('/report', [AdminController::class, 'getIncomeReport'])->name('api.admin.income.report');
+    });
+});
 
 Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::class, 'show'])->whereNumber('id');
 
