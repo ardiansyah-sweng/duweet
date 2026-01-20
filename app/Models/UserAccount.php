@@ -71,6 +71,7 @@ class UserAccount extends Model
         return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
     }
 
+
    public static function usersWithoutAccount()
 {
     return User::select('users.*')
