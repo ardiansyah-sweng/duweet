@@ -10,6 +10,7 @@ use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
+use Illuminate\Support\Facades\Schema;
 
 class Transaction extends Model
 {
@@ -94,6 +95,61 @@ class Transaction extends Model
         // Eksekusi raw SQL dengan parameter binding
         $rows = DB::select($sql, [
             $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+
+    /**
+        * Ambil ringkasan surplus/defisit dalam rentang tanggal (ADMIN: agregat semua user).
+     *
+     * Definisi (mengikuti pola query di project ini):
+     * - Income  : financial_accounts.type = 'IN' dan transactions.balance_effect = 'increase'
+     * - Expense : financial_accounts.type IN ('EX','SP') dan transactions.balance_effect = 'increase'
+     *
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getSurplusDeficitSummaryByPeriod(
+        Carbon $startDate,
+        Carbon $endDate
+    ): \Illuminate\Support\Collection {
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(CASE
+                    WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
+                    ELSE 0
+                END), 0) AS total_income,
+                COALESCE(SUM(CASE
+                    WHEN fa.type IN ('EX','SP') AND t.balance_effect = 'increase' THEN t.amount
+                    ELSE 0
+                END), 0) AS total_expense,
+                (
+                    COALESCE(SUM(CASE
+                        WHEN fa.type = 'IN' AND t.balance_effect = 'increase' THEN t.amount
+                        ELSE 0
+                    END), 0)
+                    -
+                    COALESCE(SUM(CASE
+                        WHEN fa.type IN ('EX','SP') AND t.balance_effect = 'increase' THEN t.amount
+                        ELSE 0
+                    END), 0)
+                ) AS surplus_deficit
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON fa.id = t.financial_account_id
+            WHERE
+                fa.is_group = 0
+                AND fa.type IN ('IN','EX','SP')
+                AND t.created_at BETWEEN ? AND ?
+        ";
+
+        $rows = DB::select($sql, [
             $startDate->toDateTimeString(),
             $endDate->toDateTimeString(),
         ]);
@@ -624,7 +680,7 @@ class Transaction extends Model
         $sql = "
             SELECT
                 {$periodeExpr} AS periode,
-                SUM(CASE 
+                SUM(CASE
                     WHEN fa.type = 'IN' THEN t.amount
                     ELSE 0
                 END) AS total_income,
@@ -734,5 +790,59 @@ class Transaction extends Model
         );
 
         return (int) DB::getPdo()->lastInsertId();
+    }
+
+     /** Spending summary by period */
+    public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionsTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            // Jika pengecekan schema gagal (mis. koneksi), gunakan default
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
+
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t." . $dateColumn . ")";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t." . $dateColumn . ", 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_spending
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE
+                t.user_account_id = ?
+                AND fa.type IN ('EX','SP')
+                AND fa.is_group = 0
+                AND t." . $dateColumn . " BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $userAccountId,
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
     }
 }
