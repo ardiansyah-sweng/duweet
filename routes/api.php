@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
@@ -18,6 +19,12 @@ use App\Http\Controllers\FinancialAccountController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+Route::post('/login', [AuthController::class, 'ProsesLogin']);
+
+Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
+
 
 // =============================================================
 // 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
@@ -82,6 +89,7 @@ Route::prefix('transactions')->group(function () {
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
+    Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
 });
 
 // Financial Account API Routes
@@ -111,6 +119,32 @@ Route::prefix('reports')->group(function () {
     Route::get(
         '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
         ->name('api.reports.surplus-defisit');
+});
+
+// =============================================================
+// FINANCIAL ACCOUNT - SOFT DELETE / SET INACTIVE
+// =============================================================
+Route::prefix('financial-accounts')->controller(FinancialAccountController::class)->group(function () {
+    // Get all active accounts
+    Route::get('/', 'getActiveAccounts');
+    
+    // Get account detail by ID
+    Route::get('/{id}', 'show')->whereNumber('id');
+    
+    // Soft delete single account
+    Route::delete('/{id}/soft-delete', 'softDelete')->whereNumber('id');
+    
+    // Restore soft-deleted account
+    Route::post('/{id}/restore', 'restore')->whereNumber('id');
+    
+    // Get all inactive accounts (trash/recycle bin)
+    Route::get('/trash/all', 'getInactiveAccounts');
+    
+    // Soft delete multiple accounts
+    Route::post('/batch/soft-delete', 'softDeleteMultiple');
+    
+    // Get statistics
+    Route::get('/stats/summary', 'getStatistics');
 });
 
 // =============================================================
