@@ -21,6 +21,7 @@ Route::get('/user', function (Request $request) {
 
 
 Route::post('/login', [AuthController::class, 'ProsesLogin']);
+
 Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
 
 
