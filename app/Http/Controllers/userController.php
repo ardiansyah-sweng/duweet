@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Cache;
 use App\Models\User;
 use App\Models\Transaction;
 
@@ -15,6 +15,7 @@ use App\Constants\UserAccountColumns;
 use App\Constants\UserTelephoneColumns;
 use App\Constants\UserFinancialAccountColumns;
 use App\Constants\TransactionColumns;
+
 
 class UserController extends Controller
 {
@@ -157,6 +158,65 @@ class UserController extends Controller
                 'user_email' => $user->email,
                 'accounts' => $accounts,
                 'total_accounts' => count($accounts)
+            ]
+        ], 200);
+    }
+
+    public function AmbilDataUserYangLogin(Request $request)
+    {
+        try {
+            
+            $token = $request->bearerToken();
+
+            if (!$token) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token tidak ditemukan. Silakan login terlebih dahulu.'
+                ], 401);
+            }
+
+            $authData = Cache::get('auth_token_' . $token);
+
+            if (!$authData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token tidak valid atau sudah expired. Silakan login kembali.'
+                ], 401);
+            }
+
+            $userData = User::AmbilDataUserYangLogin($authData['user_account_id']);
+
+            if (!$userData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak ditemukan atau akun tidak aktif.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data user berhasil diambil.',
+                'data' => $userData
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUsers(): JsonResponse
+    {
+        $users = User::GetUser();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil data users.',
+            'data' =>[
+                'users' => $users,
+                'total_users' => count($users)
             ]
         ], 200);
     }

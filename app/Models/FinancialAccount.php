@@ -230,4 +230,94 @@ public static function getActiveAccounts()
         return DB::update($sql, $values);
     }
 
+    /**
+     * ================== SOFT DELETE METHODS ==================
+     * Query raw untuk soft delete (set status inactive)
+     */
+
+    /**
+     * Soft delete single account by ID
+     * Mengubah status is_active menjadi 0 (inactive)
+     * 
+     * @param int $id ID dari financial account
+     * @return int Jumlah baris yang di-update
+     */
+    public static function softDeleteById(int $id): int
+    {
+        return DB::update(
+            "UPDATE financial_accounts SET is_active = 0, updated_at = ? WHERE id = ?",
+            [now(), $id]
+        );
+    }
+
+    /**
+     * Soft delete multiple accounts by IDs
+     * 
+     * @param array $ids Array of financial account IDs
+     * @return int Jumlah baris yang di-update
+     */
+    public static function softDeleteByIds(array $ids): int
+    {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $params = array_merge([now()], $ids);
+        
+        return DB::update(
+            "UPDATE financial_accounts SET is_active = 0, updated_at = ? WHERE id IN ({$placeholders})",
+            $params
+        );
+    }
+
+    /**
+     * Restore dari soft delete (set status kembali ke active)
+     * 
+     * @param int $id ID dari financial account yang akan di-restore
+     * @return int Jumlah baris yang di-update
+     */
+    public static function restoreById(int $id): int
+    {
+        return DB::update(
+            "UPDATE financial_accounts SET is_active = 1, updated_at = ? WHERE id = ?",
+            [now(), $id]
+        );
+    }
+
+    /**
+     * Get hanya active accounts menggunakan raw query
+     * 
+     * @return array Array of active financial accounts
+     */
+    public static function getActiveAccountsOnly(): array
+    {
+        return DB::select(
+            "SELECT * FROM financial_accounts WHERE is_active = 1 ORDER BY sort_order ASC"
+        );
+    }
+
+    /**
+     * Get hanya inactive accounts (yang sudah di-soft-delete)
+     * 
+     * @return array Array of inactive financial accounts
+     */
+    public static function getInactiveAccounts(): array
+    {
+        return DB::select(
+            "SELECT * FROM financial_accounts WHERE is_active = 0 ORDER BY updated_at DESC"
+        );
+    }
+
+    /**
+     * Check apakah account sudah soft-deleted (inactive)
+     * 
+     * @param int $id ID dari financial account
+     * @return bool true jika inactive, false jika active
+     */
+    public static function isInactive(int $id): bool
+    {
+        $result = DB::selectOne(
+            "SELECT id FROM financial_accounts WHERE id = ? AND is_active = 0",
+            [$id]
+        );
+        return $result !== null;
+    }
+
 }
