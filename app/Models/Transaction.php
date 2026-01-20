@@ -806,8 +806,9 @@ class Transaction extends Model
             return DB::transaction(function () use ($id, $data) {
                 $transactionTable = config('db_tables.transaction');
                 
-                // 1. Get existing transaction
-                $oldTrx = DB::table($transactionTable)->where('id', $id)->lockForUpdate()->first();
+                // 1. Get existing transaction (Manual Query with Lock)
+                $oldTrxResults = DB::select("SELECT * FROM {$transactionTable} WHERE id = ? FOR UPDATE", [$id]);
+                $oldTrx = $oldTrxResults[0] ?? null;
 
                 if (!$oldTrx) {
                     throw new \Exception('Transaction not found');
@@ -817,15 +818,18 @@ class Transaction extends Model
                 // TUGAS: Hanya update description dan transaction_date. Amount tidak boleh berubah.
                 $newDescription = $data['description'] ?? $oldTrx->description;
                 $newDate = isset($data['transaction_date']) ? Carbon::parse($data['transaction_date']) : Carbon::parse($oldTrx->created_at);
-                
-                // 3. Update Transaction
-                DB::table($transactionTable)
-                    ->where('id', $id)
-                    ->update([
-                        'description' => $newDescription,
-                        'created_at' => $newDate,
-                        'updated_at' => now(),
-                    ]);
+                $updatedAt = now();
+
+                // 3. Update Transaction (Manual Query)
+                DB::update(
+                    "UPDATE {$transactionTable} SET description = ?, created_at = ?, updated_at = ? WHERE id = ?",
+                    [
+                        $newDescription,
+                        $newDate,
+                        $updatedAt,
+                        $id
+                    ]
+                );
 
                 return [
                     'success' => true,
