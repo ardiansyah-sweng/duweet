@@ -56,9 +56,9 @@ class Transaction extends Model
      */
     public static function getIncomeSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        // Gunakan nama tabel dari config bila ada, default ke nama tabel standar
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        // Gunakan nama tabel dari config bila ada
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         // Tentukan fungsi format tanggal berdasarkan driver database
         try {
@@ -358,7 +358,7 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
         $sql = "SELECT * FROM {$transactionTable} WHERE 1=1";
@@ -433,7 +433,7 @@ class Transaction extends Model
         ?int $financialAccountId = null,
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
-        $transactionTable = config('db_tables.transaction', 'transactions');
+        $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
         $sql = "SELECT * FROM {$transactionTable} WHERE created_at BETWEEN ? AND ?";
@@ -494,10 +494,10 @@ class Transaction extends Model
         string $endDate,
         ?int $userId = null
     ): \Illuminate\Support\Collection {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
-        $usersTable = config('db_tables.user', 'users');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $userAccountsTable = config('db_tables.user_account');
+        $usersTable = config('db_tables.user');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         $sql = "
             SELECT 
@@ -659,8 +659,8 @@ class Transaction extends Model
         Carbon $startDate,
         Carbon $endDate
     ): array {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         // Tentukan format periode (MySQL / SQLite / PostgreSQL)
         try {
@@ -723,8 +723,8 @@ class Transaction extends Model
      */
     public static function getTotalCashinByPeriodAdmin (Carbon $startDate, Carbon $endDate)
     {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         try {
             $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
@@ -792,6 +792,64 @@ class Transaction extends Model
         return (int) DB::getPdo()->lastInsertId();
     }
 
+
+    /**
+     * Update transaction and adjust balance
+     * 
+     * @param int $id
+     * @param array $data
+     * @return array
+     */
+    public static function updateTransactionRaw(int $id, array $data): array
+    {
+        try {
+            return DB::transaction(function () use ($id, $data) {
+                $transactionTable = config('db_tables.transaction');
+                
+                // 1. Get existing transaction (Manual Query with Lock)
+                $oldTrxResults = DB::select("SELECT * FROM {$transactionTable} WHERE id = ? FOR UPDATE", [$id]);
+                $oldTrx = $oldTrxResults[0] ?? null;
+
+                if (!$oldTrx) {
+                    throw new \Exception('Transaction not found');
+                }
+
+                // 2. Prepare new values
+                // TUGAS: Hanya update description dan transaction_date. Amount tidak boleh berubah.
+                $newDescription = $data['description'] ?? $oldTrx->description;
+                $newDate = isset($data['transaction_date']) ? Carbon::parse($data['transaction_date']) : Carbon::parse($oldTrx->created_at);
+                $updatedAt = now();
+
+                // 3. Update Transaction (Manual Query)
+                DB::update(
+                    "UPDATE {$transactionTable} SET description = ?, transaction_date = ?, updated_at = ? WHERE id = ?",
+                    [
+                        $newDescription,
+                        $newDate,
+                        $updatedAt,
+                        $id
+                    ]
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Transaction updated successfully (Description & Date only)',
+                    'data' => [
+                        'id' => $id,
+                        'description' => $newDescription,
+                        'transaction_date' => $newDate->toDateTimeString(),
+                        'amount_status' => 'unchanged' // Info bahwa amount tidak berubah
+                    ]
+                ];
+            });
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ];
+        }
+    }
+
      /** Spending summary by period */
     public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
@@ -844,6 +902,7 @@ class Transaction extends Model
         ]);
 
         return collect($rows);
+
     }
     public static function deleteByGroupIdRaw($id)
     {
