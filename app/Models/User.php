@@ -343,7 +343,7 @@ class User extends Authenticatable
         return array_values($users);
     }
 
-    /** 
+    /**
      * Get users with account setup status
      */
     public static function getUsersWithStatus($status = null)
@@ -354,8 +354,8 @@ class User extends Authenticatable
                 u.name AS nama,
                 u.email,
                 CASE
-                    WHEN ua.id_user IS NOT NULL THEN 'Sudah Setup'
-                    ELSE 'Belum Setup'
+                    WHEN ua.id_user IS NOT NULL THEN 'Belum Setup'
+                    ELSE 'Sudah Setup'
                 END AS status_account
             FROM users u
             LEFT JOIN (
