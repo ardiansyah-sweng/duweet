@@ -299,16 +299,6 @@ class User extends Authenticatable
                 $values[] = bcrypt($data['password']);
             }
 
-            if (isset($data['photo'])) {
-                $fields[] = "photo = ?";
-                $values[] = $data['photo'];
-            }
-
-            if (isset($data['preference'])) {
-                $fields[] = "preference = ?";
-                $values[] = $data['preference'];
-            }
-
             if (empty($fields)) {
                 return 'Tidak ada data yang diupdate.';
             }
