@@ -800,10 +800,10 @@ class Transaction extends Model
      * @param array $data
      * @return array
      */
-    public static function updateTransactionRaw(int $id, ?string $description = null, ?string $transactionDate = null): array
+    public static function updateTransactionRaw(int $id, array $data): array
     {
         try {
-            return DB::transaction(function () use ($id, $description, $transactionDate) {
+            return DB::transaction(function () use ($id, $data) {
                 $transactionTable = config('db_tables.transaction');
                 
                 // 1. Get existing transaction (Manual Query with Lock)
@@ -816,9 +816,8 @@ class Transaction extends Model
 
                 // 2. Prepare new values
                 // TUGAS: Hanya update description dan transaction_date. Amount tidak boleh berubah.
-                // Jika parameter null, gunakan nilai lama dari database
-                $newDescription = $description ?? $oldTrx->description;
-                $newDate = $transactionDate ? Carbon::parse($transactionDate) : Carbon::parse($oldTrx->created_at);
+                $newDescription = $data['description'] ?? $oldTrx->description;
+                $newDate = isset($data['transaction_date']) ? Carbon::parse($data['transaction_date']) : Carbon::parse($oldTrx->created_at);
                 $updatedAt = now();
 
                 // 3. Update Transaction (Manual Query)

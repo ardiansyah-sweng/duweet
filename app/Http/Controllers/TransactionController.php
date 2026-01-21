@@ -235,11 +235,7 @@ class TransactionController extends Controller
             'transaction_date' => 'nullable|date|date_format:Y-m-d H:i:s',
         ]);
 
-        $result = Transaction::updateTransactionRaw(
-            (int) $id,
-            $validated['description'] ?? null,
-            $validated['transaction_date'] ?? null
-        );
+        $result = Transaction::updateTransactionRaw((int) $id, $validated);
 
         if (!$result['success']) {
             return response()->json($result, 500);
