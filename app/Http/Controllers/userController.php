@@ -220,4 +220,74 @@ class UserController extends Controller
             ]
         ], 200);
     }
+
+    /**
+     * Get users yang belum setup account
+     */
+    public function index(Request $request)
+    {
+        try {
+            $users = User::getUsersWithStatus('belum_setup');
+
+            return response()->json([
+                'status' => 'success',
+                'keterangan' => 'Data user yang belum setup account',
+                'total_data' => $users->count(),
+                'data' => $users
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'keterangan' => 'Error: ' . $e->getMessage(),
+                'total_data' => 0,
+                'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Get users yang sudah setup account
+     */
+    public function sudahSetupAccount(Request $request)
+    {
+        try {
+            $users = User::getUsersWithStatus('sudah_setup');
+
+            return response()->json([
+                'status' => 'success',
+                'keterangan' => 'Data user yang sudah setup account',
+                'total_data' => $users->count(),
+                'data' => $users
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'keterangan' => 'Error: ' . $e->getMessage(),
+                'total_data' => 0,
+                'data' => []
+            ], 500);
+        }
+    }
+
+   
+    public function getAllWithStatus()
+    {
+        try {
+            $users = User::getUsersWithStatus();
+
+            return response()->json([
+                'status' => 'success',
+                'keterangan' => 'Data user berdasarkan status setup account',
+                'total_data' => count($users),
+                'data' => $users
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'keterangan' => 'Error: ' . $e->getMessage(),
+                'total_data' => 0,
+                'data' => []
+            ], 500);
+        }
+    }
 }

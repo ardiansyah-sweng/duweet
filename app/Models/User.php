@@ -342,4 +342,36 @@ class User extends Authenticatable
 
         return array_values($users);
     }
+
+    /** 
+     * Get users with account setup status
+     */
+    public static function getUsersWithStatus($status = null)
+    {
+        $sql = "
+            SELECT
+                u.id,
+                u.name AS nama,
+                u.email,
+                CASE
+                    WHEN ua.id_user IS NOT NULL THEN 'Sudah Setup'
+                    ELSE 'Belum Setup'
+                END AS status_account
+            FROM users u
+            LEFT JOIN (
+                SELECT DISTINCT id_user
+                FROM user_accounts
+            ) ua ON u.id = ua.id_user
+        ";
+
+        if ($status === 'belum_setup') {
+            $sql .= " WHERE ua.id_user IS NULL";
+        } elseif ($status === 'sudah_setup') {
+            $sql .= " WHERE ua.id_user IS NOT NULL";
+        }
+
+        $sql .= " ORDER BY u.id";
+
+        return DB::select($sql);
+    }
 }
