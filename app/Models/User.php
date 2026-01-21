@@ -1,7 +1,12 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use App\Constants\UserColumns;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use App\Models\UserAccount;
 use Illuminate\Support\Facades\DB;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,8 +18,25 @@ use App\Models\UserFinancialAccount;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
 
-class User extends Authenticatable
+class User extends Model
 {
+    use HasFactory;
+
+
+    protected $table = 'users';
+    protected $primaryKey = UserColumns::ID;
+    protected $fillable = UserColumns::getFillable();
+
+    protected $casts = [
+        UserColumns::TANGGAL_LAHIR => 'integer',
+        UserColumns::BULAN_LAHIR   => 'integer',
+        UserColumns::TAHUN_LAHIR   => 'integer',
+        UserColumns::USIA          => 'integer',
+    ];
+
+    public function accounts()
+    {
+        return $this->hasMany(UserAccount::class, 'user_id', 'id');
     use HasFactory, Notifiable;
 
     protected $table = 'users';
@@ -142,6 +164,31 @@ class User extends Authenticatable
      */
     public function userFinancialAccounts()
     {
+        return $this->hasMany(UserAccount::class, 'id_user');
+    }
+
+    public function scopeActiveUsers($query)
+    {
+        return $query->whereHas('accounts', function ($q) {
+            $q->where('is_active', true);
+        });
+    }
+     
+    public static function getActiveUsers()
+    {
+        return self::with(['accounts' => function ($q) {
+            $q->where('is_active', true)
+              ->select('id', 'user_id', 'username', 'email', 'is_active');
+        }])
+        ->whereHas('accounts', function ($q) {
+            $q->where('is_active', true);
+        })
+        ->orderBy(UserColumns::NAME)
+        ->get([
+            UserColumns::ID,
+            UserColumns::NAME,
+            UserColumns::EMAIL,
+        ]);
         return $this->hasMany(UserFinancialAccount::class, 'user_id');
     }
 
