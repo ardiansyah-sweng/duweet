@@ -58,7 +58,7 @@ class Transaction extends Model
     {
         // Gunakan nama tabel dari config bila ada
         $transactionsTable = config('db_tables.transaction');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $accountsTable = config('db_tables.financial_account');
 
         // Tentukan fungsi format tanggal berdasarkan driver database
         try {
@@ -495,9 +495,9 @@ class Transaction extends Model
         ?int $userId = null
     ): \Illuminate\Support\Collection {
         $transactionsTable = config('db_tables.transaction');
-        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
-        $usersTable = config('db_tables.user', 'users');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $userAccountsTable = config('db_tables.user_account');
+        $usersTable = config('db_tables.user');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         $sql = "
             SELECT 
@@ -660,7 +660,7 @@ class Transaction extends Model
         Carbon $endDate
     ): array {
         $transactionsTable = config('db_tables.transaction');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         // Tentukan format periode (MySQL / SQLite / PostgreSQL)
         try {
@@ -724,7 +724,7 @@ class Transaction extends Model
     public static function getTotalCashinByPeriodAdmin (Carbon $startDate, Carbon $endDate)
     {
         $transactionsTable = config('db_tables.transaction');
-        $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $financialAccountsTable = config('db_tables.financial_account');
 
         try {
             $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
