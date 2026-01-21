@@ -81,8 +81,6 @@ class UserController extends Controller
             'name'       => 'sometimes|string|max:255',
             'email'      => 'sometimes|email',
             'password'   => 'sometimes|string|min:8',
-            'photo'      => 'sometimes|string',
-            'preference' => 'sometimes|array',
         ]);
 
         $result = User::updateUserRaw($id, $validated);
