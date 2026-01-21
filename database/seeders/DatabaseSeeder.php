@@ -56,6 +56,9 @@ class DatabaseSeeder extends Seeder
             FinancialAccountSeeder::class,
             UserSeeder::class,
             UserAccountSeeder::class,
+            AccountSeeder::class, // Seed full account hierarchy including INCOME
+            // FinancialAccountSeeder::class, // Not needed when using AccountSeeder
+            TransactionSeeder::class, // Seed sample income transactions
             AccountSeeder::class,
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
