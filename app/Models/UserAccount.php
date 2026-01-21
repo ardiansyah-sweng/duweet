@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Constants\UserAccountColumns;
+use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -178,8 +179,7 @@ class UserAccount extends Model
         return DB::update($query, [$hashed, $email]);
     }
 
-
-   /**
+/**
  * DML: Ambil user yang tidak login dalam periode hari tertentu 
  */
 public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
@@ -197,46 +197,70 @@ public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
     return DB::select($sql, [$days]);
 }
 
-/**
- * DML: Cari user berdasarkan email dan password (LOGIKA FIX)
- */
-public static function cariUserByEmailLogin(string $email, string $password)
-{
-    $user = DB::select(
-        "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
-        [$email]
-    );
 
-    if (!empty($user)) {
-        $userData = $user[0];
+    /**
+     * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
+     */
+    public static function cariUserByUsernameLogin(string $username, string $password)
+    {
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+            [$username]
+        );
 
-        if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
-            return $userData;
+        // Hash::check
+        if (!empty($user)) {
+            $userData = $user[0];
+
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
         }
+
+        return null;
     }
 
-    return null;
-}
+    public static function HitungTotalAccountperUser($userId)
+    {
+        $query = "
+            SELECT 
+                u." . UserColumns::ID . " AS user_id,
+                u." . UserColumns::NAME . " AS name,
+                u." . UserColumns::EMAIL . " AS email,
+                u." . UserColumns::FIRST_NAME . " AS first_name,
+                u." . UserColumns::MIDDLE_NAME . " AS middle_name,
+                u." . UserColumns::LAST_NAME . " AS last_name,
+                COUNT(ua." . UserAccountColumns::ID . ") AS total_accounts
+            FROM users u
+            LEFT JOIN user_accounts ua ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
+            WHERE u." . UserColumns::ID . " = ?
+            GROUP BY 
+                u." . UserColumns::ID . ",
+                u." . UserColumns::NAME . ",
+                u." . UserColumns::EMAIL . ",
+                u." . UserColumns::FIRST_NAME . ",
+                u." . UserColumns::MIDDLE_NAME . ",
+                u." . UserColumns::LAST_NAME . "
+            LIMIT 1
+        ";
 
-/**
- * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
- */
-public static function cariUserByUsernameLogin(string $username, string $password)
-{
-    $user = DB::select(
-        "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
-        [$username]
-    );
+        $result = DB::selectOne($query, [$userId]);
 
-    if (!empty($user)) {
-        $userData = $user[0];
-
-        if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
-            return $userData;
+        if (!$result) {
+            return null;
         }
-    }
 
-    return null;
-}
+        return [
+            'user' => [
+                'id' => (int) $result->user_id,
+                'name' => $result->name,
+                'email' => $result->email,
+                'first_name' => $result->first_name,
+                'middle_name' => $result->middle_name,
+                'last_name' => $result->last_name,
+            ],
+            'total_accounts' => (int) $result->total_accounts,
+        ];
+    }
 
 }
