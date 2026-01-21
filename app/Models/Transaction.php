@@ -822,7 +822,7 @@ class Transaction extends Model
 
                 // 3. Update Transaction (Manual Query)
                 DB::update(
-                    "UPDATE {$transactionTable} SET description = ?, created_at = ?, updated_at = ? WHERE id = ?",
+                    "UPDATE {$transactionTable} SET description = ?, transaction_date = ?, updated_at = ? WHERE id = ?",
                     [
                         $newDescription,
                         $newDate,
