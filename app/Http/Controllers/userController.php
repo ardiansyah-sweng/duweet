@@ -220,4 +220,52 @@ class UserController extends Controller
             ]
         ], 200);
     }
+
+    public function countPerTanggal(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'start_date' => 'nullable|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d',
+        ]);
+
+        $data = User::countUserPerTanggal(
+            $validated['start_date'] ?? null,
+            $validated['end_date'] ?? null
+        );
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada data untuk rentang tanggal yang diminta.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
+  
+    public function countPerBulan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'year' => 'nullable|integer|min:1900|max:' . date('Y'),
+        ]);
+
+        $data = User::countUserPerBulan($validated['year'] ?? null);
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada data untuk tahun yang diminta.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
 }

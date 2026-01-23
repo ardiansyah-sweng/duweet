@@ -342,4 +342,54 @@ class User extends Authenticatable
 
         return array_values($users);
     }
+
+    public static function countUserPerTanggal($startDate = null, $endDate = null): array
+    {
+        $query = "SELECT DATE(created_at) AS tanggal, COUNT(*) AS jumlah_user FROM users";
+        $params = [];
+
+        if ($startDate && $endDate) {
+            $query .= " WHERE DATE(created_at) BETWEEN ? AND ?";
+            $params = [$startDate, $endDate];
+        } elseif ($startDate) {
+            $query .= " WHERE DATE(created_at) >= ?";
+            $params = [$startDate];
+        } elseif ($endDate) {
+            $query .= " WHERE DATE(created_at) <= ?";
+            $params = [$endDate];
+        }
+
+        $query .= " GROUP BY DATE(created_at) ORDER BY tanggal ";
+        $results = DB::select($query, $params);
+
+        return array_map(function ($row) {
+            return [
+                'tanggal' => $row->tanggal,
+                'jumlah_user' => (int) $row->jumlah_user,
+            ];
+        }, $results);
+    }
+
+    
+    public static function countUserPerBulan($year = null): array
+    {
+        $query = "SELECT YEAR(created_at) AS tahun, MONTH(created_at) AS bulan, COUNT(*) AS jumlah_user FROM users";
+        $params = [];
+
+        if ($year) {
+            $query .= " WHERE YEAR(created_at) = ?";
+            $params = [$year];
+        }
+
+        $query .= " GROUP BY YEAR(created_at), MONTH(created_at) ORDER BY tahun DESC, bulan DESC";
+        $results = DB::select($query, $params);
+
+        return array_map(function ($row) {
+            return [
+                'tahun' => (int) $row->tahun,
+                'bulan' => (int) $row->bulan,
+                'jumlah_user' => (int) $row->jumlah_user,
+            ];
+        }, $results);
+    }
 }
