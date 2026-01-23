@@ -374,5 +374,23 @@ class FinancialAccountController extends Controller
             ], 500);
         }
     }
+
+    public function filterByType(Request $request, $type)
+    {
+        try {
+            $model = new FinancialAccount();
+            $data = $model->filterFinancialByType($type);
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
         

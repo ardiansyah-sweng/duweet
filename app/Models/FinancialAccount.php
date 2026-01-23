@@ -250,4 +250,8 @@ public static function getActiveAccounts()
         return $result !== null;
     }
 
+    public function filterFinancialByType($type){
+        $sql = "SELECT * FROM {$this->table} WHERE type = ?";
+        return DB::select($sql, [$type]);
+    }
 }
