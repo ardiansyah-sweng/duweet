@@ -381,7 +381,7 @@ class User extends Authenticatable
             $params = [$year];
         }
 
-        $query .= " GROUP BY YEAR(created_at), MONTH(created_at) ORDER BY tahun DESC, bulan DESC";
+        $query .= " GROUP BY YEAR(created_at), MONTH(created_at) ORDER BY tahun DESC, bulan ASC ";
         $results = DB::select($query, $params);
 
         return array_map(function ($row) {
