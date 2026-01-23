@@ -69,6 +69,7 @@ Route::prefix('user-account')->group(function () {
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+    
 });
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
@@ -97,6 +98,7 @@ Route::prefix('transactions')->group(function () {
 Route::prefix('financial-account')->group(function () {
     Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+    Route::get('/filter/type/{type}', [FinancialAccountController::class, 'filterByType'])->name('api.financial-account.filter-by-type');
 
     // Liquid Assets Route - per user_account_id
     Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
