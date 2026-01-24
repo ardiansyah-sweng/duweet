@@ -601,17 +601,13 @@ class Transaction extends Model
      * FROM transactions t
      * INNER JOIN financial_accounts fa ON t.financial_account_id = fa.id
      * WHERE fa.type = 'EX'
-     *   AND t.balance_effect = 'increase'
+     *   AND t.balance_effect = 'decrease'
      *   AND fa.is_group = 0
      *   AND t.created_at BETWEEN ? AND ?
      * GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
      * ORDER BY periode ASC;
      * -----------------------------------------------------------
-     * 
-     * NOTE: Dalam double-entry bookkeeping sistem ini:
-     * - Expenses (EX) menggunakan balance_effect = 'increase' (bukan 'decrease')
-     * - Karena expense account bertambah (debit) saat ada pengeluaran
-     *
+ 
      * @param \Carbon\Carbon $startDate
      * @param \Carbon\Carbon $endDate
      * @return \Illuminate\Support\Collection
@@ -864,6 +860,7 @@ class Transaction extends Model
 
         return (int) DB::getPdo()->lastInsertId();
     }
+
 
      /** Spending summary by period */
     public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
