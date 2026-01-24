@@ -305,7 +305,6 @@ class UserAccount extends Model
                 $userId = (int) $row->user_id;
                 $userAccountId = (int) $row->user_account_id;
                 
-                // Inisialisasi user jika belum ada
                 if (!isset($users[$userId])) {
                     $users[$userId] = [
                         'user_id' => $userId,
@@ -315,7 +314,6 @@ class UserAccount extends Model
                     ];
                 }
                 
-                // Inisialisasi user account jika belum ada
                 if (!isset($users[$userId]['user_accounts'][$userAccountId])) {
                     $users[$userId]['user_accounts'][$userAccountId] = [
                         'user_account_id' => $userAccountId,
@@ -326,7 +324,6 @@ class UserAccount extends Model
                     ];
                 }
                 
-                // Tambahkan financial account jika ada (tidak null)
                 if ($row->financial_account_id !== null) {
                     $users[$userId]['user_accounts'][$userAccountId]['financial_accounts'][] = [
                         'financial_account_id' => (int) $row->financial_account_id,
@@ -338,14 +335,13 @@ class UserAccount extends Model
                 }
             }
             
-            // Konversi array associative ke indexed array
             foreach ($users as &$user) {
                 $user['user_accounts'] = array_values($user['user_accounts']);
             }
             
             return array_values($users);
         } catch (\Exception $e) {
-            Log::error('Error in GetStructureNestedAccountUser: ' . $e->getMessage());
+            Log::error('Gagal Mengabil Data Structure Bertinggal Akun user: ' . $e->getMessage());
             return [];
         }
     }

@@ -248,7 +248,7 @@ class UserAccountController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Nested user account structure retrieved successfully',
+                'message' => 'Nested user account structure retrieved success',
                 'count' => count($nestedStructure),
                 'data' => $nestedStructure
             ], 200);
