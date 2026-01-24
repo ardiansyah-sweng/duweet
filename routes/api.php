@@ -15,6 +15,7 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -168,3 +169,5 @@ Route::get(
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 //Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+Route::get('/admin/total-cash-out', [AdminController::class, 'SumCashOutByPeriod']);
