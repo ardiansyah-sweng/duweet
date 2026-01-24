@@ -173,4 +173,173 @@ class User extends Authenticatable
             ];
         }, $results);
     }
+
+    /**
+     * Ambil data user yang login berdasarkan user_account_id
+     * Digunakan untuk endpoint /api/userlog
+     */
+    public static function AmbilDataUserYangLogin($userAccountId)
+    {
+        $query = "SELECT 
+                    u.id as user_id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email as user_email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    ua.id as user_account_id,
+                    ua.username,
+                    ua.email as account_email,
+                    ua.is_active,
+                    ua.verified_at,
+                    GROUP_CONCAT(ut.number SEPARATOR ',') as telephones
+                  FROM users u
+                  INNER JOIN user_accounts ua ON u.id = ua.id_user
+                  LEFT JOIN user_telephones ut ON u.id = ut.user_id
+                  WHERE ua.id = ?
+                  AND ua.is_active = 1
+                  GROUP BY u.id, u.email, u.name, u.first_name, u.middle_name, u.last_name,
+                           u.provinsi, u.kabupaten, u.kecamatan, u.jalan, u.kode_pos,
+                           u.tanggal_lahir, u.bulan_lahir, u.tahun_lahir, u.usia,
+                           ua.id, ua.username, ua.email, ua.is_active, ua.verified_at
+                  LIMIT 1";
+
+        $userData = DB::selectOne($query, [$userAccountId]);
+
+        if (!$userData) {
+            return null;
+        }
+
+        $telephonesArray = $userData->telephones 
+            ? explode(',', $userData->telephones) 
+            : [];
+
+        return [
+            'user_id' => $userData->user_id,
+            'user_account_id' => $userData->user_account_id,
+            'username' => $userData->username,
+            'email' => $userData->account_email,
+            'profile' => [
+                'name' => $userData->name,
+                'first_name' => $userData->first_name,
+                'middle_name' => $userData->middle_name,
+                'last_name' => $userData->last_name,
+                'tanggal_lahir' => $userData->tanggal_lahir,
+                'bulan_lahir' => $userData->bulan_lahir,
+                'tahun_lahir' => $userData->tahun_lahir,
+                'usia' => $userData->usia,
+            ],
+            'address' => [
+                'provinsi' => $userData->provinsi,
+                'kabupaten' => $userData->kabupaten,
+                'kecamatan' => $userData->kecamatan,
+                'jalan' => $userData->jalan,
+                'kode_pos' => $userData->kode_pos,
+            ],
+            'telephones' => $telephonesArray,
+            'account_status' => [
+                'is_active' => (bool) $userData->is_active,
+                'verified_at' => $userData->verified_at,
+            ]
+        ];
+    }
+
+    /**
+     * Ambil semua user dengan relasi telephones dan accounts
+     */
+    public static function GetUser()
+    {
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    ut.id as telephone_id,
+                    ut.number as telephone_number,
+                    ua.id as user_account_id,
+                    ua.username,
+                    ua.email as account_email,
+                    ua.verified_at,
+                    ua.is_active
+                  FROM users u
+                  LEFT JOIN user_telephones ut ON u.id = ut.user_id
+                  LEFT JOIN user_accounts ua ON u.id = ua.id_user
+                  ORDER BY u.id, ut.id, ua.id";
+        
+        $results = DB::select($query);
+
+        $users = [];
+        foreach ($results as $row) {
+            $userId = $row->id;
+            
+            if (!isset($users[$userId])) {
+                $users[$userId] = [
+                    'id' => $row->id,
+                    'name' => $row->name,
+                    'first_name' => $row->first_name,
+                    'middle_name' => $row->middle_name,
+                    'last_name' => $row->last_name,
+                    'email' => $row->email,
+                    'provinsi' => $row->provinsi,
+                    'kabupaten' => $row->kabupaten,
+                    'kecamatan' => $row->kecamatan,
+                    'jalan' => $row->jalan,
+                    'kode_pos' => $row->kode_pos,
+                    'tanggal_lahir' => $row->tanggal_lahir,
+                    'bulan_lahir' => $row->bulan_lahir,
+                    'tahun_lahir' => $row->tahun_lahir,
+                    'usia' => $row->usia,
+                    'telephones' => [],
+                    'accounts' => []
+                ];
+            }
+            
+            if ($row->telephone_id !== null) {
+                $telephoneExists = false;
+                foreach ($users[$userId]['telephones'] as $tel) {
+                    if ($tel['number'] === $row->telephone_number) {
+                        $telephoneExists = true;
+                        break;
+                    }
+                }
+                if (!$telephoneExists) {
+                    $users[$userId]['telephones'][] = [
+                        'number' => $row->telephone_number
+                    ];
+                }
+            }
+
+            if ($row->user_account_id !== null) {
+                $users[$userId]['accounts'][] = [
+                    'user_account_id' => $row->user_account_id,
+                    'username' => $row->username,
+                    'email' => $row->account_email,
+                    'verified_at' => $row->verified_at,
+                    'is_active' => (bool) $row->is_active
+                ];
+            }
+        }
+
+        return array_values($users);
+    }
 }

@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MonthlyExpenseController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserAccountTestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
@@ -17,6 +19,12 @@ use App\Http\Controllers\FinancialAccountController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+Route::post('/login', [AuthController::class, 'ProsesLogin']);
+
+Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
+
 
 // =============================================================
 // 1. USER ACCOUNT (Prioritas versi Kamu: ada storeRaw & destroyRaw)
@@ -51,6 +59,7 @@ Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::c
 // UserAccount API Routes (no CSRF protection needed)
 Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
+Route::get('/user-accounts/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
 
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
@@ -80,6 +89,8 @@ Route::prefix('transactions')->group(function () {
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
+    Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
+    Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
 });
 
 // Financial Account API Routes
@@ -91,6 +102,8 @@ Route::prefix('financial-account')->group(function () {
     Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
     // Liquid Assets Route - semua user
     Route::get('/liquid-assets/all-users', [FinancialAccountController::class, 'getAllUsersLiquidAssets'])->name('api.financial-account.liquid-assets.all-users');
+    // Liquid Assets Summary untuk admin
+    Route::get('/liquid-assets/admin/summary', [FinancialAccountController::class, 'adminLiquidAssetsSummary'])->name('api.financial-account.liquid-assets.admin-summary');
 });
 
 // =============================================================
@@ -99,11 +112,40 @@ Route::prefix('financial-account')->group(function () {
 Route::prefix('reports')->group(function () {
     Route::get('/transactions-per-user-account', [ReportController::class, 'getTotalTransactionsPerUserAccount'])
         ->name('api.reports.transactions-per-user-account');
+
+    Route::get('/surplus-deficit', [ReportController::class, 'surplusDeficitByPeriod'])
+        ->name('api.reports.surplus-deficit');
     Route::get('/sum-by-type', [ReportController::class, 'sumFinancialAccountsByType'])
         ->name('api.reports.sum-by-type');
     Route::get(
         '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
         ->name('api.reports.surplus-defisit');
+});
+
+// =============================================================
+// FINANCIAL ACCOUNT - SOFT DELETE / SET INACTIVE
+// =============================================================
+Route::prefix('financial-accounts')->controller(FinancialAccountController::class)->group(function () {
+    // Get all active accounts
+    Route::get('/', 'getActiveAccounts');
+    
+    // Get account detail by ID
+    Route::get('/{id}', 'show')->whereNumber('id');
+    
+    // Soft delete single account
+    Route::delete('/{id}/soft-delete', 'softDelete')->whereNumber('id');
+    
+    // Restore soft-deleted account
+    Route::post('/{id}/restore', 'restore')->whereNumber('id');
+    
+    // Get all inactive accounts (trash/recycle bin)
+    Route::get('/trash/all', 'getInactiveAccounts');
+    
+    // Soft delete multiple accounts
+    Route::post('/batch/soft-delete', 'softDeleteMultiple');
+    
+    // Get statistics
+    Route::get('/stats/summary', 'getStatistics');
 });
 
 // =============================================================
@@ -122,8 +164,11 @@ Route::get(
 );
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
 
 Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
+
+Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);

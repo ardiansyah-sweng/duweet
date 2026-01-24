@@ -224,6 +224,23 @@ class UserAccountController extends Controller
         ]);
     }
 
+    public function countAccountsPerUser($userId): JsonResponse
+    {
+        $summary = UserAccount::HitungTotalAccountperUser($userId);
+
+        if (!$summary) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $summary
+        ]);
+    }
+
     // public function findByEmail(Request $request): JsonResponse
     // {
     //     $request->validate([
@@ -242,6 +259,5 @@ class UserAccountController extends Controller
     //     ]);
     // }
 
-}
-
+}   
 

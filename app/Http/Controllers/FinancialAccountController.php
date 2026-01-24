@@ -143,5 +143,236 @@ class FinancialAccountController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * ==================== SOFT DELETE ENDPOINTS ====================
+     */
+
+    /**
+     * Soft delete (inactivate) a financial account
+     * Mengubah is_active menjadi 0
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function softDelete($id)
+    {
+        try {
+            // Check if account exists
+            $account = DB::selectOne(
+                "SELECT id, is_active, name FROM financial_accounts WHERE id = ?",
+                [$id]
+            );
+
+            if (!$account) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Financial account not found'
+                ], 404);
+            }
+
+            // Check if already inactive
+            if ($account->is_active == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account already inactive'
+                ], 400);
+            }
+
+            // Soft delete
+            $result = FinancialAccount::softDeleteById($id);
+
+            if ($result === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to soft delete account'
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account soft-deleted successfully',
+                'data' => [
+                    'id' => $id,
+                    'name' => $account->name,
+                    'status' => 'inactive'
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Restore (reactivate) a soft-deleted account
+     * Mengubah is_active menjadi 1
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function restore($id)
+    {
+        try {
+            // Check if account exists
+            $account = DB::selectOne(
+                "SELECT id, is_active, name FROM financial_accounts WHERE id = ?",
+                [$id]
+            );
+
+            if (!$account) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Financial account not found'
+                ], 404);
+            }
+
+            // Check if already active
+            if ($account->is_active == 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account already active'
+                ], 400);
+            }
+
+            // Restore
+            $result = FinancialAccount::restoreById($id);
+
+            if ($result === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to restore account'
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account restored successfully',
+                'data' => [
+                    'id' => $id,
+                    'name' => $account->name,
+                    'status' => 'active'
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all inactive (soft-deleted) accounts
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getInactiveAccounts()
+    {
+        try {
+            $inactive = FinancialAccount::getInactiveAccounts();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inactive accounts retrieved successfully',
+                'count' => count($inactive),
+                'data' => $inactive
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Soft delete multiple accounts
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function softDeleteMultiple(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'ids' => 'required|array|min:1',
+                'ids.*' => 'integer'
+            ]);
+
+            $ids = $validated['ids'];
+            $result = FinancialAccount::softDeleteByIds($ids);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Accounts soft-deleted successfully',
+                'data' => [
+                    'ids_deleted' => $ids,
+                    'count' => $result
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /* Admin liquid assets summary: total, per user_account, per financial account
+    */
+    public function adminLiquidAssetsSummary()
+    {
+        try {
+            $summary = UserFinancialAccount::getAdminLiquidAssetsSummary();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin liquid assets summary',
+                'data' => $summary,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get account statistics (active, inactive, total)
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStatistics()
+    {
+        try {
+            $stats = DB::selectOne(
+                "SELECT 
+                    COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_count,
+                    COUNT(CASE WHEN is_active = 0 THEN 1 END) as inactive_count,
+                    COUNT(*) as total_count,
+                    SUM(CASE WHEN is_active = 1 THEN balance ELSE 0 END) as total_active_balance
+                FROM financial_accounts"
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Statistics retrieved successfully',
+                'data' => $stats
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
         
