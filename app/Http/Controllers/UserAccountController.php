@@ -241,6 +241,26 @@ class UserAccountController extends Controller
         ]);
     }
 
+    public function GetstructureNested(): JsonResponse
+    {
+        try {
+            $nestedStructure = UserAccount::GetStructureNestedAccountUser();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Nested user account structure retrieved successfully',
+                'count' => count($nestedStructure),
+                'data' => $nestedStructure
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving nested user account structure',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     // public function findByEmail(Request $request): JsonResponse
     // {
     //     $request->validate([

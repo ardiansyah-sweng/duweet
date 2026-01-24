@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Constants\FinancialAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
+use Illuminate\Support\Facades\Log;
 
 class UserAccount extends Model
 {
@@ -264,4 +267,87 @@ class UserAccount extends Model
             'total_accounts' => (int) $result->total_accounts,
         ];
     }
+
+    public static function GetStructureNestedAccountUser()
+    {
+        try {
+            $query = "
+                SELECT
+                    u." . UserColumns::ID . " AS user_id,
+                    u." . UserColumns::NAME . " AS user_name,
+                    u." . UserColumns::EMAIL . " AS user_email,
+                    ua." . UserAccountColumns::ID . " AS user_account_id,
+                    ua." . UserAccountColumns::USERNAME . " AS username,
+                    ua." . UserAccountColumns::EMAIL . " AS user_account_email,
+                    ua." . UserAccountColumns::IS_ACTIVE . " AS user_account_is_active,
+                    fa." . FinancialAccountColumns::ID . " AS financial_account_id,
+                    fa." . FinancialAccountColumns::NAME . " AS financial_account_name,
+                    fa." . FinancialAccountColumns::TYPE . " AS financial_account_type,
+                    ufa." . UserFinancialAccountColumns::BALANCE . " AS user_financial_balance,
+                    fa." . FinancialAccountColumns::IS_ACTIVE . " AS financial_account_is_active
+                FROM users u
+                LEFT JOIN user_accounts ua ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
+                LEFT JOIN user_financial_accounts ufa ON ufa.user_account_id = ua." . UserAccountColumns::ID . "
+                LEFT JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa.financial_account_id
+                WHERE ua." . UserAccountColumns::ID . " IS NOT NULL
+                ORDER BY u." . UserColumns::ID . ", ua." . UserAccountColumns::ID . ", fa." . FinancialAccountColumns::ID . "
+            ";
+            
+            $results = DB::select($query);
+            
+            if (empty($results)) {
+                return [];
+            }
+            
+            $users = [];
+            
+            foreach ($results as $row) {
+                $userId = (int) $row->user_id;
+                $userAccountId = (int) $row->user_account_id;
+                
+                // Inisialisasi user jika belum ada
+                if (!isset($users[$userId])) {
+                    $users[$userId] = [
+                        'user_id' => $userId,
+                        'user_name' => $row->user_name,
+                        'user_email' => $row->user_email,
+                        'user_accounts' => [],
+                    ];
+                }
+                
+                // Inisialisasi user account jika belum ada
+                if (!isset($users[$userId]['user_accounts'][$userAccountId])) {
+                    $users[$userId]['user_accounts'][$userAccountId] = [
+                        'user_account_id' => $userAccountId,
+                        'username' => $row->username,
+                        'email' => $row->user_account_email,
+                        'is_active' => (bool) $row->user_account_is_active,
+                        'financial_accounts' => [],
+                    ];
+                }
+                
+                // Tambahkan financial account jika ada (tidak null)
+                if ($row->financial_account_id !== null) {
+                    $users[$userId]['user_accounts'][$userAccountId]['financial_accounts'][] = [
+                        'financial_account_id' => (int) $row->financial_account_id,
+                        'name' => $row->financial_account_name,
+                        'type' => $row->financial_account_type,
+                        'balance' => (float) $row->user_financial_balance,
+                        'is_active' => (bool) $row->financial_account_is_active,
+                    ];
+                }
+            }
+            
+            // Konversi array associative ke indexed array
+            foreach ($users as &$user) {
+                $user['user_accounts'] = array_values($user['user_accounts']);
+            }
+            
+            return array_values($users);
+        } catch (\Exception $e) {
+            Log::error('Error in GetStructureNestedAccountUser: ' . $e->getMessage());
+            return [];
+        }
+    }
+
 }
