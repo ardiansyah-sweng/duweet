@@ -161,8 +161,7 @@ Route::get(
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
 
-Route::get('/users/count-per-tanggal', [UserController::class, 'countPerTanggal']);
-Route::get('/users/count-per-bulan', [UserController::class, 'countPerBulan']);
+Route::get('/users/countUser', [UserController::class, 'countUserpertanggalandbulan'])->name('api.users.count-user-pertanggalbulan');
 
 
 Route::get(

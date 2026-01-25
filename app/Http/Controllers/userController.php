@@ -15,6 +15,7 @@ use App\Constants\UserAccountColumns;
 use App\Constants\UserTelephoneColumns;
 use App\Constants\UserFinancialAccountColumns;
 use App\Constants\TransactionColumns;
+use Carbon\Carbon;
 
 
 class UserController extends Controller
@@ -221,49 +222,47 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function countPerTanggal(Request $request): JsonResponse
+    public function countUserpertanggalandbulan(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'start_date' => 'nullable|date_format:Y-m-d',
-            'end_date' => 'nullable|date_format:Y-m-d',
+            'date' => 'nullable|date_format:Y-m-d',
+            'month' => 'nullable|date_format:Y-m',   
         ]);
 
-        $data = User::countUserPerTanggal(
-            $validated['start_date'] ?? null,
-            $validated['end_date'] ?? null
-        );
-
-        if (!$data) {
+        if (empty($validated['date']) && empty($validated['month'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ada data untuk rentang tanggal yang diminta.',
-            ], 404);
+                'message' => 'Kirim salah satu: date (Y-m-d) atau month (Y-m).',
+            ], 422);
         }
+
+        if (!empty($validated['date']) && !empty($validated['month'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gunakan salah satu saja: date atau month.',
+            ], 422);
+        }
+
+        $year = null;
+        $month = null;
+        $day = null;
+
+        if (!empty($validated['date'])) {
+            $date = Carbon::createFromFormat('Y-m-d', $validated['date']);
+            $year = (int) $date->year;
+            $month = (int) $date->month;
+            $day = (int) $date->day;
+        } elseif (!empty($validated['month'])) {
+            $monthOnly = Carbon::createFromFormat('Y-m', $validated['month']);
+            $year = (int) $monthOnly->year;
+            $month = (int) $monthOnly->month;
+        }
+
+        $data = User::countUserpertanggaldanbulan($year, $month, $day);
 
         return response()->json([
             'success' => true,
-            'data' => $data,
-        ]);
-    }
-
-  
-    public function countPerBulan(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'year' => 'nullable|integer|min:1900|max:' . date('Y'),
-        ]);
-
-        $data = User::countUserPerBulan($validated['year'] ?? null);
-
-        if (!$data) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak ada data untuk tahun yang diminta.',
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
+            'message' => 'Berhasil menghitung user.',
             'data' => $data,
         ]);
     }

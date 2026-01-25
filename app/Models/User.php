@@ -13,6 +13,7 @@ use App\Models\UserFinancialAccount;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
 
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -343,53 +344,33 @@ class User extends Authenticatable
         return array_values($users);
     }
 
-    public static function countUserPerTanggal($startDate = null, $endDate = null): array
+    public static function countUserpertanggaldanbulan(?int $year = null, ?int $month = null, ?int $day = null): array
     {
-        $query = "SELECT DATE(created_at) AS tanggal, COUNT(*) AS jumlah_user FROM users";
+        $query = "SELECT COUNT(*) AS jumlah_user FROM users WHERE 1=1";
         $params = [];
 
-        if ($startDate && $endDate) {
-            $query .= " WHERE DATE(created_at) BETWEEN ? AND ?";
-            $params = [$startDate, $endDate];
-        } elseif ($startDate) {
-            $query .= " WHERE DATE(created_at) >= ?";
-            $params = [$startDate];
-        } elseif ($endDate) {
-            $query .= " WHERE DATE(created_at) <= ?";
-            $params = [$endDate];
+        if ($year !== null) {
+            $query .= " AND YEAR(created_at) = ?";
+            $params[] = $year;
         }
 
-        $query .= " GROUP BY DATE(created_at) ORDER BY tanggal ";
-        $results = DB::select($query, $params);
-
-        return array_map(function ($row) {
-            return [
-                'tanggal' => $row->tanggal,
-                'jumlah_user' => (int) $row->jumlah_user,
-            ];
-        }, $results);
-    }
-
-    
-    public static function countUserPerBulan($year = null): array
-    {
-        $query = "SELECT YEAR(created_at) AS tahun, MONTH(created_at) AS bulan, COUNT(*) AS jumlah_user FROM users";
-        $params = [];
-
-        if ($year) {
-            $query .= " WHERE YEAR(created_at) = ?";
-            $params = [$year];
+        if ($month !== null) {
+            $query .= " AND MONTH(created_at) = ?";
+            $params[] = $month;
         }
 
-        $query .= " GROUP BY YEAR(created_at), MONTH(created_at) ORDER BY tahun DESC, bulan ASC ";
-        $results = DB::select($query, $params);
+        if ($day !== null) {
+            $query .= " AND DAY(created_at) = ?";
+            $params[] = $day;
+        }
 
-        return array_map(function ($row) {
-            return [
-                'tahun' => (int) $row->tahun,
-                'bulan' => (int) $row->bulan,
-                'jumlah_user' => (int) $row->jumlah_user,
-            ];
-        }, $results);
+        $result = DB::selectOne($query, $params);
+
+        return [
+            'tahun' => $year,
+            'bulan' => $month,
+            'tanggal' => $day,
+            'jumlah_user' => isset($result->jumlah_user) ? (int) $result->jumlah_user : 0,
+        ];
     }
 }
