@@ -168,3 +168,6 @@ Route::get(
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 //Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+
+Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
