@@ -388,8 +388,7 @@ class User extends Authenticatable
             $query .= "u.id = ?";
             $params[] = $searchTerm;
         }
-        else {
-            
+        else {  
             $query .= "(u.name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
             $params = [$likeTerm, $likeTerm, $likeTerm];
         }
