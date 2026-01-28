@@ -350,13 +350,11 @@ class User extends Authenticatable
             return [];
         }
 
-        // Tentukan nama tabel user_telephones
         $userTelephoneTable = config('db_tables.user_telephone', 'user_telephones');
         
         $params = [];
         $likeTerm = '%' . $searchTerm . '%';
 
-        // Build query dengan explicit column names
         $query = "SELECT 
                     u.id,
                     u.name,
