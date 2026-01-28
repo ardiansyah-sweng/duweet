@@ -380,24 +380,19 @@ class User extends Authenticatable
                   LEFT JOIN {$userTelephoneTable} ut ON u.id = ut.user_id
                   WHERE ";
 
-        // Deteksi tipe input
         if (strpos($searchTerm, '@') !== false) {
-            // Search by email
             $query .= "u.email LIKE ?";
             $params[] = $likeTerm;
         }
         elseif (is_numeric($searchTerm)) {
-            // Search by ID (exact match)
             $query .= "u.id = ?";
             $params[] = $searchTerm;
         }
         else {
-            // Search by name
             $query .= "(u.name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
             $params = [$likeTerm, $likeTerm, $likeTerm];
         }
 
-        // GROUP BY dengan semua kolom non-aggregate
         $query .= " GROUP BY u.id,
                     u.name,
                     u.first_name,
@@ -419,7 +414,6 @@ class User extends Authenticatable
         try {
             return DB::select($query, $params);
         } catch (\Exception $e) {
-            // Log error untuk debugging
             Log::error('Search Users Error: ' . $e->getMessage());
             return [];
         }
