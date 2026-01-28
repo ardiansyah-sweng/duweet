@@ -230,6 +230,5 @@ class UserController extends Controller
             'success' => true,
             'data' => $users
         ]);
-        
     }
 }
