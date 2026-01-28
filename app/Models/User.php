@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -341,5 +342,86 @@ class User extends Authenticatable
         }
 
         return array_values($users);
+    }
+
+    public static function SearchUsersbyEmailandNameandid($searchTerm)
+    { 
+        if (empty($searchTerm)) {
+            return [];
+        }
+
+        // Tentukan nama tabel user_telephones
+        $userTelephoneTable = config('db_tables.user_telephone', 'user_telephones');
+        
+        $params = [];
+        $likeTerm = '%' . $searchTerm . '%';
+
+        // Build query dengan explicit column names
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    u.created_at,
+                    u.updated_at,
+                    GROUP_CONCAT(ut.number SEPARATOR ', ') as phone_numbers
+                  FROM users u
+                  LEFT JOIN {$userTelephoneTable} ut ON u.id = ut.user_id
+                  WHERE ";
+
+        // Deteksi tipe input
+        if (strpos($searchTerm, '@') !== false) {
+            // Search by email
+            $query .= "u.email LIKE ?";
+            $params[] = $likeTerm;
+        }
+        elseif (is_numeric($searchTerm)) {
+            // Search by ID (exact match)
+            $query .= "u.id = ?";
+            $params[] = $searchTerm;
+        }
+        else {
+            // Search by name
+            $query .= "(u.name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
+            $params = [$likeTerm, $likeTerm, $likeTerm];
+        }
+
+        // GROUP BY dengan semua kolom non-aggregate
+        $query .= " GROUP BY u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    u.created_at,
+                    u.updated_at";
+
+        try {
+            return DB::select($query, $params);
+        } catch (\Exception $e) {
+            // Log error untuk debugging
+            Log::error('Search Users Error: ' . $e->getMessage());
+            return [];
+        }
     }
 }
