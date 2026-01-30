@@ -949,16 +949,27 @@ class Transaction extends Model
         $transactionTable = config('db_tables.transaction');
         $accountsTable = config('db_tables.financial_account');
 
-        // Period expressions 
+        // Prefer using transaction_date column if available, otherwise fallback to created_at
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            // If schema check fails (e.g. during testing), default to transaction_date constant
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
+
+        // Period expressions using selected date column
         $periodExpressions = [
-            'day' => "DATE(t.created_at)",
-            'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
-            'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
-            'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
-            'year' => "YEAR(t.created_at)",
+            'day' => "DATE(t." . $dateColumn . ")",
+            'week' => "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1)",
+            'month' => "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')",
+            'quarter' => "CONCAT(YEAR(t." . $dateColumn . "), '-Q', QUARTER(t." . $dateColumn . "))",
+            'year' => "YEAR(t." . $dateColumn . ")",
         ];
 
-        // Use selected period format, default to 'month')
+        // Use selected period format, default to 'month'
         $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
 
         // Build base SQL with JOIN using aliases for consistency
@@ -974,7 +985,7 @@ class Transaction extends Model
             INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
             WHERE t.entry_type = 'credit'
                 AND t.balance_effect = 'increase'
-                AND t.created_at BETWEEN ? AND ?
+                AND t." . $dateColumn . " BETWEEN ? AND ?
         ";
 
         $bindings = [
@@ -995,7 +1006,7 @@ class Transaction extends Model
 
         // Add GROUP BY and ORDER BY (MySQL)
         if ($periodFormat === 'week') {
-            $sql .= " GROUP BY YEAR(t.created_at), WEEK(t.created_at, 1), fa.id, fa.name, fa.type";
+            $sql .= " GROUP BY YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1), fa.id, fa.name, fa.type";
         } else {
             $sql .= " GROUP BY {$periodExpr}, fa.id, fa.name, fa.type";
         }
@@ -1025,13 +1036,24 @@ class Transaction extends Model
     ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction');
 
-        // Period expressions untuk berbagai driver (MySQL)
+        // Prefer using transaction_date column if available, otherwise fallback to created_at
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            // If schema check fails (e.g. during testing), default to transaction_date constant
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
+
+        // Period expressions using selected date column
         $periodExpressions = [
-            'day' => "DATE(t.created_at)",
-            'week' => "YEAR(t.created_at), WEEK(t.created_at, 1)",
-            'month' => "DATE_FORMAT(t.created_at, '%Y-%m')",
-            'quarter' => "CONCAT(YEAR(t.created_at), '-Q', QUARTER(t.created_at))",
-            'year' => "YEAR(t.created_at)",
+            'day' => "DATE(t." . $dateColumn . ")",
+            'week' => "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1)",
+            'month' => "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')",
+            'quarter' => "CONCAT(YEAR(t." . $dateColumn . "), '-Q', QUARTER(t." . $dateColumn . "))",
+            'year' => "YEAR(t." . $dateColumn . ")",
         ];
 
         // Use selected period format, default to 'month' (MySQL only)
@@ -1046,7 +1068,7 @@ class Transaction extends Model
             FROM {$transactionTable} t
             WHERE t.entry_type = 'credit'
                 AND t.balance_effect = 'increase'
-                AND t.created_at BETWEEN ? AND ?
+                AND t." . $dateColumn . " BETWEEN ? AND ?
         ";
 
         $bindings = [
@@ -1056,7 +1078,7 @@ class Transaction extends Model
 
         // Add GROUP BY and ORDER BY (MySQL)
         if ($periodFormat === 'week') {
-            $sql .= " GROUP BY YEAR(t.created_at), WEEK(t.created_at, 1)";
+            $sql .= " GROUP BY YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1)";
         } else {
             $sql .= " GROUP BY {$periodExpr}";
         }
