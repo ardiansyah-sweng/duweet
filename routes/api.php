@@ -49,7 +49,7 @@ Route::get('/health', function () {
 Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 
 // GET endpoint to find user by email (safe response, no password)
-Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
+Route::post('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
 
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 

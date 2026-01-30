@@ -224,23 +224,22 @@ class UserAccountController extends Controller
         ]);
     }
 
-    // public function findByEmail(Request $request): JsonResponse
-    // {
-    //     $request->validate([
-    //         'email' => ['required', 'email'],
-    //     ]);
+    public function findByEmail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
 
-    //     $user = UserAccount::cariUserByEmail($request->email);
+        $user = UserAccount::cariUserByEmail($request->email);
 
-    //     if (!$user) {
-    //         return response()->json(['message' => 'User not found'], 404);
-    //     }
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
 
-    //     return response()->json([
-    //         'success' => true,
-    //         'data' => $user
-    //     ]);
-    // }
-
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
 }   
 
