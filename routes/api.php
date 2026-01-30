@@ -59,6 +59,7 @@ Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::c
 // UserAccount API Routes (no CSRF protection needed)
 Route::get('/user-accounts', [UserAccountController::class, 'index']);
 Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
+Route::get('/user-accounts/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
 
 Route::prefix('user-account')->group(function () {
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
@@ -158,6 +159,11 @@ Route::get(
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
 
+Route::get(
+    '/admin/reports/expenses-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminExpensesSummary']
+);
+
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
 
@@ -165,6 +171,5 @@ Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
-Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
-//Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
