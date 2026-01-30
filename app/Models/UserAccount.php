@@ -182,22 +182,22 @@ class UserAccount extends Model
 /**
  * DML: Ambil user yang tidak login dalam periode hari tertentu 
  */
-public static function query_user_yang_tidak_login_dalam_periode_tertentu($days)
+public static function query_user_tidak_login_dalam_periode_tanggal($startDate, $endDate)
 {
     $sql = "
         SELECT ua.*
         FROM user_accounts ua
         LEFT JOIN user_login ul
             ON ua.id = ul.user_account_id
-        WHERE (ul.last_login_at IS NULL
-               OR ul.last_login_at < DATE_SUB(NOW(), INTERVAL ? DAY))
-          AND ua.is_active = 1
+        WHERE (
+            ul.last_login_at IS NULL
+            OR ul.last_login_at NOT BETWEEN ? AND ?
+        )
+        AND ua.is_active = 1
     ";
 
-    return DB::select($sql, [$days]);
+    return DB::select($sql, [$startDate, $endDate]);
 }
-
-
     /**
      * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
      */

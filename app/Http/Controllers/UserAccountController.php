@@ -230,19 +230,24 @@ class UserAccountController extends Controller
      * ======================================================
      */
     public function inactiveByPeriod(Request $request): JsonResponse
-    {
-        $days = $request->query('hari', 7);
+{
+    $startDate = $request->query('start_date');
+    $endDate   = $request->query('end_date');
 
-        // Memanggil fungsi murni dari Model
-        $data = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu($days);
+    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+        $startDate,
+        $endDate
+    );
 
-        return response()->json([
-            'success' => true,
-            'days_threshold' => $days,
-            'total_found' => count($data),
-            'data' => $data
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'total_found' => count($data),
+        'data' => $data
+    ]);
+}
+
 
     public function countAccountsPerUser($userId): JsonResponse
     {
@@ -286,17 +291,23 @@ class UserAccountController extends Controller
  * GET USERS WHO HAVE NOT LOGGED IN PERIOD– (DML VERSION)
  * ======================================================
  */
-public function notLoggedIn($days = 7): JsonResponse
+public function notLoggedIn(Request $request): JsonResponse
 {
-    $users = UserAccount::query_user_yang_tidak_login_dalam_periode_tertentu($days);
+    $startDate = $request->query('start_date');
+    $endDate   = $request->query('end_date');
+
+    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+        $startDate,
+        $endDate
+    );
 
     return response()->json([
         'success' => true,
-        'days_threshold' => $days,
-        'total_found' => count($users),
-        'data' => $users
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'total_found' => count($data),
+        'data' => $data
     ]);
 }
-
 
 }
