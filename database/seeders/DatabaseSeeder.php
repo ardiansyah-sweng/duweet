@@ -43,24 +43,15 @@ class DatabaseSeeder extends Seeder
 
         User::updateOrCreate(['email' => $attrs['email']], $attrs);
 
-        // Create a test user only if not already exists
-        if (!User::where('email', 'test@example.com')->exists()) {
-            User::factory()->create([
-                'email' => 'test@example.com',
-                'name' => 'Test User',
-            ]);
-        }
-
-        // Run seeders in order: users -> user_accounts -> financial_accounts -> transactions
+        // Run seeders in correct order: users -> accounts -> financial_accounts -> transactions
         $this->call([
-            FinancialAccountSeeder::class,
             UserSeeder::class,
-            UserAccountSeeder::class,
             AccountSeeder::class,
+            FinancialAccountSeeder::class,
+            UserAccountSeeder::class,
             UserTelephoneSeeder::class,
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
-            UserTelephoneSeeder::class,
         ]);
     }
 }

@@ -19,10 +19,22 @@ class User extends Authenticatable
 
     protected $table = 'users';
     
-
-    /**
-     * Insert user 
-     */
+    protected $fillable = [
+        'name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'jalan',
+        'kode_pos',
+        'tanggal_lahir',
+        'bulan_lahir',
+        'tahun_lahir',
+        'usia',
+    ];
     public static function createUserRaw(array $data)
     {
         if (empty($data['email'])) {
