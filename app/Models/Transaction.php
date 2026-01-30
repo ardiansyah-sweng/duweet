@@ -970,4 +970,3 @@ class Transaction extends Model
         return self::getTotalCashinByPeriodAdmin($start, $end);
     }
 }
-}
