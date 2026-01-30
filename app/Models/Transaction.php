@@ -596,6 +596,75 @@ class Transaction extends Model
         ]));
     }
 
+    /**
+     * ADMIN REPORT
+     * Sum expenses by period (month) for all users
+     * 
+     * DML SQL (MySQL/MariaDB):
+     * -----------------------------------------------------------
+     * SELECT 
+     *     DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
+     *     COALESCE(SUM(t.amount), 0) AS total_expenses
+     * FROM transactions t
+     * INNER JOIN financial_accounts fa ON t.financial_account_id = fa.id
+     * WHERE fa.type = 'EX'
+     *   AND t.balance_effect = 'decrease'
+     *   AND fa.is_group = 0
+     *   AND t.created_at BETWEEN ? AND ?
+     * GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
+     * ORDER BY periode ASC;
+     * -----------------------------------------------------------
+ 
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getExpensesSummaryByPeriodAdmin(Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        // Get table names from config
+        $transactionsTable = config('db_tables.transaction', 'transactions');
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+
+        // Determine date format function based on database driver
+        try {
+            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        } catch (\Exception $e) {
+            $driver = 'mysql';
+        }
+
+        if ($driver === 'sqlite') {
+            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
+            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+        } else {
+            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+        }
+
+        // Build raw SQL query
+        $sql = "
+            SELECT 
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_expenses
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE 
+                fa.type = 'EX'
+                AND t.balance_effect = 'decrease'
+                AND fa.is_group = 0
+                AND t.created_at BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        // Execute raw SQL with parameter binding
+        $rows = DB::select($sql, [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        return collect($rows);
+    }
+
     
     /**
      * Hard delete semua transaksi dalam satu transaction_group_id dan
@@ -803,6 +872,7 @@ class Transaction extends Model
         return (int) DB::getPdo()->lastInsertId();
     }
 
+
      /** Spending summary by period */
     public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
@@ -899,4 +969,5 @@ class Transaction extends Model
         // Gunakan method yang sudah ada
         return self::getTotalCashinByPeriodAdmin($start, $end);
     }
+}
 }
