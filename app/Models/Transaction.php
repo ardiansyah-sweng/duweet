@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
+use App\Constants\FinancialAccountColumns;
+use App\Enums\AccountType;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
@@ -18,6 +20,32 @@ class Transaction extends Model
     
     // Nama tabel yang sesuai dengan konfigurasi
     protected $table = 'transactions';
+
+    protected $casts = [
+        TransactionColumns::AMOUNT => 'integer',
+        TransactionColumns::IS_BALANCE => 'boolean',
+    ];
+
+    /**
+     * Constructor
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->fillable = TransactionColumns::getFillable();
+    }
+
+    /**
+     * Boot method untuk auto-generate transaction_group_id
+     */
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
+                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
+            }
+        });
+    }
 
     // protected static function booted()
     // {
@@ -32,9 +60,9 @@ class Transaction extends Model
     /**
      * Ambil ringkasan total pendapatan berdasarkan periode (Bulan) untuk user tertentu.
      * Ini adalah implementasi dari query: "sum income user by periode" dengan DML SQL murni.
-     *
-     * DML SQL (MySQL/MariaDB):
-     * -----------------------------------------------------------
+        // Use the table name from config if available, default to standard table name
+        $transactionsTable = config('db_tables.transaction', 'transactions'); // Ensure correct table name
+        $accountsTable = config('db_tables.financial_account', 'financial_accounts'); // Ensure correct table name
      * SELECT 
      *     DATE_FORMAT(t.created_at, '%Y-%m') AS periode,
      *     COALESCE(SUM(t.amount), 0) AS total_income
@@ -188,6 +216,7 @@ class Transaction extends Model
 
         return self::deleteByUserAccountIds($userAccountIds);
     }
+
     /**
      * Get total transactions per user account using raw SQL query.
      *
@@ -240,28 +269,6 @@ class Transaction extends Model
 
         // Convert to collection
         return collect($results);
-    }
-
-    protected $fillable = [];
-
-    protected $casts = [
-        TransactionColumns::AMOUNT => 'integer',
-        TransactionColumns::IS_BALANCE => 'boolean',
-    ];
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->fillable = TransactionColumns::getFillable();
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($transaction) {
-            if (empty($transaction->{TransactionColumns::TRANSACTION_GROUP_ID})) {
-                $transaction->{TransactionColumns::TRANSACTION_GROUP_ID} = (string) Str::uuid();
-            }
-        });
     }
 
     public function userAccount()
@@ -547,7 +554,7 @@ class Transaction extends Model
             JOIN
                 financial_accounts a ON t.financial_account_id = a.id
             WHERE
-                t.created_at >= NOW() - INTERVAL 7 DAY
+                    // Removed erroneous variable declaration
                 AND a.type IN ('IN', 'EX', 'SP')
             ORDER BY
                 t.created_at DESC
@@ -794,6 +801,7 @@ class Transaction extends Model
     {
         $transactionsTable = config('db_tables.transaction', 'transactions');
         $financialAccountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $userAccountsTable = config('db_tables.user_account', 'user_accounts');
 
         try {
             $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
@@ -812,11 +820,14 @@ class Transaction extends Model
         $sql = "
             SELECT
                 {$periodeExpr} AS periode,
-                COALESCE(SUM(t.amount), 0) AS total_cashin
+                COALESCE(SUM(t.amount), 0) AS total_income,
+                COUNT(DISTINCT t.id) AS transaction_count,
+                COUNT(DISTINCT t.user_account_id) AS user_count
             FROM {$transactionsTable} t
             INNER JOIN {$financialAccountsTable} fa ON fa.id = t.financial_account_id
             WHERE
                 fa.type = 'IN'
+                AND t.balance_effect = 'increase'
                 AND fa.is_group = 0
                 AND t.created_at BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
@@ -925,5 +936,37 @@ class Transaction extends Model
         ";
 
         return DB::delete($query, [$id]);
+    }
+
+    /**
+     * Sum income by period for admin dashboard
+     * Wrapper method untuk getTotalCashinByPeriodAdmin dengan fleksibilitas parameter
+     * 
+     * @param string $period daily|weekly|monthly|yearly
+     * @param string|null $startDate
+     * @param string|null $endDate
+     * @param int|null $userId
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumIncomeByPeriod(
+        string $period = 'monthly',
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?int $userId = null
+    ): \Illuminate\Support\Collection {
+        // Set default date range jika tidak ada (12 bulan terakhir)
+        if (!$startDate) {
+            $startDate = Carbon::now()->subMonths(11)->startOfMonth()->toDateString();
+        }
+        if (!$endDate) {
+            $endDate = Carbon::now()->endOfMonth()->toDateString();
+        }
+
+        // Convert string to Carbon
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+
+        // Gunakan method yang sudah ada
+        return self::getTotalCashinByPeriodAdmin($start, $end);
     }
 }
