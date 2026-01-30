@@ -814,7 +814,7 @@ class Transaction extends Model
                 {$periodeExpr} AS periode,
                 COALESCE(SUM(t.amount), 0) AS total_cashin
             FROM {$transactionsTable} t
-            INNER JOIN {$financialAccountsTable} fa ON fa.id = t.financial_account_id
+            INNER JOIN {$financialAccountsTable} fa ON t.financial_account_id = fa.id
             WHERE
                 fa.type = 'IN'
                 AND fa.is_group = 0
@@ -918,6 +918,7 @@ class Transaction extends Model
             ];
         }
     }
+
      /** Spending summary by period */
     public static function getSpendingSummaryByPeriod(int $userAccountId, Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
