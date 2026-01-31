@@ -304,4 +304,17 @@ class TransactionController extends Controller
         ], 500);
     }
 }
+
+    public function SumCashOutByPeriod(Request $request)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $totalCashOut = Transaction::SumCashOutByPeriod($startDate, $endDate);
+
+        return response()->json([
+            'success' => true,
+            'total_cash_out' => $totalCashOut
+        ]);
+    }
 }
