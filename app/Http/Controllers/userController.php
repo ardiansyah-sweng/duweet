@@ -59,6 +59,46 @@ class UserController extends Controller
         ], 201);
     }
 
+    /**
+     * UPDATE data user (name, email, password, photo, preference)
+     * Hanya validasi & delegasi ke model
+     */
+    public function updateUser(Request $request, $id): JsonResponse
+    {
+        // Cek user
+        $user = DB::table('users')
+            ->where(UserColumns::ID, $id)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan.'
+            ], 404);
+        }
+
+        // Validasi field update
+        $validated = $request->validate([
+            'name'       => 'sometimes|string|max:255',
+            'email'      => 'sometimes|email',
+            'password'   => 'sometimes|string|min:8',
+        ]);
+
+        $result = User::updateUserRaw($id, $validated);
+
+        if (is_string($result)) {
+            return response()->json([
+                'success' => false,
+                'message' => $result
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data user berhasil diperbarui.'
+        ], 200);
+    }
+
     public function destroy($id)
     {
         $user = DB::table('users')
@@ -135,7 +175,6 @@ class UserController extends Controller
 
     public function getUserAccounts($id): JsonResponse
     {
-        
         $user = DB::table('users')
             ->where(UserColumns::ID, $id)
             ->first();
