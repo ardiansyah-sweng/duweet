@@ -926,7 +926,6 @@ class Transaction extends Model
 
         return DB::delete($query, [$id]);
     }
-<<<<<<< HEAD
 
     public static function SumCashOutByPeriod($startDate, $endDate)
     {
@@ -941,6 +940,3 @@ class Transaction extends Model
         return $result ? $result->total_cash_out : 0;
     }
 }
-=======
-}
->>>>>>> 09e8b5927921b63e649487eb60342cbe4ea3a1dc
