@@ -930,17 +930,13 @@ class Transaction extends Model
     /**
      * Get sum of cash in (credit transactions) by period using raw SQL
      *
-     * Can return either per-account breakdown (default) or combined totals per period
-     * when $combined = true.
-     *
-     * -----------------------------------------------------------
+     * Returns breakdown per financial account per period.
      *
      * @param  Carbon  $startDate  Start date for period
      * @param  Carbon  $endDate  End date for period
-     * @param  int|null  $userAccountId  Optional: Filter by user account (applies when not combined)
-     * @param  int|null  $financialAccountId  Optional: Filter by financial account (applies when not combined)
+     * @param  int|null  $userAccountId  Optional: Filter by user account
+     * @param  int|null  $financialAccountId  Optional: Filter by financial account
      * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
-     * @param  bool  $combined  If true, returns combined totals per period (no account details)
      * @return \Illuminate\Support\Collection
      */
     public static function sumCashInByPeriod(
@@ -948,8 +944,7 @@ class Transaction extends Model
         Carbon $endDate,
         ?int $userAccountId = null,
         ?int $financialAccountId = null,
-        string $periodFormat = 'month',
-        bool $combined = false
+        string $periodFormat = 'month'
     ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction');
         $accountsTable = config('db_tables.financial_account');
@@ -977,49 +972,7 @@ class Transaction extends Model
         // Use selected period format, default to 'month'
         $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
 
-        // If combined, build a simpler query that aggregates totals per period without account details
-        if ($combined) {
-            $sql = "
-                SELECT
-                    {$periodExpr} AS period,
-                    COALESCE(SUM(t.amount), 0) AS total_cash_in,
-                    COUNT(t.id) AS transaction_count
-                FROM {$transactionTable} t
-                WHERE t.entry_type = 'credit'
-                    AND t.balance_effect = 'increase'
-                    AND t." . $dateColumn . " BETWEEN ? AND ?
-            ";
-
-            $bindings = [
-                $startDate->toDateTimeString(),
-                $endDate->toDateTimeString(),
-            ];
-
-            // Optional filters may still be applied to the combined query if provided
-            if ($userAccountId !== null) {
-                $sql .= " AND t.user_account_id = ?";
-                $bindings[] = $userAccountId;
-            }
-
-            if ($financialAccountId !== null) {
-                $sql .= " AND t.financial_account_id = ?";
-                $bindings[] = $financialAccountId;
-            }
-
-            if ($periodFormat === 'week') {
-                $sql .= " GROUP BY YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1)";
-            } else {
-                $sql .= " GROUP BY {$periodExpr}";
-            }
-
-            $sql .= " ORDER BY period DESC";
-
-            $results = DB::select($sql, $bindings);
-
-            return collect($results);
-        }
-
-        // Default behaviour: per-account breakdown
+        // Per-account breakdown per period
         $sql = "
             SELECT 
                 {$periodExpr} AS period,
