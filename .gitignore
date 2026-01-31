@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Ignore controller and model files that should not be pushed
+/app/Http/Controllers/FinancialAccountController.php
+/app/Http/Controllers/ReportController.php
+/app/Models/FinancialAccount.php
