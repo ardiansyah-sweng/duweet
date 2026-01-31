@@ -264,13 +264,13 @@ class UserAccount extends Model
             'total_accounts' => (int) $result->total_accounts,
         ];
     }
-    public static function updatePasswordById($idUser, $newPassword){
-    $hashed = bcrypt($newPassword);
-
-    return DB::update("
-        UPDATE user_accounts
-        SET password = ?
-        WHERE id_user = ?
-    ", [$hashed, $idUser]);
+    public static function updatePasswordById($idUser, $newPassword)
+    {
+        return DB::update(
+            "UPDATE user_accounts
+            SET password = ?
+            WHERE id_user = ?",
+            [bcrypt($newPassword), $idUser]
+        );
     }
 }
