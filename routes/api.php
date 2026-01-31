@@ -92,6 +92,7 @@ Route::prefix('transactions')->group(function () {
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
     Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
+    Route::get('/total-cash-out', [TransactionController::class, 'SumCashOutByPeriod']);
 });
 
 // Financial Account API Routes
@@ -170,4 +171,4 @@ Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->
 //Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
 
-Route::get('/admin/total-cash-out', [AdminController::class, 'SumCashOutByPeriod']);
+
