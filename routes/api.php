@@ -173,3 +173,6 @@ Route::get(
 );
 
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+
+Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);

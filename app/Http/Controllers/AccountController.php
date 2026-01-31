@@ -12,6 +12,7 @@ use App\Constants\UserColumns;
 use App\Constants\AccountColumns;
 use App\Constants\FinancialAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
+use App\Models\UserAccount;
 
 class AccountController extends Controller
 {
@@ -121,5 +122,21 @@ class AccountController extends Controller
 
         return response()->json(['data' => $row], 200);
     }
+
+    
+     public function updatePassword($id, Request $request)
+    {
+
+        $password = $request->input('password');
+
+        $result = UserAccount::updatePasswordById($id, $password);
+
+        return response()->json([
+            'success' => $result ? true : false,
+            'id_user' => $id,
+            'password_baru' => $password
+        ]);
+    }
+
 
 }
