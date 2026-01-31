@@ -98,6 +98,7 @@ Route::prefix('transactions')->group(function () {
 Route::prefix('financial-account')->group(function () {
     Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+    Route::get('/filter/type/{type}', [FinancialAccountController::class, 'filterByType'])->name('api.financial-account.filter-by-type');
 
     // Liquid Assets Route - per user_account_id
     Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
@@ -159,6 +160,11 @@ Route::get(
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
 
+Route::get(
+    '/admin/reports/expenses-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminExpensesSummary']
+);
+
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
 
@@ -166,7 +172,6 @@ Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
-Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
-//Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
 Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
