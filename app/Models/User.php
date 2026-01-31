@@ -350,8 +350,6 @@ class User extends Authenticatable
             return [];
         }
 
-        $userTelephoneTable = config('db_tables.user_telephone', 'user_telephones');
-        
         $params = [];
         $likeTerm = '%' . $searchTerm . '%';
 
@@ -372,12 +370,11 @@ class User extends Authenticatable
                     u.tahun_lahir,
                     u.usia,
                     u.created_at,
-                    u.updated_at,
-                    GROUP_CONCAT(ut.number SEPARATOR ', ') as phone_numbers
-                  FROM users u
-                  LEFT JOIN {$userTelephoneTable} ut ON u.id = ut.user_id
-                  WHERE ";
+                    u.updated_at
+                    FROM users u
+                    WHERE ";
 
+    
         if (strpos($searchTerm, '@') !== false) {
             $query .= "u.email LIKE ?";
             $params[] = $likeTerm;
@@ -386,34 +383,19 @@ class User extends Authenticatable
             $query .= "u.id = ?";
             $params[] = $searchTerm;
         }
-        else {  
+        else {
+
             $query .= "(u.name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
             $params = [$likeTerm, $likeTerm, $likeTerm];
         }
 
-        $query .= " GROUP BY u.id,
-                    u.name,
-                    u.first_name,
-                    u.middle_name,
-                    u.last_name,
-                    u.email,
-                    u.provinsi,
-                    u.kabupaten,
-                    u.kecamatan,
-                    u.jalan,
-                    u.kode_pos,
-                    u.tanggal_lahir,
-                    u.bulan_lahir,
-                    u.tahun_lahir,
-                    u.usia,
-                    u.created_at,
-                    u.updated_at";
-
         try {
             return DB::select($query, $params);
         } catch (\Exception $e) {
+            
             Log::error('Search Users Error: ' . $e->getMessage());
             return [];
         }
     }
+    
 }
