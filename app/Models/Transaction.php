@@ -926,4 +926,96 @@ class Transaction extends Model
 
         return DB::delete($query, [$id]);
     }
+
+    /**
+     * Get sum of cash in (credit transactions) by period using raw SQL
+     *
+     * Returns breakdown per financial account per period.
+     *
+     * @param  Carbon  $startDate  Start date for period
+     * @param  Carbon  $endDate  End date for period
+     * @param  int|null  $userAccountId  Optional: Filter by user account
+     * @param  int|null  $financialAccountId  Optional: Filter by financial account
+     * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumCashInByPeriod(
+        Carbon $startDate,
+        Carbon $endDate,
+        ?int $userAccountId = null,
+        ?int $financialAccountId = null,
+        string $periodFormat = 'month'
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        // Prefer using transaction_date column if available, otherwise fallback to created_at
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            // If schema check fails (e.g. during testing), default to transaction_date constant
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
+
+        // Period expressions using selected date column
+        $periodExpressions = [
+            'day' => "DATE(t." . $dateColumn . ")",
+            'week' => "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1)",
+            'month' => "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')",
+            'quarter' => "CONCAT(YEAR(t." . $dateColumn . "), '-Q', QUARTER(t." . $dateColumn . "))",
+            'year' => "YEAR(t." . $dateColumn . ")",
+        ];
+
+        // Use selected period format, default to 'month'
+        $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
+
+        // Per-account breakdown per period
+        $sql = "
+            SELECT 
+                {$periodExpr} AS period,
+                fa.id AS account_id,
+                fa.name AS account_name,
+                fa.type AS account_type,
+                COALESCE(SUM(t.amount), 0) AS total_cash_in,
+                COUNT(t.id) AS transaction_count
+            FROM {$transactionTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE t.entry_type = 'credit'
+                AND t.balance_effect = 'increase'
+                AND t." . $dateColumn . " BETWEEN ? AND ?
+        ";
+
+        $bindings = [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ];
+
+        // Add optional filters
+        if ($userAccountId !== null) {
+            $sql .= " AND t.user_account_id = ?";
+            $bindings[] = $userAccountId;
+        }
+
+        if ($financialAccountId !== null) {
+            $sql .= " AND t.financial_account_id = ?";
+            $bindings[] = $financialAccountId;
+        }
+
+        // Add GROUP BY and ORDER BY (MySQL)
+        if ($periodFormat === 'week') {
+            $sql .= " GROUP BY YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1), fa.id, fa.name, fa.type";
+        } else {
+            $sql .= " GROUP BY {$periodExpr}, fa.id, fa.name, fa.type";
+        }
+
+        $sql .= " ORDER BY period DESC, account_name ASC";
+
+        // Execute raw SQL query
+        $results = DB::select($sql, $bindings);
+
+        return collect($results);
+    }
 }
