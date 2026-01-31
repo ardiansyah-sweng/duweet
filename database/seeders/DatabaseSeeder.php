@@ -61,6 +61,9 @@ class DatabaseSeeder extends Seeder
             UserFinancialAccountSeeder::class,
             TransactionSeeder::class,
             UserTelephoneSeeder::class,
+            UserLoginSeeder::class,
         ]);
+        
+        
     }
 }
