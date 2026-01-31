@@ -13,6 +13,7 @@ use App\Models\UserFinancialAccount;
 use App\Models\FinancialAccount;
 use App\Models\Transaction;
 
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -341,5 +342,25 @@ class User extends Authenticatable
         }
 
         return array_values($users);
+    }
+
+    public static function countUserpertanggaldanbulan(?string $startDate = null, ?string $endDate = null): array
+    {
+        if (!$startDate || !$endDate) {
+            return [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'jumlah_user' => 0,
+            ];
+        }
+
+        $query = "SELECT COUNT(*) AS jumlah_user FROM users WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)";
+        $result = DB::selectOne($query, [$startDate, $endDate]);
+
+        return [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'jumlah_user' => isset($result->jumlah_user) ? (int) $result->jumlah_user : 0,
+        ];
     }
 }
