@@ -49,7 +49,7 @@ Route::get('/health', function () {
 Route::post('/reset-password', [UserAccountController::class, 'resetPassword']);
 
 // GET endpoint to find user by email (safe response, no password)
-Route::get('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
+Route::post('/user/find', [\App\Http\Controllers\UserAccountController::class, 'findByEmail']);
 
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
@@ -89,6 +89,7 @@ Route::prefix('transactions')->group(function () {
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
+    Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
     Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
 });

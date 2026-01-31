@@ -226,6 +226,23 @@ class TransactionController extends Controller
         }
 
     }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            // 'amount' tidak divalidasi karena tugas hanya minta update desc & date
+            'description' => 'nullable|string|max:255',
+            'transaction_date' => 'nullable|date|date_format:Y-m-d H:i:s',
+        ]);
+
+        $result = Transaction::updateTransactionRaw((int) $id, $validated);
+
+        if (!$result['success']) {
+            return response()->json($result, 500);
+        }
+
+        return response()->json($result, 200);
+    }
     
     /**
      * API: Get spending summary (sum of spending) grouped by period for a user account
@@ -278,30 +295,31 @@ class TransactionController extends Controller
                 'message' => 'Gagal mengambil spending summary: ' . $e->getMessage()
             ], 500);
         }
-    } 
+    }
+
     public function destroy($id)
     {
-    try {
-        // Memanggil fungsi deleteByIdRaw yang tadi dibuat
-        $deleted = Transaction::deleteByGroupIdRaw($id);
+        try {
+            // Memanggil fungsi deleteByIdRaw yang tadi dibuat
+            $deleted = Transaction::deleteByGroupIdRaw($id);
 
-        if ($deleted) {
+            if ($deleted) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Transaksi berhasil dihapus'
+                ], 200);
+            }
+
             return response()->json([
-                'status' => 'success',
-                'message' => 'Transaksi berhasil dihapus'
-            ], 200);
+                'status' => 'error',
+                'message' => 'Data tidak ditemukan'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Data tidak ditemukan'
-        ], 404);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => $e->getMessage()
-        ], 500);
     }
-}
 }
