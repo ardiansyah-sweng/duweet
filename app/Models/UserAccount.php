@@ -283,14 +283,19 @@ class UserAccount extends Model
                     fa." . FinancialAccountColumns::ID . " AS financial_account_id,
                     fa." . FinancialAccountColumns::NAME . " AS financial_account_name,
                     fa." . FinancialAccountColumns::TYPE . " AS financial_account_type,
+                    fa." . FinancialAccountColumns::PARENT_ID . " AS financial_account_parent_id,
+                    fa." . FinancialAccountColumns::LEVEL . " AS financial_account_level,
+                    fa." . FinancialAccountColumns::IS_GROUP . " AS financial_account_is_group,
+                    fa." . FinancialAccountColumns::INITIAL_BALANCE . " AS financial_account_initial_balance,
                     ufa." . UserFinancialAccountColumns::BALANCE . " AS user_financial_balance,
+                    ufa." . UserFinancialAccountColumns::INITIAL_BALANCE . " AS user_financial_initial_balance,
+                    ufa." . UserFinancialAccountColumns::IS_ACTIVE . " AS user_financial_is_active,
                     fa." . FinancialAccountColumns::IS_ACTIVE . " AS financial_account_is_active
-                FROM users u
-                LEFT JOIN user_accounts ua ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
-                LEFT JOIN user_financial_accounts ufa ON ufa.user_account_id = ua." . UserAccountColumns::ID . "
-                LEFT JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa.financial_account_id
-                WHERE ua." . UserAccountColumns::ID . " IS NOT NULL
-                ORDER BY u." . UserColumns::ID . ", ua." . UserAccountColumns::ID . ", fa." . FinancialAccountColumns::ID . "
+                FROM user_financial_accounts ufa
+                INNER JOIN user_accounts ua ON ua." . UserAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::USER_ACCOUNT_ID . "
+                INNER JOIN users u ON u." . UserColumns::ID . " = ua." . UserAccountColumns::ID_USER . "
+                INNER JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . "
+                ORDER BY u." . UserColumns::ID . ", ua." . UserAccountColumns::ID . ", fa." . FinancialAccountColumns::LEVEL . ", fa." . FinancialAccountColumns::ID . "
             ";
             
             $results = DB::select($query);
@@ -321,29 +326,61 @@ class UserAccount extends Model
                         'email' => $row->user_account_email,
                         'is_active' => (bool) $row->user_account_is_active,
                         'financial_accounts' => [],
+                        '_fa_index' => [],
                     ];
                 }
                 
                 if ($row->financial_account_id !== null) {
-                    $users[$userId]['user_accounts'][$userAccountId]['financial_accounts'][] = [
-                        'financial_account_id' => (int) $row->financial_account_id,
-                        'name' => $row->financial_account_name,
-                        'type' => $row->financial_account_type,
-                        'balance' => (float) $row->user_financial_balance,
-                        'is_active' => (bool) $row->financial_account_is_active,
-                    ];
+                    $financialAccountId = (int) $row->financial_account_id;
+
+                    if (!isset($users[$userId]['user_accounts'][$userAccountId]['_fa_index'][$financialAccountId])) {
+                        $users[$userId]['user_accounts'][$userAccountId]['_fa_index'][$financialAccountId] = [
+                            'financial_account_id' => $financialAccountId,
+                            'name' => $row->financial_account_name,
+                            'type' => $row->financial_account_type,
+                            'parent_id' => $row->financial_account_parent_id !== null ? (int) $row->financial_account_parent_id : null,
+                            'level' => $row->financial_account_level !== null ? (int) $row->financial_account_level : null,
+                            'is_group' => (bool) $row->financial_account_is_group,
+                            'initial_balance' => $row->financial_account_initial_balance !== null ? (float) $row->financial_account_initial_balance : null,
+                            'balance' => $row->user_financial_balance !== null ? (float) $row->user_financial_balance : null,
+                            'user_initial_balance' => $row->user_financial_initial_balance !== null ? (float) $row->user_financial_initial_balance : null,
+                            'user_is_active' => $row->user_financial_is_active !== null ? (bool) $row->user_financial_is_active : null,
+                            'is_active' => (bool) $row->financial_account_is_active,
+                            'children' => [],
+                        ];
+                    }
                 }
             }
             
+           
             foreach ($users as &$user) {
+                foreach ($user['user_accounts'] as &$account) {
+                    $faIndex = $account['_fa_index'] ?? [];
+                    $roots = [];
+
+                    foreach ($faIndex as $faId => &$faNode) {
+                        $parentId = $faNode['parent_id'];
+                        if ($parentId !== null && isset($faIndex[$parentId])) {
+                            $faIndex[$parentId]['children'][] = &$faNode;
+                        } else {
+                            $roots[] = &$faNode;
+                        }
+                    }
+                    unset($faNode);
+
+                    $account['financial_accounts'] = array_values($roots);
+                    unset($account['_fa_index']);
+                }
+                unset($account);
+
                 $user['user_accounts'] = array_values($user['user_accounts']);
             }
+            unset($user);
             
             return array_values($users);
         } catch (\Exception $e) {
-            Log::error('Gagal Mengabil Data Structure Bertinggal Akun user: ' . $e->getMessage());
+            Log::error('Error in GetStructureNestedAccountUser: ' . $e->getMessage());
             return [];
         }
     }
-
 }
