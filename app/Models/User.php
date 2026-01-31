@@ -344,32 +344,22 @@ class User extends Authenticatable
         return array_values($users);
     }
 
-    public static function countUserpertanggaldanbulan(?int $year = null, ?int $month = null, ?int $day = null): array
+    public static function countUserpertanggaldanbulan(?string $startDate = null, ?string $endDate = null): array
     {
-        $query = "SELECT COUNT(*) AS jumlah_user FROM users WHERE 1=1";
-        $params = [];
-
-        if ($year !== null) {
-            $query .= " AND YEAR(created_at) = ?";
-            $params[] = $year;
+        if (!$startDate || !$endDate) {
+            return [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'jumlah_user' => 0,
+            ];
         }
 
-        if ($month !== null) {
-            $query .= " AND MONTH(created_at) = ?";
-            $params[] = $month;
-        }
-
-        if ($day !== null) {
-            $query .= " AND DAY(created_at) = ?";
-            $params[] = $day;
-        }
-
-        $result = DB::selectOne($query, $params);
+        $query = "SELECT COUNT(*) AS jumlah_user FROM users WHERE created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)";
+        $result = DB::selectOne($query, [$startDate, $endDate]);
 
         return [
-            'tahun' => $year,
-            'bulan' => $month,
-            'tanggal' => $day,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'jumlah_user' => isset($result->jumlah_user) ? (int) $result->jumlah_user : 0,
         ];
     }

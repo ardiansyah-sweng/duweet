@@ -225,40 +225,21 @@ class UserController extends Controller
     public function countUserpertanggalandbulan(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'date' => 'nullable|date_format:Y-m-d',
-            'month' => 'nullable|date_format:Y-m',   
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d',
         ]);
 
-        if (empty($validated['date']) && empty($validated['month'])) {
+        if (empty($validated['start_date']) || empty($validated['end_date'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Kirim salah satu: date (Y-m-d) atau month (Y-m).',
+                'message' => 'Kirim start_date dan end_date (Y-m-d).',
             ], 422);
         }
 
-        if (!empty($validated['date']) && !empty($validated['month'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gunakan salah satu saja: date atau month.',
-            ], 422);
-        }
-
-        $year = null;
-        $month = null;
-        $day = null;
-
-        if (!empty($validated['date'])) {
-            $date = Carbon::createFromFormat('Y-m-d', $validated['date']);
-            $year = (int) $date->year;
-            $month = (int) $date->month;
-            $day = (int) $date->day;
-        } elseif (!empty($validated['month'])) {
-            $monthOnly = Carbon::createFromFormat('Y-m', $validated['month']);
-            $year = (int) $monthOnly->year;
-            $month = (int) $monthOnly->month;
-        }
-
-        $data = User::countUserpertanggaldanbulan($year, $month, $day);
+        $data = User::countUserpertanggaldanbulan(
+            $validated['start_date'],
+            $validated['end_date']
+        );
 
         return response()->json([
             'success' => true,
