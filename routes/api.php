@@ -172,4 +172,9 @@ Route::get(
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
 
+Route::get(
+    '/admin/income/by-period',
+    [\App\Http\Controllers\ReportController::class, 'adminIncomeByPeriod']
+);
+
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);

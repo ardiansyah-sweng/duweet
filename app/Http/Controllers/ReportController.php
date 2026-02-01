@@ -508,4 +508,62 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Sum income by period untuk ADMIN (agregat semua user)
+     * 
+     * GET /api/admin/income/by-period
+     * Query params:
+     * - start_date (optional, format: Y-m-d)
+     * - end_date   (optional, format: Y-m-d)
+     */
+    public function adminIncomeByPeriod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'end_date' => 'nullable|date|date_format:Y-m-d',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+        $defaultEndDate = Carbon::create(2026, 12, 31)->endOfDay();
+
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : $defaultStartDate;
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : $defaultEndDate;
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.',
+            ], 400);
+        }
+
+        try {
+            $data = Transaction::getAdminIncomeSummaryByPeriod($startDate, $endDate);
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil ringkasan income by period.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
