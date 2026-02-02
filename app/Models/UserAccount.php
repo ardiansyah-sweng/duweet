@@ -65,6 +65,16 @@ class UserAccount extends Model
             WHERE user_id = ?
         ", [$hashed, $userId]);
     }
+public static function updatePasswordById($id, $newPassword)
+{
+    $hashed = bcrypt($newPassword);
+
+    return DB::update("
+        UPDATE user_accounts
+        SET password = ?
+        WHERE id = ?
+    ", [$hashed, $id]);
+}
 
     /**
      * Raw delete user account
