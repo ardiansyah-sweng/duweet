@@ -31,6 +31,7 @@ Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
 // =============================================================
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
+Route::put('/users/{id}', [UserController::class, 'updateUser']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [\App\Http\Controllers\TransactionController::class, 'monthlyExpense']);
 

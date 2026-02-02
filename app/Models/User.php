@@ -343,6 +343,9 @@ class User extends Authenticatable
         return array_values($users);
     }
 
+    /**
+     * Get users with account setup status
+     */
     public static function getUsersWithStatus($status = null)
     {
         $sql = "
@@ -358,9 +361,53 @@ class User extends Authenticatable
             ) ua ON u.id = ua.id_user
         ";
 
-
         $sql .= " ORDER BY u.id";
 
         return DB::select($sql);
+    }
+
+    /**
+     * Update user: name, email, password, photo, preference
+     */
+    public static function updateUserRaw(int $userId, array $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $fields = [];
+            $values = [];
+
+            if (isset($data['name'])) {
+                $fields[] = "name = ?";
+                $values[] = $data['name'];
+            }
+
+            if (isset($data['email'])) {
+                if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    return 'Format email tidak valid.';
+                }
+
+                $fields[] = "email = ?";
+                $values[] = $data['email'];
+            }
+
+            if (empty($fields)) {
+                return 'Tidak ada data yang diupdate.';
+            }
+
+            $values[] = $userId;
+
+            DB::update(
+                "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?",
+                $values
+            );
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return 'Gagal update user: ' . $e->getMessage();
+        }
     }
 }
