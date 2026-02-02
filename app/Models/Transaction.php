@@ -872,45 +872,40 @@ class Transaction extends Model
     public static function updateTransactionRaw(int $id, array $data): array
     {
         try {
-            return DB::transaction(function () use ($id, $data) {
-                $transactionTable = config('db_tables.transaction');
-                
-                // 1. Get existing transaction (Manual Query with Lock)
-                $oldTrxResults = DB::select("SELECT * FROM {$transactionTable} WHERE id = ? FOR UPDATE", [$id]);
-                $oldTrx = $oldTrxResults[0] ?? null;
+            // 1. Cek apakah transaksi ada (Query Manual Sederhana)
+            $exists = DB::selectOne("SELECT id FROM transactions WHERE id = ?", [$id]);
+            if (!$exists) {
+                throw new \Exception('Transaction not found');
+            }
 
-                if (!$oldTrx) {
-                    throw new \Exception('Transaction not found');
-                }
+            // 2. Siapkan data (Hanya deskripsi dan tanggal sesuai tugas)
+            $description = $data['description'] ?? null;
+            $transactionDate = $data['transaction_date'] ?? null;
 
-                // 2. Prepare new values
-                // TUGAS: Hanya update description dan transaction_date. Amount tidak boleh berubah.
-                $newDescription = $data['description'] ?? $oldTrx->description;
-                $newDate = isset($data['transaction_date']) ? Carbon::parse($data['transaction_date']) : Carbon::parse($oldTrx->created_at);
-                $updatedAt = now();
+            // 3. Update Transaction (Manual Query UPDATE)
+            // Kita gunakan COALESCE agar jika salah satu null, data lama tidak hilang
+            DB::update(
+                "UPDATE transactions SET 
+                    description = COALESCE(?, description), 
+                    transaction_date = COALESCE(?, transaction_date), 
+                    updated_at = ? 
+                 WHERE id = ?",
+                [
+                    $description,
+                    $transactionDate,
+                    now(),
+                    $id
+                ]
+            );
 
-                // 3. Update Transaction (Manual Query)
-                DB::update(
-                    "UPDATE {$transactionTable} SET description = ?, transaction_date = ?, updated_at = ? WHERE id = ?",
-                    [
-                        $newDescription,
-                        $newDate,
-                        $updatedAt,
-                        $id
-                    ]
-                );
-
-                return [
-                    'success' => true,
-                    'message' => 'Transaction updated successfully (Description & Date only)',
-                    'data' => [
-                        'id' => $id,
-                        'description' => $newDescription,
-                        'transaction_date' => $newDate->toDateTimeString(),
-                        'amount_status' => 'unchanged' // Info bahwa amount tidak berubah
-                    ]
-                ];
-            });
+            return [
+                'success' => true,
+                'message' => 'Transaction updated successfully (Description & Date only)',
+                'data' => [
+                    'id' => $id,
+                    'updated_fields' => array_keys(array_filter($data))
+                ]
+            ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
