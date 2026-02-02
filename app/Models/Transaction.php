@@ -872,16 +872,16 @@ class Transaction extends Model
     public static function updateTransactionRaw(int $id, array $data): array
     {
         try {
-            // Murni hanya menjalankan query UPDATE sesuai tugas
+            // Menggunakan COALESCE agar jika data tidak dikirim, tetap menggunakan data lama di DB
             DB::update(
                 "UPDATE transactions SET 
-                    description = ?, 
-                    transaction_date = ?, 
+                    description = COALESCE(?, description), 
+                    transaction_date = COALESCE(?, transaction_date), 
                     updated_at = ? 
                  WHERE id = ?",
                 [
-                    $data['description'],
-                    $data['transaction_date'],
+                    $data['description'] ?? null,
+                    $data['transaction_date'] ?? null,
                     now(),
                     $id
                 ]
