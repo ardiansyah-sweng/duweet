@@ -363,4 +363,64 @@ class User extends Authenticatable
             'jumlah_user' => isset($result->jumlah_user) ? (int) $result->jumlah_user : 0,
         ];
     }
+
+    /**
+     * Update user: name, email, password, photo, preference
+     */
+    public static function updateUserRaw(int $userId, array $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $fields = [];
+            $values = [];
+
+            if (isset($data['name'])) {
+                $fields[] = "name = ?";
+                $values[] = $data['name'];
+            }
+
+            if (isset($data['email'])) {
+                if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    return 'Format email tidak valid.';
+                }
+
+                $fields[] = "email = ?";
+                $values[] = $data['email'];
+            }
+
+            if (empty($fields)) {
+                return 'Tidak ada data yang diupdate.';
+            }
+
+            $values[] = $userId;
+
+            DB::update(
+                "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?",
+                $values
+            );
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return 'Gagal update user: ' . $e->getMessage();
+        }
+    }
 }
+                "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?",
+                $values
+            );
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return 'Gagal update user: ' . $e->getMessage();
+        }
+    }
+
+}
+>>>>>>> 7575c0db0db92cb0c3f9ed3942aecd66dc6fffb2
