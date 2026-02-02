@@ -353,17 +353,41 @@ class User extends Authenticatable
                 u.id,
                 u.name AS nama,
                 u.email,
-                ua.id_user IS NOT NULL AS has_account
+                ua.id AS user_account_id,
+                ua.username,
+                ua.email AS account_email,
+                ua.is_active
             FROM users u
-            LEFT JOIN (
-                SELECT DISTINCT id_user
-                FROM user_accounts
-            ) ua ON u.id = ua.id_user
-             ORDER BY u.id
-             ";
-        
+            LEFT JOIN user_accounts ua ON u.id = ua.id_user
+            ORDER BY u.id, ua.id
+        ";
 
-        return DB::select($sql);
+        $results = DB::select($sql);
+
+        $users = [];
+        foreach ($results as $row) {
+            $userId = $row->id;
+            
+            if (!isset($users[$userId])) {
+                $users[$userId] = [
+                    'id' => $row->id,
+                    'nama' => $row->nama,
+                    'email' => $row->email,
+                    'accounts' => []
+                ];
+            }
+            
+            if ($row->user_account_id !== null) {
+                $users[$userId]['accounts'][] = [
+                    'user_account_id' => $row->user_account_id,
+                    'username' => $row->username,
+                    'email' => $row->account_email,
+                    'is_active' => $row->is_active
+                ];
+            }
+        }
+
+        return array_values($users);
     }
 
     /**
