@@ -872,27 +872,16 @@ class Transaction extends Model
     public static function updateTransactionRaw(int $id, array $data): array
     {
         try {
-            // 1. Cek apakah transaksi ada (Query Manual Sederhana)
-            $exists = DB::selectOne("SELECT id FROM transactions WHERE id = ?", [$id]);
-            if (!$exists) {
-                throw new \Exception('Transaction not found');
-            }
-
-            // 2. Siapkan data (Hanya deskripsi dan tanggal sesuai tugas)
-            $description = $data['description'] ?? null;
-            $transactionDate = $data['transaction_date'] ?? null;
-
-            // 3. Update Transaction (Manual Query UPDATE)
-            // Kita gunakan COALESCE agar jika salah satu null, data lama tidak hilang
+            // Murni hanya menjalankan query UPDATE sesuai tugas
             DB::update(
                 "UPDATE transactions SET 
-                    description = COALESCE(?, description), 
-                    transaction_date = COALESCE(?, transaction_date), 
+                    description = ?, 
+                    transaction_date = ?, 
                     updated_at = ? 
                  WHERE id = ?",
                 [
-                    $description,
-                    $transactionDate,
+                    $data['description'],
+                    $data['transaction_date'],
                     now(),
                     $id
                 ]
@@ -900,11 +889,7 @@ class Transaction extends Model
 
             return [
                 'success' => true,
-                'message' => 'Transaction updated successfully (Description & Date only)',
-                'data' => [
-                    'id' => $id,
-                    'updated_fields' => array_keys(array_filter($data))
-                ]
+                'message' => 'Transaction updated successfully'
             ];
         } catch (\Exception $e) {
             return [
