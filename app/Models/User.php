@@ -342,7 +342,7 @@ class User extends Authenticatable
 
         return array_values($users);
     }
-    
+
     public static function getUsersWithStatus($status = null)
     {
         $sql = "

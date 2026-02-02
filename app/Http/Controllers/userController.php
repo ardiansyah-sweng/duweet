@@ -232,7 +232,7 @@ class UserController extends Controller
             return response()->json([
                 'status' => 'success',
                 'keterangan' => 'Data user yang belum setup account',
-                'total_data' => $users->count(),
+                'total_data' => count($users),
                 'data' => $users
             ]);
         } catch (\Throwable $e) {
@@ -256,7 +256,7 @@ class UserController extends Controller
             return response()->json([
                 'status' => 'success',
                 'keterangan' => 'Data user yang sudah setup account',
-                'total_data' => $users->count(),
+                'total_data' => count($users),
                 'data' => $users
             ]);
         } catch (\Throwable $e) {
@@ -268,6 +268,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
     public function getAllWithStatus()
     {
