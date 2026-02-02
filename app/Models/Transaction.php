@@ -292,7 +292,7 @@ class Transaction extends Model
             't.balance_effect',
             't.is_balance',
             't.description',
-            't.created_at as transaction_date',
+            't.transaction_date',
             'ua.id as user_account_id',
             'ua.username as user_account_username',
             'ua.email as user_account_email',
@@ -380,8 +380,8 @@ class Transaction extends Model
             $bindings[] = $entryType;
         }
 
-        // Order by created_at descending
-        $sql .= " ORDER BY created_at DESC";
+        // Order by transaction_date descending
+        $sql .= " ORDER BY transaction_date DESC";
 
         // Execute raw SQL query
         $results = DB::select($sql, $bindings);
@@ -406,12 +406,12 @@ class Transaction extends Model
 
         // Rentang tanggal (butuh start & end)
         if ($startDate !== null && $endDate !== null) {
-            $sql .= " AND created_at BETWEEN ? AND ?";
+            $sql .= " AND transaction_date BETWEEN ? AND ?";
             $bindings[] = $startDate . ' 00:00:00';
             $bindings[] = $endDate . ' 23:59:59';
         }
 
-        $sql .= " ORDER BY created_at DESC";
+        $sql .= " ORDER BY transaction_date DESC";
 
         return collect(DB::select($sql, $bindings));
     }
@@ -436,7 +436,7 @@ class Transaction extends Model
         $transactionTable = config('db_tables.transaction');
 
         // Start with base SQL
-        $sql = "SELECT * FROM {$transactionTable} WHERE created_at BETWEEN ? AND ?";
+        $sql = "SELECT * FROM {$transactionTable} WHERE transaction_date BETWEEN ? AND ?";
         $bindings = [
             $startDate . ' 00:00:00',
             $endDate . ' 23:59:59'
@@ -458,8 +458,8 @@ class Transaction extends Model
             $bindings[] = $entryType;
         }
 
-        // Order by created_at descending
-        $sql .= " ORDER BY created_at DESC";
+        // Order by transaction_date descending
+        $sql .= " ORDER BY transaction_date DESC";
 
         // Execute raw SQL query
         $results = DB::select($sql, $bindings);
