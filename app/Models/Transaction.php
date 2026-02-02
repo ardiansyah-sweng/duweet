@@ -929,25 +929,22 @@ class Transaction extends Model
     }
 
     /**
-     * Get sum of cash in (credit transactions) by period using raw SQL
+     * Get sum of cash in by financial account for a given date range (no period grouping).
      *
-     * Returns breakdown per financial account per period.
+     * Returns breakdown per financial account for the provided date range.
      *
      * @param  Carbon  $startDate  Start date for period
      * @param  Carbon  $endDate  End date for period
      * @param  int|null  $userAccountId  Optional: Filter by user account
      * @param  int|null  $financialAccountId  Optional: Filter by financial account
-     * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
-     * Note: Results are limited to financial accounts with type 'AS' (assets).
      * @return \Illuminate\Support\Collection
      */
     public static function sumCashInByPeriod(
         Carbon $startDate,
         Carbon $endDate,
         ?int $userAccountId = null,
-        ?int $financialAccountId = null,
-        string $periodFormat = 'month'
-    ): \Illuminate\Support\Collection { 
+        ?int $financialAccountId = null
+    ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction');
         $accountsTable = config('db_tables.financial_account');
 
@@ -958,26 +955,12 @@ class Transaction extends Model
                 $dateColumn = 'created_at';
             }
         } catch (\Exception $e) {
-            // If schema check fails (e.g. during testing), default to transaction_date constant
             $dateColumn = TransactionColumns::TRANSACTION_DATE;
         }
 
-        // Period expressions using selected date column
-        $periodExpressions = [
-            'day' => "DATE(t." . $dateColumn . ")",
-            'week' => "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1)",
-            'month' => "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')",
-            'quarter' => "CONCAT(YEAR(t." . $dateColumn . "), '-Q', QUARTER(t." . $dateColumn . "))",
-            'year' => "YEAR(t." . $dateColumn . ")",
-        ];
-
-        // Use selected period format, default to 'month'
-        $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
-
-        // Inline GROUP BY and ORDER BY directly into the SQL string without separate if/else
+        // Per-account totals for the full date range (no period grouping)
         $sql = "
             SELECT 
-                {$periodExpr} AS period,
                 fa.id AS account_id,
                 fa.name AS account_name,
                 fa.type AS account_type,
@@ -991,15 +974,10 @@ class Transaction extends Model
                 AND (? IS NULL OR t.user_account_id = ?)
                 AND (? IS NULL OR t.financial_account_id = ?)
                 AND fa.type = 'AS'
-            GROUP BY " . (
-                $periodFormat === 'week' 
-                ? "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1), fa.id, fa.name, fa.type" 
-                : "{$periodExpr}, fa.id, fa.name, fa.type"
-            ) . "
-            ORDER BY period DESC, account_name ASC
+            GROUP BY fa.id, fa.name, fa.type
+            ORDER BY account_name ASC
         ";
 
-        // Bind values; use null where filter not provided so the conditional placeholders take effect
         $userAccountBind = $userAccountId;
         $financialAccountBind = $financialAccountId;
 
@@ -1010,7 +988,6 @@ class Transaction extends Model
             $financialAccountBind, $financialAccountBind,
         ];
 
-        // Execute raw SQL query
         $results = DB::select($sql, $bindings);
 
         return collect($results);

@@ -530,7 +530,6 @@ class ReportController extends Controller
             'end_date' => 'nullable|date_format:Y-m-d',
             'user_account_id' => 'nullable|integer|exists:user_accounts,id',
             'financial_account_id' => 'nullable|integer|exists:financial_accounts,id',
-            'period_format' => 'nullable|in:day,week,month,quarter,year',
         ]);
 
         if ($validator->fails()) {
@@ -542,21 +541,15 @@ class ReportController extends Controller
 
         // 2. Parse start_date (required)
         $startDate = Carbon::parse($request->query('start_date'))->startOfDay();
-        $periodFormat = $request->query('period_format', 'month');
+        // Period format will be determined solely from the input date range below
+        $periodFormat = 'month';
 
         // 3. Auto-set end_date berdasarkan period_format jika tidak diberikan
         if ($request->query('end_date')) {
             $endDate = Carbon::parse($request->query('end_date'))->endOfDay();
         } else {
-            // Determine end_date based on period_format
-            $endDate = match($periodFormat) {
-                'day' => $startDate->copy()->endOfDay(),
-                'week' => $startDate->copy()->endOfWeek()->endOfDay(),
-                'month' => $startDate->copy()->endOfMonth()->endOfDay(),
-                'quarter' => $startDate->copy()->endOfQuarter()->endOfDay(),
-                'year' => $startDate->copy()->endOfYear()->endOfDay(),
-                default => $startDate->copy()->endOfMonth()->endOfDay(),
-            };
+            // Default end_date = end of month from start date
+            $endDate = $startDate->copy()->endOfMonth()->endOfDay();
         }
 
         // 4. Validasi periode
@@ -567,45 +560,17 @@ class ReportController extends Controller
             ], 400);
         }
 
-        // 5. Intelligent period_format detection - override jika range menunjukkan periode yang lebih besar
-        if (!$request->query('period_format')) {
-            // Auto-detect berdasarkan date range
-            $daysDiff = $startDate->diffInDays($endDate);
-            
-            // Full year detection (Jan 1 - Dec 31)
-            if ($startDate->isStartOfDay() && $endDate->isEndOfDay() && 
-                $startDate->month === 1 && $startDate->day === 1 && 
-                $endDate->month === 12 && $endDate->day === 31 && 
-                $startDate->year === $endDate->year) {
-                $periodFormat = 'year';
-            }
-            // Quarter detection
-            elseif ($daysDiff >= 85 && $daysDiff <= 95) {
-                $periodFormat = 'quarter';
-            }
-            // Month detection
-            elseif ($daysDiff >= 27 && $daysDiff <= 32) {
-                $periodFormat = 'month';
-            }
-            // Week detection
-            elseif ($daysDiff >= 6 && $daysDiff <= 7) {
-                $periodFormat = 'week';
-            }
-            // Default: already set to 'month'
-        }
-
         // 6. Extract filter parameters
         $userAccountId = $request->query('user_account_id') ? (int) $request->query('user_account_id') : null;
         $financialAccountId = $request->query('financial_account_id') ? (int) $request->query('financial_account_id') : null;
 
         try {
-            // 7. Query ke model dengan opsi filter
+            // 7. Query ke model dengan opsi filter (no period grouping)
             $data = Transaction::sumCashInByPeriod(
                 $startDate,
                 $endDate,
                 $userAccountId,
-                $financialAccountId,
-                $periodFormat
+                $financialAccountId
             );
 
             // 8. Calculate aggregate totals
@@ -623,7 +588,6 @@ class ReportController extends Controller
                 'period' => [
                     'from' => $startDate->toDateString(),
                     'to' => $endDate->toDateString(),
-                    'format' => $periodFormat
                 ],
                 'filters' => [
                     'user_account_id' => $userAccountId,
