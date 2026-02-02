@@ -342,4 +342,25 @@ class User extends Authenticatable
 
         return array_values($users);
     }
+    
+    public static function getUsersWithStatus($status = null)
+    {
+        $sql = "
+            SELECT
+                u.id,
+                u.name AS nama,
+                u.email,
+                ua.id_user IS NOT NULL AS has_account
+            FROM users u
+            LEFT JOIN (
+                SELECT DISTINCT id_user
+                FROM user_accounts
+            ) ua ON u.id = ua.id_user
+        ";
+
+
+        $sql .= " ORDER BY u.id";
+
+        return DB::select($sql);
+    }
 }

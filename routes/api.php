@@ -176,3 +176,4 @@ Route::get(
 );
 
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+Route::get('/users/with-status', [UserController::class, 'getAllWithStatus'])->name('api.users.with-status');
