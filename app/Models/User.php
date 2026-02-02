@@ -361,11 +361,6 @@ class User extends Authenticatable
             ) ua ON u.id = ua.id_user
         ";
 
-        if ($status === 'belum_setup') {
-            $sql .= " WHERE ua.id_user IS NULL";
-        } elseif ($status === 'sudah_setup') {
-            $sql .= " WHERE ua.id_user IS NOT NULL";
-        }
 
         $sql .= " ORDER BY u.id";
 
