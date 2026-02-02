@@ -68,11 +68,11 @@ class Transaction extends Model
         }
 
         if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+            $periodeExpr = "strftime('%Y-%m', t.transaction_date)";
         } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+            $periodeExpr = "to_char(t.transaction_date, 'YYYY-MM')";
         } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+            $periodeExpr = "DATE_FORMAT(t.transaction_date, '%Y-%m')"; // MySQL/MariaDB
         }
 
         // Susun DML SQL murni (alias tabel: t, fa)
@@ -87,7 +87,7 @@ class Transaction extends Model
                 AND fa.type = 'IN'
                 AND t.balance_effect = 'increase'
                 AND fa.is_group = 0
-                AND t.created_at BETWEEN ? AND ?
+                AND t.transaction_date BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
             ORDER BY periode ASC
         ";
@@ -146,7 +146,7 @@ class Transaction extends Model
             WHERE
                 fa.is_group = 0
                 AND fa.type IN ('IN','EX','SP')
-                AND t.created_at BETWEEN ? AND ?
+                AND t.transaction_date BETWEEN ? AND ?
         ";
 
         $rows = DB::select($sql, [
@@ -318,7 +318,7 @@ class Transaction extends Model
         $startDate = $startDate instanceof Carbon ? $startDate->toDateString() : $startDate;
         $endDate = $endDate instanceof Carbon ? $endDate->toDateString() : $endDate;
 
-        return $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        return $query->whereBetween('transaction_date', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
     }
 
     /**
@@ -510,8 +510,8 @@ class Transaction extends Model
             INNER JOIN {$financialAccountsTable} fa 
                 ON fa.id = t.financial_account_id
             AND fa.type = 'EX'
-            WHERE t.created_at >= ?
-            AND t.created_at < ?
+            WHERE t.transaction_date >= ?
+            AND t.transaction_date < ?
         ";
 
         $bindings = [$startDate, $endDate];
@@ -535,7 +535,7 @@ class Transaction extends Model
             SELECT
                 t.amount,
                 t.description,
-                t.created_at,
+                t.transaction_date,
                 t.entry_type, 
                 ua.username as user_name,
                 a.name as category_name,
@@ -547,10 +547,10 @@ class Transaction extends Model
             JOIN
                 financial_accounts a ON t.financial_account_id = a.id
             WHERE
-                t.created_at >= NOW() - INTERVAL 7 DAY
+                t.transaction_date >= NOW() - INTERVAL 7 DAY
                 AND a.type IN ('IN', 'EX', 'SP')
             ORDER BY
-                t.created_at DESC
+                t.transaction_date DESC
             LIMIT 20
         ";
 
@@ -578,7 +578,7 @@ class Transaction extends Model
             WHERE
                 fa.type = 'SP'
                 AND fa.is_group = 0
-                AND t.created_at BETWEEN ? AND ?
+                AND t.transaction_date BETWEEN ? AND ?
             GROUP BY ua.id, ua.username
             ORDER BY total_spending DESC
         ";
@@ -626,11 +626,11 @@ class Transaction extends Model
         }
 
         if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+            $periodeExpr = "strftime('%Y-%m', t.transaction_date)";
         } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+            $periodeExpr = "to_char(t.transaction_date, 'YYYY-MM')";
         } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+            $periodeExpr = "DATE_FORMAT(t.transaction_date, '%Y-%m')"; // MySQL/MariaDB
         }
 
         // Build raw SQL query
@@ -644,7 +644,7 @@ class Transaction extends Model
                 fa.type = 'EX'
                 AND t.balance_effect = 'decrease'
                 AND fa.is_group = 0
-                AND t.created_at BETWEEN ? AND ?
+                AND t.transaction_date BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
             ORDER BY periode ASC
         ";
@@ -739,11 +739,11 @@ class Transaction extends Model
         }
 
         if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+            $periodeExpr = "strftime('%Y-%m', t.transaction_date)";
         } elseif ($driver === 'pgsql') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+            $periodeExpr = "to_char(t.transaction_date, 'YYYY-MM')";
         } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')";
+            $periodeExpr = "DATE_FORMAT(t.transaction_date, '%Y-%m')";
         }
 
         $sql = "
@@ -767,7 +767,7 @@ class Transaction extends Model
                 ON fa.id = t.financial_account_id
             WHERE
                 t.user_account_id = ?
-                AND t.created_at BETWEEN ? AND ?
+                AND t.transaction_date BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
             ORDER BY periode ASC
         ";
@@ -802,11 +802,11 @@ class Transaction extends Model
         }
 
         if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t.created_at)";
+            $periodeExpr = "strftime('%Y-%m', t.transaction_date)";
         } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t.created_at, 'YYYY-MM')";
+            $periodeExpr = "to_char(t.transaction_date, 'YYYY-MM')";
         } else {
-            $periodeExpr = "DATE_FORMAT(t.created_at, '%Y-%m')"; // MySQL/MariaDB
+            $periodeExpr = "DATE_FORMAT(t.transaction_date, '%Y-%m')"; // MySQL/MariaDB
         }
 
         $sql = "
@@ -818,7 +818,7 @@ class Transaction extends Model
             WHERE
                 fa.type = 'IN'
                 AND fa.is_group = 0
-                AND t.created_at BETWEEN ? AND ?
+                AND t.transaction_date BETWEEN ? AND ?
             GROUP BY {$periodeExpr}
             ORDER BY periode ASC
         ";
