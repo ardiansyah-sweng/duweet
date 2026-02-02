@@ -9,17 +9,17 @@ use Illuminate\Http\JsonResponse;
 
 class UserAccountController extends Controller
 {
-    public function updatePassword($id, Request $request)
-    {
-        
-        $password = $request->input('password');
+    public function updatePassword(Request $request, $id)
+{
+    $request->validate([
+        'password' => 'required|min:8'
+    ]);
 
-        $result = UserAccount::updatePasswordById($id, $password);
+    $result = UserAccount::updatePasswordById($id, $request->password);
 
-        return response()->json([
-            'success' => $result ? true : false,
-            'id_user' => $id,
-            'password_baru' => $password
-        ]);
-    }
+    return response()->json([
+        'success' => (bool) $result,
+        'id' => $id
+    ]);
+}
 }
