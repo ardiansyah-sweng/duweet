@@ -31,6 +31,7 @@ Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
 // =============================================================
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
+Route::put('/users/{id}', [UserController::class, 'updateUser']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [\App\Http\Controllers\TransactionController::class, 'monthlyExpense']);
 
@@ -62,13 +63,16 @@ Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 Route::get('/user-accounts/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
 
 Route::prefix('user-account')->group(function () {
+     Route::get('/inactive-users', [UserAccountController::class, 'inactiveByPeriod'])->name('api.user-account.inactive-users');
+      Route::get('/not-logged-in/{days?}', [UserAccountController::class, 'notLoggedIn'])->name('api.user-account.not-logged-in');
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/find-by-id/{id}', [UserAccountController::class, 'findById'])->name('api.user-account.find-by-id');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
-    Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
+    @Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+   
 });
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
@@ -97,6 +101,7 @@ Route::prefix('transactions')->group(function () {
 Route::prefix('financial-account')->group(function () {
     Route::get('/active', [FinancialAccountController::class, 'getActiveAccounts'])->name('api.financial-account.active');
     Route::get('/{id}', [FinancialAccountController::class, 'show'])->name('api.financial-account.show');
+    Route::get('/filter/type/{type}', [FinancialAccountController::class, 'filterByType'])->name('api.financial-account.filter-by-type');
 
     // Liquid Assets Route - per user_account_id
     Route::get('/liquid-assets/{user_account_id}', [FinancialAccountController::class, 'getUserLiquidAssets'])->name('api.financial-account.liquid-assets.user');
@@ -158,6 +163,11 @@ Route::get(
     [\App\Http\Controllers\ReportController::class, 'adminSpendingSummary']
 );
 
+Route::get(
+    '/admin/reports/expenses-summary',
+    [\App\Http\Controllers\ReportController::class, 'adminExpensesSummary']
+);
+
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
 
@@ -165,8 +175,7 @@ Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
-Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
-//Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
+
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
 
 
