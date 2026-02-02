@@ -989,28 +989,23 @@ class Transaction extends Model
             WHERE t.entry_type = 'credit'
                 AND t.balance_effect = 'increase'
                 AND t." . $dateColumn . " BETWEEN ? AND ?
+                AND (? IS NULL OR t.user_account_id = ?)
+                AND (? IS NULL OR t.financial_account_id = ?)
+                AND (? IS NULL OR fa." . FinancialAccountColumns::IS_LIQUID . " = ?)
         ";
+
+        // Bind values; use null where filter not provided so the conditional placeholders take effect
+        $userAccountBind = $userAccountId;
+        $financialAccountBind = $financialAccountId;
+        $isLiquidBind = $isLiquid === null ? null : ($isLiquid ? 1 : 0);
 
         $bindings = [
             $startDate->toDateTimeString(),
             $endDate->toDateTimeString(),
+            $userAccountBind, $userAccountBind,
+            $financialAccountBind, $financialAccountBind,
+            $isLiquidBind, $isLiquidBind,
         ];
-
-        // Add optional filters
-        if ($userAccountId !== null) {
-            $sql .= " AND t.user_account_id = ?";
-            $bindings[] = $userAccountId;
-        }
-
-        if ($financialAccountId !== null) {
-            $sql .= " AND t.financial_account_id = ?";
-            $bindings[] = $financialAccountId;
-        }
-
-        if ($isLiquid !== null) {
-            $sql .= " AND fa." . FinancialAccountColumns::IS_LIQUID . " = ?";
-            $bindings[] = $isLiquid ? 1 : 0;
-        }
 
         // Add GROUP BY and ORDER BY (MySQL)
         if ($periodFormat === 'week') {
