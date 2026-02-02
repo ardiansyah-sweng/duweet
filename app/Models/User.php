@@ -359,9 +359,9 @@ class User extends Authenticatable
                 SELECT DISTINCT id_user
                 FROM user_accounts
             ) ua ON u.id = ua.id_user
-        ";
-
-        $sql .= " ORDER BY u.id";
+             ORDER BY u.id
+             ";
+        
 
         return DB::select($sql);
     }
