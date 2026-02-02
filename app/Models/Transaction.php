@@ -937,8 +937,8 @@ class Transaction extends Model
      * @param  Carbon  $endDate  End date for period
      * @param  int|null  $userAccountId  Optional: Filter by user account
      * @param  int|null  $financialAccountId  Optional: Filter by financial account
-     * @param  bool|null $isLiquid Optional: Filter by financial account is_liquid (true/false)
      * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
+     * Note: Results are limited to financial accounts with type 'AS' (assets).
      * @return \Illuminate\Support\Collection
      */
     public static function sumCashInByPeriod(
@@ -946,7 +946,6 @@ class Transaction extends Model
         Carbon $endDate,
         ?int $userAccountId = null,
         ?int $financialAccountId = null,
-        ?bool $isLiquid = null,
         string $periodFormat = 'month'
     ): \Illuminate\Support\Collection { 
         $transactionTable = config('db_tables.transaction');
@@ -986,12 +985,12 @@ class Transaction extends Model
                 COUNT(t.id) AS transaction_count
             FROM {$transactionTable} t
             INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
-            WHERE t.entry_type = 'credit'
+            WHERE t.entry_type = 'debit'
                 AND t.balance_effect = 'increase'
                 AND t." . $dateColumn . " BETWEEN ? AND ?
                 AND (? IS NULL OR t.user_account_id = ?)
                 AND (? IS NULL OR t.financial_account_id = ?)
-                AND (? IS NULL OR fa." . FinancialAccountColumns::IS_LIQUID . " = ?)
+                AND fa.type = 'AS'
             GROUP BY " . (
                 $periodFormat === 'week' 
                 ? "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1), fa.id, fa.name, fa.type" 
@@ -1003,14 +1002,12 @@ class Transaction extends Model
         // Bind values; use null where filter not provided so the conditional placeholders take effect
         $userAccountBind = $userAccountId;
         $financialAccountBind = $financialAccountId;
-        $isLiquidBind = $isLiquid === null ? null : ($isLiquid ? 1 : 0);
 
         $bindings = [
             $startDate->toDateTimeString(),
             $endDate->toDateTimeString(),
             $userAccountBind, $userAccountBind,
             $financialAccountBind, $financialAccountBind,
-            $isLiquidBind, $isLiquidBind,
         ];
 
         // Execute raw SQL query
