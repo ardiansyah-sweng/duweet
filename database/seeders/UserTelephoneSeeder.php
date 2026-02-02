@@ -12,22 +12,10 @@ class UserTelephoneSeeder extends Seeder
 {
     public function run(): void
     {
-        // Nonaktifkan FK sementara (support MySQL dan SQLite)
-        $driver = DB::connection()->getDriverName();
-        
-        if ($driver === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        } elseif ($driver === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF;');
-        }
-        
+        // Nonaktifkan FK sementara
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         UserTelephone::truncate();
-        
-        if ($driver === 'mysql') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        } elseif ($driver === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = ON;');
-        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Ambil semua id user
         $userIds = DB::table(config('db_tables.users', 'users'))->pluck('id');
