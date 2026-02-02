@@ -343,54 +343,20 @@ class User extends Authenticatable
         return array_values($users);
     }
 
-    /**
-     * Get users with account setup status
-     */
-    public static function getUsersWithStatus($status = null)
+  
+    public static function getUsersWithoutAccount()
     {
-        $sql = "
-            SELECT
-                u.id,
-                u.name AS nama,
-                u.email,
-                ua.id AS user_account_id,
-                ua.username,
-                ua.email AS account_email,
-                ua.is_active
-            FROM users u
-            LEFT JOIN user_accounts ua ON u.id = ua.id_user
-            ORDER BY u.id, ua.id
-        ";
+        $query = "SELECT u.id, u.name, u.email
+                  FROM users u
+                  WHERE NOT EXISTS (
+                      SELECT ua.id_user
+                      FROM user_accounts ua
+                      WHERE ua.id_user = u.id
+                  )";
 
-        $results = DB::select($sql);
-
-        $users = [];
-        foreach ($results as $row) {
-            $userId = $row->id;
-            
-            if (!isset($users[$userId])) {
-                $users[$userId] = [
-                    'id' => $row->id,
-                    'nama' => $row->nama,
-                    'email' => $row->email,
-                    'accounts' => []
-                ];
-            }
-            
-            if ($row->user_account_id !== null) {
-                $users[$userId]['accounts'][] = [
-                    'user_account_id' => $row->user_account_id,
-                    'username' => $row->username,
-                    'email' => $row->account_email,
-                    'is_active' => $row->is_active
-                ];
-            }
-        }
-
-        return array_values($users);
+        return DB::select($query);
     }
-
-    /**
+        /**
      * Update user: name, email, password, photo, preference
      */
     public static function updateUserRaw(int $userId, array $data)
