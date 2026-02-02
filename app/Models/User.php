@@ -388,3 +388,20 @@ class User extends Authenticatable
     }
 
 }
+
+ public static function getUserAccounts($userId)
+    {
+
+        $query = "SELECT 
+                    ua.id as user_account_id,
+                    ua.id_user,
+                    ua.username,
+                    ua.email,
+                    ua.verified_at,
+                    ua.is_active
+                  FROM user_accounts ua
+                  WHERE ua.id_user = ?
+                  ORDER BY ua.id";
+        
+        $results = DB::select($query, [$userId]);
+    }
