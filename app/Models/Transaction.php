@@ -975,7 +975,7 @@ class Transaction extends Model
         // Use selected period format, default to 'month'
         $periodExpr = $periodExpressions[$periodFormat] ?? $periodExpressions['month'];
 
-        // Per-account breakdown per period
+        // Inline GROUP BY and ORDER BY directly into the SQL string without separate if/else
         $sql = "
             SELECT 
                 {$periodExpr} AS period,
@@ -992,6 +992,12 @@ class Transaction extends Model
                 AND (? IS NULL OR t.user_account_id = ?)
                 AND (? IS NULL OR t.financial_account_id = ?)
                 AND (? IS NULL OR fa." . FinancialAccountColumns::IS_LIQUID . " = ?)
+            GROUP BY " . (
+                $periodFormat === 'week' 
+                ? "YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1), fa.id, fa.name, fa.type" 
+                : "{$periodExpr}, fa.id, fa.name, fa.type"
+            ) . "
+            ORDER BY period DESC, account_name ASC
         ";
 
         // Bind values; use null where filter not provided so the conditional placeholders take effect
@@ -1006,15 +1012,6 @@ class Transaction extends Model
             $financialAccountBind, $financialAccountBind,
             $isLiquidBind, $isLiquidBind,
         ];
-
-        // Add GROUP BY and ORDER BY (MySQL)
-        if ($periodFormat === 'week') {
-            $sql .= " GROUP BY YEAR(t." . $dateColumn . "), WEEK(t." . $dateColumn . ", 1), fa.id, fa.name, fa.type";
-        } else {
-            $sql .= " GROUP BY {$periodExpr}, fa.id, fa.name, fa.type";
-        }
-
-        $sql .= " ORDER BY period DESC, account_name ASC";
 
         // Execute raw SQL query
         $results = DB::select($sql, $bindings);
