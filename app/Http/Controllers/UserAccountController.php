@@ -68,12 +68,16 @@ class UserAccountController extends Controller
     }
 
     /**
+     * Store a new user account (RAW QUERY - Via Model)
+     * Controller sekarang hanya validasi dan memanggil Model.
      * ============================
      * CREATE USER ACCOUNT
      * ============================
      */
     public function store(Request $request)
     {
+        // 1. Validasi Input
+        // Menggunakan Constant agar nama field validasi sinkron dengan database
         $validated = $request->validate([
             UserAccountColumns::ID_USER => 'required|exists:users,id',
             UserAccountColumns::USERNAME => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME . '|max:255',
@@ -93,72 +97,54 @@ class UserAccountController extends Controller
     }
 
     /**
+     * Update a user account (RAW QUERY VERSION)
+     * Menggunakan method static updateUserAccountRaw dari Model
      * ============================
-     * UPDATE USER ACCOUNT (ELOQUENT)
+     * UPDATE USER ACCOUNT
      * ============================
      */
     public function update(Request $request, $id)
     {
-        $userAccount = UserAccount::find($id);
+        // 1. Cek apakah user ada (Menggunakan Raw/Static method agar konsisten)
+        $existingUser = UserAccount::cariUserById($id);
 
-        if (!$userAccount) {
+        if (!$existingUser) {
             return response()->json([
                 'success' => false,
                 'message' => 'UserAccount tidak ditemukan'
             ], 404);
         }
 
+        // 2. Validasi Input
+        // Menggunakan 'sometimes' agar user bisa update sebagian data saja
         $validated = $request->validate([
-            UserAccountColumns::USERNAME => 'sometimes|string|unique:user_accounts,' . UserAccountColumns::USERNAME . ',' . $id . '|max:255',
-            UserAccountColumns::EMAIL => 'sometimes|email|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id . '|max:255',
+            UserAccountColumns::USERNAME => 'sometimes|string|max:255|unique:user_accounts,' . UserAccountColumns::USERNAME . ',' . $id,
+            UserAccountColumns::EMAIL => 'sometimes|email|max:255|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id,
             UserAccountColumns::PASSWORD => 'sometimes|string|min:8',
             UserAccountColumns::IS_ACTIVE => 'boolean',
         ]);
 
-        if (isset($validated[UserAccountColumns::PASSWORD])) {
-            $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
+        // 3. Proses Update via Model (RAW Query)
+        // Password hashing sudah ditangani otomatis di dalam method updateUserAccountRaw
+        try {
+            $affectedRows = UserAccount::updateUserAccountRaw($id, $validated);
+
+            // 4. Ambil data terbaru untuk response
+            $updatedUser = UserAccount::cariUserById($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => $affectedRows > 0 ? 'UserAccount berhasil diupdate' : 'Tidak ada perubahan data',
+                'data' => $updatedUser
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate data',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $userAccount->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'UserAccount berhasil diupdate',
-            'data' => $userAccount
-        ]);
-    }
-
-    /**
-     * ============================
-     * UPDATE USER ACCOUNT (RAW QUERY) <-
-     * ============================
-     */
-    public function updateRaw(Request $request, $id)
-    {
-        // Validasi data (sama dengan update Eloquent)
-        $validated = $request->validate([
-            UserAccountColumns::USERNAME => 'sometimes|string|unique:user_accounts,' . UserAccountColumns::USERNAME . ',' . $id . '|max:255',
-            UserAccountColumns::EMAIL => 'sometimes|email|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id . '|max:255',
-            UserAccountColumns::PASSWORD => 'sometimes|string|min:8',
-            UserAccountColumns::IS_ACTIVE => 'boolean',
-        ]);
-
-        // Hash password jika diinput
-        if (isset($validated[UserAccountColumns::PASSWORD])) {
-            $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
-        }
-
-        // Panggil Model Raw Update
-        $result = UserAccount::updateUserAccountRaw($id, $validated);
-
-        if (!$result['success']) {
-            if (isset($result['message']) && $result['message'] === 'UserAccount tidak ditemukan') {
-                return response()->json($result, 404);
-            }
-            return response()->json($result, 500);
-        }
-
-        return response()->json($result);
     }
 
     /**
@@ -206,6 +192,7 @@ class UserAccountController extends Controller
      * RESET PASSWORD – (DML VERSION)
      * ======================================================
      */
+
     public function resetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -248,6 +235,23 @@ class UserAccountController extends Controller
         return response()->json([
             'success' => true,
             'data' => $user
+        ]);
+    }
+
+    public function countAccountsPerUser($userId): JsonResponse
+    {
+        $summary = UserAccount::HitungTotalAccountperUser($userId);
+
+        if (!$summary) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $summary
         ]);
     }
 }
