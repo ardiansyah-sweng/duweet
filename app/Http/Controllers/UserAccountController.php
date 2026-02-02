@@ -224,6 +224,31 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ======================================================
+     * GET INACTIVE USERS – (DML VERSION)
+     * ======================================================
+     */
+    public function inactiveByPeriod(Request $request): JsonResponse
+{
+    $startDate = $request->query('start_date');
+    $endDate   = $request->query('end_date');
+
+    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+        $startDate,
+        $endDate
+    );
+
+    return response()->json([
+        'success' => true,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'total_found' => count($data),
+        'data' => $data
+    ]);
+}
+
+
     public function countAccountsPerUser($userId): JsonResponse
     {
         $summary = UserAccount::HitungTotalAccountperUser($userId);
@@ -279,5 +304,29 @@ class UserAccountController extends Controller
     //     ]);
     // }
 
-}   
+    
+    /**
+ * ======================================================
+ * GET USERS WHO HAVE NOT LOGGED IN PERIOD– (DML VERSION)
+ * ======================================================
+ */
+public function notLoggedIn(Request $request): JsonResponse
+{
+    $startDate = $request->query('start_date');
+    $endDate   = $request->query('end_date');
 
+    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+        $startDate,
+        $endDate
+    );
+
+    return response()->json([
+        'success' => true,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'total_found' => count($data),
+        'data' => $data
+    ]);
+}
+
+}
