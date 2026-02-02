@@ -281,22 +281,8 @@ class User extends Authenticatable
                     return 'Format email tidak valid.';
                 }
 
-                $existing = DB::selectOne(
-                    "SELECT id FROM users WHERE email = ? AND id != ?",
-                    [$data['email'], $userId]
-                );
-
-                if ($existing) {
-                    return 'Email sudah digunakan.';
-                }
-
                 $fields[] = "email = ?";
                 $values[] = $data['email'];
-            }
-
-            if (isset($data['password'])) {
-                $fields[] = "password = ?";
-                $values[] = bcrypt($data['password']);
             }
 
             if (empty($fields)) {
