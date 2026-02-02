@@ -353,10 +353,7 @@ class User extends Authenticatable
                 u.id,
                 u.name AS nama,
                 u.email,
-                CASE
-                    WHEN ua.id_user IS NOT NULL THEN 'Belum Setup'
-                    ELSE 'Sudah Setup'
-                END AS status_account
+                ua.id_user IS NOT NULL AS has_account
             FROM users u
             LEFT JOIN (
                 SELECT DISTINCT id_user
