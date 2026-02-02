@@ -873,24 +873,43 @@ class Transaction extends Model
     public static function updateTransactionRaw(int $id, array $data): array
     {
         try {
-            // Menggunakan COALESCE agar jika data tidak dikirim, tetap menggunakan data lama di DB
-            DB::update(
-                "UPDATE transactions SET 
-                    description = COALESCE(?, description), 
-                    transaction_date = COALESCE(?, transaction_date), 
-                    updated_at = ? 
-                 WHERE id = ?",
-                [
-                    $data['description'] ?? null,
-                    $data['transaction_date'] ?? null,
-                    now(),
-                    $id
-                ]
-            );
+            $transactionTable = config('db_tables.transaction', 'transactions');
+            
+            // Cek apakah kolom transaction_date ada di database dosen
+            $hasDateColumn = Schema::hasColumn($transactionTable, 'transaction_date');
+            $dateColumn = $hasDateColumn ? 'transaction_date' : 'created_at';
+
+            $fields = [];
+            $bindings = [];
+
+            if (isset($data['description'])) {
+                $fields[] = "description = ?";
+                $bindings[] = $data['description'];
+            }
+
+            if (isset($data['transaction_date'])) {
+                $fields[] = "{$dateColumn} = ?";
+                $bindings[] = $data['transaction_date'];
+            }
+
+            if (empty($fields)) {
+                return ['success' => false, 'message' => 'No data provided for update'];
+            }
+
+            $fields[] = "updated_at = ?";
+            $bindings[] = now();
+            $bindings[] = $id;
+            
+            $setClause = implode(', ', $fields);
+            $sql = "UPDATE {$transactionTable} SET {$setClause} WHERE id = ?";
+            
+            $affected = DB::update($sql, $bindings);
 
             return [
                 'success' => true,
-                'message' => 'Transaction updated successfully'
+                'message' => $affected > 0 ? 'Update successful' : 'No changes or ID not found',
+                'affected_rows' => $affected,
+                'column_used' => $dateColumn // Info untuk debug kolom mana yang terupdate
             ];
         } catch (\Exception $e) {
             return [
