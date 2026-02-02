@@ -839,8 +839,8 @@ class Transaction extends Model
             : Carbon::now()->toDateTimeString();
 
         $insertQuery = "INSERT INTO transactions 
-            (transaction_group_id, user_account_id, financial_account_id, amount, entry_type, balance_effect, is_balance, description, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            (transaction_group_id, user_account_id, financial_account_id, amount, entry_type, balance_effect, is_balance, description, transaction_date, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         DB::insert(
             $insertQuery,
@@ -853,8 +853,9 @@ class Transaction extends Model
                 $data['balance_effect'],
                 $data['is_balance'] ?? false,
                 $data['description'] ?? null,
-                $timestamp,
-                $timestamp
+                $timestamp, // transaction_date
+                $timestamp, // created_at
+                $timestamp  // updated_at
             ]
         );
 
