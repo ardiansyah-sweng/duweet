@@ -530,6 +530,7 @@ class ReportController extends Controller
             'end_date' => 'nullable|date_format:Y-m-d',
             'user_account_id' => 'nullable|integer|exists:user_accounts,id',
             'financial_account_id' => 'nullable|integer|exists:financial_accounts,id',
+            'is_liquid' => 'nullable|boolean',
             'period_format' => 'nullable|in:day,week,month,quarter,year',
         ]);
 
@@ -597,6 +598,7 @@ class ReportController extends Controller
         // 6. Extract filter parameters
         $userAccountId = $request->query('user_account_id') ? (int) $request->query('user_account_id') : null;
         $financialAccountId = $request->query('financial_account_id') ? (int) $request->query('financial_account_id') : null;
+        $isLiquid = $request->query('is_liquid') !== null ? filter_var($request->query('is_liquid'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : null;
 
         try {
             // 7. Query ke model dengan opsi filter
@@ -605,6 +607,7 @@ class ReportController extends Controller
                 $endDate,
                 $userAccountId,
                 $financialAccountId,
+                $isLiquid,
                 $periodFormat
             );
 
@@ -628,6 +631,7 @@ class ReportController extends Controller
                 'filters' => [
                     'user_account_id' => $userAccountId,
                     'financial_account_id' => $financialAccountId,
+                    'is_liquid' => $isLiquid,
                 ],
                 'total_records' => $data->count(),
                 'data' => $data,

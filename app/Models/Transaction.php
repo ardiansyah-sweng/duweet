@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use App\Constants\TransactionColumns;
 use App\Constants\UserAccountColumns;
 use App\Constants\UserFinancialAccountColumns;
+use App\Constants\FinancialAccountColumns;
 use Carbon\Carbon; // Import Carbon untuk type hinting
 use Illuminate\Support\Facades\Schema;
 
@@ -936,6 +937,7 @@ class Transaction extends Model
      * @param  Carbon  $endDate  End date for period
      * @param  int|null  $userAccountId  Optional: Filter by user account
      * @param  int|null  $financialAccountId  Optional: Filter by financial account
+     * @param  bool|null $isLiquid Optional: Filter by financial account is_liquid (true/false)
      * @param  string  $periodFormat  Period format: 'month', 'week', 'day', 'year', 'quarter'
      * @return \Illuminate\Support\Collection
      */
@@ -944,8 +946,9 @@ class Transaction extends Model
         Carbon $endDate,
         ?int $userAccountId = null,
         ?int $financialAccountId = null,
+        ?bool $isLiquid = null,
         string $periodFormat = 'month'
-    ): \Illuminate\Support\Collection {
+    ): \Illuminate\Support\Collection { 
         $transactionTable = config('db_tables.transaction');
         $accountsTable = config('db_tables.financial_account');
 
@@ -1002,6 +1005,11 @@ class Transaction extends Model
         if ($financialAccountId !== null) {
             $sql .= " AND t.financial_account_id = ?";
             $bindings[] = $financialAccountId;
+        }
+
+        if ($isLiquid !== null) {
+            $sql .= " AND fa." . FinancialAccountColumns::IS_LIQUID . " = ?";
+            $bindings[] = $isLiquid ? 1 : 0;
         }
 
         // Add GROUP BY and ORDER BY (MySQL)
