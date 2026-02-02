@@ -878,19 +878,8 @@ class Transaction extends Model
             $dateColumn = TransactionColumns::TRANSACTION_DATE;
         }
 
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t." . $dateColumn . ")";
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t." . $dateColumn . ", 'YYYY-MM')";
-        } else {
-            $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')"; // MySQL/MariaDB
-        }
+        // MySQL/MariaDB only
+        $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')";
 
         $sql = "
             SELECT
@@ -966,19 +955,8 @@ class Transaction extends Model
             $dateColumn = TransactionColumns::TRANSACTION_DATE;
         }
 
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t." . $dateColumn . ")";
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t." . $dateColumn . ", 'YYYY-MM')";
-        } else {
-            $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')"; // MySQL/MariaDB
-        }
+        // MySQL/MariaDB only
+        $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')";
 
         $sql = "
             SELECT
