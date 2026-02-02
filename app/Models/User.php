@@ -344,6 +344,7 @@ class User extends Authenticatable
         return array_values($users);
     }
 
+
     public static function SearchUsersbyEmailandNameandid($searchTerm)
     { 
         if (empty($searchTerm)) {
@@ -397,5 +398,50 @@ class User extends Authenticatable
             return [];
         }
     }
-    
+
+        /**
+     * Update user: name, email, password, photo, preference
+     */
+    public static function updateUserRaw(int $userId, array $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $fields = [];
+            $values = [];
+
+            if (isset($data['name'])) {
+                $fields[] = "name = ?";
+                $values[] = $data['name'];
+            }
+
+            if (isset($data['email'])) {
+                if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    return 'Format email tidak valid.';
+                }
+
+                $fields[] = "email = ?";
+                $values[] = $data['email'];
+            }
+
+            if (empty($fields)) {
+                return 'Tidak ada data yang diupdate.';
+            }
+
+            $values[] = $userId;
+
+            DB::update(
+                "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?",
+                $values
+            );
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return 'Gagal update user: ' . $e->getMessage();
+        }
+    }
+
 }
