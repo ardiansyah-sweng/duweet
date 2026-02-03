@@ -76,6 +76,8 @@ Route::prefix('user-account')->group(function () {
    
 });
 
+Route::get('account-user/nested-structure', [UserAccountController::class, 'GetstructureNested'])->name('api.user-account.nested-structure');
+
 Route::get('/ping', fn () => response()->json(['pong' => true]));
 
 Route::get('/accounts', function () {
@@ -126,6 +128,8 @@ Route::prefix('reports')->group(function () {
     Route::get(
         '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
         ->name('api.reports.surplus-defisit');
+    Route::get('/sum-cashin-by-period', [ReportController::class, 'sumCashInByPeriod'])
+        ->name('api.reports.sum-cashin-by-period');
 });
 
 // =============================================================
