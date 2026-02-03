@@ -232,7 +232,7 @@ class TransactionController extends Controller
         $validated = $request->validate([
             // 'amount' tidak divalidasi karena tugas hanya minta update desc & date
             'description' => 'nullable|string|max:255',
-            'transaction_date' => 'nullable|date|date_format:Y-m-d H:i:s',
+            'transaction_date' => 'nullable|date',
         ]);
 
         $result = Transaction::updateTransactionRaw((int) $id, $validated);
