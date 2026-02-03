@@ -461,4 +461,31 @@ class User extends Authenticatable
             return 'Gagal update user: ' . $e->getMessage();
         }
     }
+    public static function countUserpertanggaldanbulan(?string $startDate = null, ?string $endDate = null): array
+    {
+        if (!$startDate || !$endDate) {
+            return [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'jumlah_user' => 0,
+            ];
+        }
+
+        // Hitung tanggal akhir eksklusif di PHP (hindari penggunaan INTERVAL di SQL)
+        try {
+            $endExclusive = (new \DateTime($endDate))->modify('+1 day')->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            // Jika parsing gagal, fallback ke nilai yang diberikan (masih lebih baik jika input tervalidasi sebelum)
+            $endExclusive = $endDate;
+        }
+
+        $query = "SELECT COUNT(*) AS jumlah_user FROM users WHERE created_at >= ? AND created_at < ?";
+        $result = DB::selectOne($query, [$startDate, $endExclusive]);
+
+        return [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'jumlah_user' => isset($result->jumlah_user) ? (int) $result->jumlah_user : 0,
+        ];
+    }
 }

@@ -290,4 +290,30 @@ class UserController extends Controller
         
 
     }
+
+    public function countUserpertanggalandbulan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d',
+        ]);
+
+        if (empty($validated['start_date']) || empty($validated['end_date'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kirim start_date dan end_date (Y-m-d).',
+            ], 422);
+        }
+
+        $data = User::countUserpertanggaldanbulan(
+            $validated['start_date'],
+            $validated['end_date']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil menghitung user.',
+            'data' => $data,
+        ]);
+    }
 }
