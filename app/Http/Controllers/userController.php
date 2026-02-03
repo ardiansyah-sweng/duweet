@@ -259,4 +259,16 @@ class UserController extends Controller
             ]
         ], 200);
     }
+
+    public function searchUsers(Request $request): JsonResponse
+    {
+        $searchTerm = $request->input('q', '');
+        $users = User::SearchUsersbyEmailandNameandid($searchTerm);
+
+        return response()->json([
+            'success' => true,
+            'data' => $users
+        ]);
+        
+    }
 }

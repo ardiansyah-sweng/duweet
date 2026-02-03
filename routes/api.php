@@ -12,6 +12,7 @@ use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
@@ -177,3 +178,4 @@ Route::get(
 );
 
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
