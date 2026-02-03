@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -343,6 +344,7 @@ class User extends Authenticatable
         return array_values($users);
     }
 
+
   
     public static function getUsersWithoutAccount()
     {
@@ -358,6 +360,63 @@ class User extends Authenticatable
     }
     
     
+
+
+    public static function SearchUsersbyEmailandNameandid($searchTerm)
+    { 
+        if (empty($searchTerm)) {
+            return [];
+        }
+
+        $params = [];
+        $likeTerm = '%' . $searchTerm . '%';
+
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    u.created_at,
+                    u.updated_at
+                    FROM users u
+                    WHERE ";
+
+    
+        if (strpos($searchTerm, '@') !== false) {
+            $query .= "u.email LIKE ?";
+            $params[] = $likeTerm;
+        }
+        elseif (is_numeric($searchTerm)) {
+            $query .= "u.id = ?";
+            $params[] = $searchTerm;
+        }
+        else {
+
+            $query .= "(u.name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
+            $params = [$likeTerm, $likeTerm, $likeTerm];
+        }
+
+        try {
+            return DB::select($query, $params);
+        } catch (\Exception $e) {
+            
+            Log::error('Search Users Error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+
         /**
      * Update user: name, email, password, photo, preference
      */
