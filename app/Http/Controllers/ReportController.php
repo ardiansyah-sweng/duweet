@@ -623,7 +623,7 @@ class ReportController extends Controller
      * - user_account_id (optional)
      * - financial_account_id (optional)
      * 
-     * Returns: Total cash in grouped by periode dan akun
+     * Returns: Total cash in (single number) for account type 'AS' (no grouping)
      */
     public function sumCashInByPeriod(Request $request)
     {
@@ -667,38 +667,40 @@ class ReportController extends Controller
         $financialAccountId = $request->query('financial_account_id') ? (int) $request->query('financial_account_id') : null;
 
         try {
-            // 7. Query ke model dengan opsi filter (no period grouping)
-            $data = Transaction::sumCashInByPeriod(
+            // 7. Query model untuk mendapatkan agregat totals (sum, transaction_count, user_count) untuk akun bertipe 'AS'
+            $totals = Transaction::sumCashInByPeriod(
                 $startDate,
                 $endDate,
                 $userAccountId,
                 $financialAccountId
             );
 
-            // 8. Calculate aggregate totals
-            $totalCashIn = $data->sum('total_cash_in');
-            $totalTransactions = $data->sum('transaction_count');
+            $totalCashIn = (int) ($totals['total_cash_in'] ?? 0);
+            $totalTransactions = (int) ($totals['transaction_count'] ?? 0);
+            $totalUsers = (int) ($totals['user_count'] ?? 0);
+            $totalCashInFormatted = 'Rp ' . number_format($totalCashIn, 0, ',', '.');
 
-            // 9. Format response
+            // 8. Format response
             return response()->json([
-                'status' => 'success',
-                'type' => 'CASHIN_SUMMARY_REPORT',
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'start_month' => $startDate->format('Y-m'),
+                    'end_month' => $endDate->format('Y-m'),
+                ],
                 'summary' => [
                     'total_cash_in' => $totalCashIn,
+                    'total_cash_in_formatted' => $totalCashInFormatted,
                     'total_transactions' => $totalTransactions,
-                ],
-                'period' => [
-                    'from' => $startDate->toDateString(),
-                    'to' => $endDate->toDateString(),
+                    'total_users' => $totalUsers,
                 ],
                 'filters' => [
                     'user_account_id' => $userAccountId,
                     'financial_account_id' => $financialAccountId,
                     'account_type' => 'AS',
                 ],
-                'total_records' => $data->count(),
-                'data' => $data,
-                ]);
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([

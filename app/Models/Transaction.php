@@ -1022,7 +1022,7 @@ class Transaction extends Model
         Carbon $endDate,
         ?int $userAccountId = null,
         ?int $financialAccountId = null
-    ): \Illuminate\Support\Collection {
+    ): array {
         $transactionTable = config('db_tables.transaction');
         $accountsTable = config('db_tables.financial_account');
 
@@ -1036,14 +1036,12 @@ class Transaction extends Model
             $dateColumn = TransactionColumns::TRANSACTION_DATE;
         }
 
-        // Per-account totals for the full date range (no period grouping)
+        // Aggregate totals across all 'AS' accounts for the date range
         $sql = "
             SELECT 
-                fa.id AS account_id,
-                fa.name AS account_name,
-                fa.type AS account_type,
                 COALESCE(SUM(t.amount), 0) AS total_cash_in,
-                COUNT(t.id) AS transaction_count
+                COUNT(t.id) AS transaction_count,
+                COUNT(DISTINCT t.user_account_id) AS user_count
             FROM {$transactionTable} t
             INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
             WHERE t.entry_type = 'debit'
@@ -1052,22 +1050,23 @@ class Transaction extends Model
                 AND (? IS NULL OR t.user_account_id = ?)
                 AND (? IS NULL OR t.financial_account_id = ?)
                 AND fa.type = 'AS'
-            GROUP BY fa.id, fa.name, fa.type
-            ORDER BY account_name ASC
         ";
-
-        $userAccountBind = $userAccountId;
-        $financialAccountBind = $financialAccountId;
 
         $bindings = [
             $startDate->toDateTimeString(),
             $endDate->toDateTimeString(),
-            $userAccountBind, $userAccountBind,
-            $financialAccountBind, $financialAccountBind,
+            $userAccountId, $userAccountId,
+            $financialAccountId, $financialAccountId,
         ];
 
-        $results = DB::select($sql, $bindings);
+        $rows = DB::select($sql, $bindings);
 
-        return collect($results);
+        $result = [
+            'total_cash_in' => (int) ($rows[0]->total_cash_in ?? 0),
+            'transaction_count' => (int) ($rows[0]->transaction_count ?? 0),
+            'user_count' => (int) ($rows[0]->user_count ?? 0),
+        ];
+
+        return $result;
     }
 }
