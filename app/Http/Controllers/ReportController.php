@@ -582,6 +582,11 @@ class ReportController extends Controller
         try {
             $data = Transaction::getAdminIncomeSummaryByPeriod($startDate, $endDate);
 
+            // Aggregate totals from all periods
+            $grandTotalIncome = (int) $data->sum('total_income');
+            $grandTotalTransactions = (int) $data->sum('transaction_count');
+            $grandTotalUsers = (int) $data->sum('user_count');
+
             return response()->json([
                 'success' => true,
                 'period' => [
@@ -590,10 +595,12 @@ class ReportController extends Controller
                     'start_month' => $startDate->format('Y-m'),
                     'end_month' => $endDate->format('Y-m'),
                 ],
-                'total_income' => (int) $data->sum('total_income'),
-                'total_transactions' => (int) $data->sum('transaction_count'),
-                'total_users' => (int) $data->sum('user_count'),
-                'data' => $data,
+                'summary' => [
+                    'total_income' => $grandTotalIncome,
+                    'total_income_formatted' => 'Rp ' . number_format($grandTotalIncome, 0, ',', '.'),
+                    'total_transactions' => $grandTotalTransactions,
+                    'total_users' => $grandTotalUsers,
+                ],
             ]);
 
         } catch (\Exception $e) {
