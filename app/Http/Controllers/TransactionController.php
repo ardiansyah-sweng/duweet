@@ -229,19 +229,46 @@ class TransactionController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Validasi: hanya description dan date, boleh salah satu (nullable)
         $validated = $request->validate([
-            // 'amount' tidak divalidasi karena tugas hanya minta update desc & date
+            'transaction_date' => 'nullable|date|date_format:Y-m-d H:i:s',
             'description' => 'nullable|string|max:255',
-            'transaction_date' => 'nullable|date',
         ]);
 
-        $result = Transaction::updateTransactionRaw((int) $id, $validated);
+        try {
+            // Filter hanya data yang tidak null
+            $updateData = array_filter($validated, function ($value) {
+                return !is_null($value);
+            });
 
-        if (!$result['success']) {
-            return response()->json($result, 500);
+            if (empty($updateData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data yang dikirim untuk diperbarui.',
+                ], 400);
+            }
+
+            // Panggil method model updateDateDescription
+            $affected = Transaction::updateDateDescription((int) $id, $updateData);
+
+            if ($affected > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaksi berhasil diperbarui.',
+                ], 200);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan atau tidak ada perubahan data.',
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui transaksi: ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json($result, 200);
     }
     
     /**
