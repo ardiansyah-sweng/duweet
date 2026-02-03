@@ -345,6 +345,23 @@ class User extends Authenticatable
     }
 
 
+  
+    public static function getUsersWithoutAccount()
+    {
+        $query = "SELECT u.id, u.name, u.email
+                  FROM users u
+                  WHERE NOT EXISTS (
+                      SELECT ua.id_user
+                      FROM user_accounts ua
+                      WHERE ua.id_user = u.id
+                  )";
+
+        return DB::select($query);
+    }
+    
+    
+
+
     public static function SearchUsersbyEmailandNameandid($searchTerm)
     { 
         if (empty($searchTerm)) {
@@ -399,6 +416,7 @@ class User extends Authenticatable
         }
     }
 
+
         /**
      * Update user: name, email, password, photo, preference
      */
@@ -443,5 +461,4 @@ class User extends Authenticatable
             return 'Gagal update user: ' . $e->getMessage();
         }
     }
-
 }
