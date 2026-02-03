@@ -508,4 +508,101 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /* Sum Cash In by Period
+     * 
+     * GET /api/reports/sum-cashin-by-period
+     * 
+     * Query Params:
+     * - start_date (required, format: Y-m-d)
+     * - end_date (optional, format: Y-m-d) - jika kosong, auto-set berdasarkan period_format
+     * - period_format (optional, default: month) - day|week|month|quarter|year
+     * - user_account_id (optional)
+     * - financial_account_id (optional)
+     * 
+     * Returns: Total cash in grouped by periode dan akun
+     */
+    public function sumCashInByPeriod(Request $request)
+    {
+        // 1. Validasi input
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d',
+            'user_account_id' => 'nullable|integer|exists:user_accounts,id',
+            'financial_account_id' => 'nullable|integer|exists:financial_accounts,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // 2. Parse start_date (required)
+        $startDate = Carbon::parse($request->query('start_date'))->startOfDay();
+        // Period format will be determined solely from the input date range below
+
+        // 3. Auto-set end_date berdasarkan period_format jika tidak diberikan
+        if ($request->query('end_date')) {
+            $endDate = Carbon::parse($request->query('end_date'))->endOfDay();
+        } else {
+            // Default end_date = end of month from start date
+            $endDate = $startDate->copy()->endOfMonth()->endOfDay();
+        }
+
+        // 4. Validasi periode
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 6. Extract filter parameters
+        $userAccountId = $request->query('user_account_id') ? (int) $request->query('user_account_id') : null;
+        $financialAccountId = $request->query('financial_account_id') ? (int) $request->query('financial_account_id') : null;
+
+        try {
+            // 7. Query ke model dengan opsi filter (no period grouping)
+            $data = Transaction::sumCashInByPeriod(
+                $startDate,
+                $endDate,
+                $userAccountId,
+                $financialAccountId
+            );
+
+            // 8. Calculate aggregate totals
+            $totalCashIn = $data->sum('total_cash_in');
+            $totalTransactions = $data->sum('transaction_count');
+
+            // 9. Format response
+            return response()->json([
+                'status' => 'success',
+                'type' => 'CASHIN_SUMMARY_REPORT',
+                'summary' => [
+                    'total_cash_in' => $totalCashIn,
+                    'total_transactions' => $totalTransactions,
+                ],
+                'period' => [
+                    'from' => $startDate->toDateString(),
+                    'to' => $endDate->toDateString(),
+                ],
+                'filters' => [
+                    'user_account_id' => $userAccountId,
+                    'financial_account_id' => $financialAccountId,
+                    'account_type' => 'AS',
+                ],
+                'total_records' => $data->count(),
+                'data' => $data,
+                ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil laporan sum cash in',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

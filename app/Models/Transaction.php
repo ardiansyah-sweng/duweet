@@ -926,4 +926,69 @@ class Transaction extends Model
 
         return DB::delete($query, [$id]);
     }
+
+    /**
+     * Get sum of cash in by financial account for a given date range (no period grouping).
+     *
+     * Returns breakdown per financial account for the provided date range.
+     *
+     * @param  Carbon  $startDate  Start date for period
+     * @param  Carbon  $endDate  End date for period
+     * @param  int|null  $userAccountId  Optional: Filter by user account
+     * @param  int|null  $financialAccountId  Optional: Filter by financial account
+     * @return \Illuminate\Support\Collection
+     */
+    public static function sumCashInByPeriod(
+        Carbon $startDate,
+        Carbon $endDate,
+        ?int $userAccountId = null,
+        ?int $financialAccountId = null
+    ): \Illuminate\Support\Collection {
+        $transactionTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        // Prefer using transaction_date column if available, otherwise fallback to created_at
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
+
+        // Per-account totals for the full date range (no period grouping)
+        $sql = "
+            SELECT 
+                fa.id AS account_id,
+                fa.name AS account_name,
+                fa.type AS account_type,
+                COALESCE(SUM(t.amount), 0) AS total_cash_in,
+                COUNT(t.id) AS transaction_count
+            FROM {$transactionTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE t.entry_type = 'debit'
+                AND t.balance_effect = 'increase'
+                AND t." . $dateColumn . " BETWEEN ? AND ?
+                AND (? IS NULL OR t.user_account_id = ?)
+                AND (? IS NULL OR t.financial_account_id = ?)
+                AND fa.type = 'AS'
+            GROUP BY fa.id, fa.name, fa.type
+            ORDER BY account_name ASC
+        ";
+
+        $userAccountBind = $userAccountId;
+        $financialAccountBind = $financialAccountId;
+
+        $bindings = [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+            $userAccountBind, $userAccountBind,
+            $financialAccountBind, $financialAccountBind,
+        ];
+
+        $results = DB::select($sql, $bindings);
+
+        return collect($results);
+    }
 }
