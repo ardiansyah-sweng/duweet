@@ -287,6 +287,23 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Ambil user yang belum memiliki account
+     */
+    public function getUsersWithoutAccount(): JsonResponse
+    {
+        $users = User::getUsersWithoutAccount();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil user yang belum setup account.',
+            'data' => [
+                'users' => $users,
+                'total_users' => count($users)
+            ]
+        ], 200);
+    }
+
     public function searchUsers(Request $request): JsonResponse
     {
         $searchTerm = $request->input('q', '');

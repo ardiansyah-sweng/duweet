@@ -171,6 +171,7 @@ Route::get(
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
+Route::get('/users-without-account', [UserController::class, 'getUsersWithoutAccount'])->name('api.users.without-account');
 
 Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggalandbulan']);
 
@@ -181,4 +182,7 @@ Route::get(
 );
 
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+
 Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
+
