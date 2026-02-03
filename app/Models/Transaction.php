@@ -943,8 +943,8 @@ class Transaction extends Model
      */
     public static function getAdminIncomeSummaryByPeriod(Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         $dateColumn = TransactionColumns::TRANSACTION_DATE;
         try {
