@@ -76,6 +76,8 @@ Route::prefix('user-account')->group(function () {
    
 });
 
+Route::get('account-user/nested-structure', [UserAccountController::class, 'GetstructureNested'])->name('api.user-account.nested-structure');
+
 Route::get('/ping', fn () => response()->json(['pong' => true]));
 
 Route::get('/accounts', function () {
