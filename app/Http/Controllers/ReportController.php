@@ -513,15 +513,26 @@ class ReportController extends Controller
      * Sum income by period untuk ADMIN (agregat semua user)
      * 
      * GET /api/admin/income/by-period
-     * Query params:
-     * - start_date (optional, format: Y-m-d)
-     * - end_date   (optional, format: Y-m-d)
+     * Query params (flexible input):
+     * Option 1 - Full Date:
+     * - start_date (format: Y-m-d)
+     * - end_date (format: Y-m-d)
+     * 
+     * Option 2 - Year & Month:
+     * - start_year (tahun) & start_month (bulan) untuk tanggal mulai bulan
+     * - end_year (tahun) & end_month (bulan) untuk tanggal akhir bulan
+     * 
+     * Default: 1 Jan 2025 - 31 Dec 2026
      */
     public function adminIncomeByPeriod(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'start_date' => 'nullable|date|date_format:Y-m-d',
             'end_date' => 'nullable|date|date_format:Y-m-d',
+            'start_year' => 'nullable|integer|min:2000|max:2100',
+            'start_month' => 'nullable|integer|min:1|max:12',
+            'end_year' => 'nullable|integer|min:2000|max:2100',
+            'end_month' => 'nullable|integer|min:1|max:12',
         ]);
 
         if ($validator->fails()) {
@@ -535,13 +546,31 @@ class ReportController extends Controller
         $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
         $defaultEndDate = Carbon::create(2026, 12, 31)->endOfDay();
 
-        $startDate = $request->input('start_date')
-            ? Carbon::parse($request->input('start_date'))->startOfDay()
-            : $defaultStartDate;
+        // Determine start date
+        if ($request->input('start_date')) {
+            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+        } elseif ($request->input('start_year') && $request->input('start_month')) {
+            $startDate = Carbon::createFromDate(
+                (int) $request->input('start_year'),
+                (int) $request->input('start_month'),
+                1
+            )->startOfDay();
+        } else {
+            $startDate = $defaultStartDate;
+        }
 
-        $endDate = $request->input('end_date')
-            ? Carbon::parse($request->input('end_date'))->endOfDay()
-            : $defaultEndDate;
+        // Determine end date
+        if ($request->input('end_date')) {
+            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        } elseif ($request->input('end_year') && $request->input('end_month')) {
+            $endDate = Carbon::createFromDate(
+                (int) $request->input('end_year'),
+                (int) $request->input('end_month'),
+                1
+            )->endOfMonth()->endOfDay();
+        } else {
+            $endDate = $defaultEndDate;
+        }
 
         if ($startDate->greaterThan($endDate)) {
             return response()->json([
@@ -555,6 +584,15 @@ class ReportController extends Controller
 
             return response()->json([
                 'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'start_month' => $startDate->format('Y-m'),
+                    'end_month' => $endDate->format('Y-m'),
+                ],
+                'total_income' => (int) $data->sum('total_income'),
+                'total_transactions' => (int) $data->sum('transaction_count'),
+                'total_users' => (int) $data->sum('user_count'),
                 'data' => $data,
             ]);
 
