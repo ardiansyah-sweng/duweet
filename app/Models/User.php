@@ -356,6 +356,8 @@ class User extends Authenticatable
 
         return DB::select($query);
     }
+    
+    
         /**
      * Update user: name, email, password, photo, preference
      */
