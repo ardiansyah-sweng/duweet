@@ -81,7 +81,7 @@ Route::get('/ping', fn () => response()->json(['pong' => true]));
 Route::get('/accounts', function () {
     return response()->json(['ok' => true]);
 });
-
+Route::get('/admin/active-user-accounts', [\App\Http\Controllers\UserAccountController::class, 'listActive']);
 
 Route::post('/financial_accounts', [AccountController::class, 'store']);
 Route::get('/financial_accounts', [AccountController::class, 'index']);

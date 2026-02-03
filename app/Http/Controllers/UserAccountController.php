@@ -266,6 +266,19 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * Return list of active user accounts (for admin) as JSON.
+     */
+    public function listActive(Request $request): JsonResponse
+    {
+        $results = UserAccount::query_list_user_account_aktif();
+
+        return response()->json([
+            'success' => true,
+            'data' => $results,
+        ]);
+    }
+
 
     // public function findByEmail(Request $request): JsonResponse
     // {
