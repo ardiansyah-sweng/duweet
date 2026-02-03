@@ -359,34 +359,28 @@ class Transaction extends Model
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction');
-
-        // Start with base SQL
-        $sql = "SELECT * FROM {$transactionTable} WHERE 1=1";
         $bindings = [];
+        $filters = [];
 
-        // Add optional filters
         if ($userAccountId !== null) {
-            $sql .= " AND " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
+            $filters[] = TransactionColumns::USER_ACCOUNT_ID . " = ?";
             $bindings[] = $userAccountId;
         }
 
         if ($financialAccountId !== null) {
-            $sql .= " AND " . TransactionColumns::FINANCIAL_ACCOUNT_ID . " = ?";
+            $filters[] = TransactionColumns::FINANCIAL_ACCOUNT_ID . " = ?";
             $bindings[] = $financialAccountId;
         }
 
         if ($entryType !== null) {
-            $sql .= " AND " . TransactionColumns::ENTRY_TYPE . " = ?";
+            $filters[] = TransactionColumns::ENTRY_TYPE . " = ?";
             $bindings[] = $entryType;
         }
 
-        // Order by transaction_date descending
-        $sql .= " ORDER BY transaction_date DESC";
+        $whereClause = !empty($filters) ? "WHERE " . implode(" AND ", $filters) : "";
+        $sql = "SELECT * FROM {$transactionTable} {$whereClause} ORDER BY transaction_date DESC";
 
-        // Execute raw SQL query
-        $results = DB::select($sql, $bindings);
-
-        return collect($results);
+        return collect(DB::select($sql, $bindings));
     }
 
     /**
@@ -434,37 +428,29 @@ class Transaction extends Model
         ?string $entryType = null
     ): \Illuminate\Support\Collection {
         $transactionTable = config('db_tables.transaction');
+        
+        $bindings = [$startDate . ' 00:00:00', $endDate . ' 23:59:59'];
+        $filters = ["transaction_date BETWEEN ? AND ?"];
 
-        // Start with base SQL
-        $sql = "SELECT * FROM {$transactionTable} WHERE transaction_date BETWEEN ? AND ?";
-        $bindings = [
-            $startDate . ' 00:00:00',
-            $endDate . ' 23:59:59'
-        ];
-
-        // Add optional filters
         if ($userAccountId !== null) {
-            $sql .= " AND " . TransactionColumns::USER_ACCOUNT_ID . " = ?";
+            $filters[] = TransactionColumns::USER_ACCOUNT_ID . " = ?";
             $bindings[] = $userAccountId;
         }
 
         if ($financialAccountId !== null) {
-            $sql .= " AND " . TransactionColumns::FINANCIAL_ACCOUNT_ID . " = ?";
+            $filters[] = TransactionColumns::FINANCIAL_ACCOUNT_ID . " = ?";
             $bindings[] = $financialAccountId;
         }
 
         if ($entryType !== null) {
-            $sql .= " AND " . TransactionColumns::ENTRY_TYPE . " = ?";
+            $filters[] = TransactionColumns::ENTRY_TYPE . " = ?";
             $bindings[] = $entryType;
         }
 
-        // Order by transaction_date descending
-        $sql .= " ORDER BY transaction_date DESC";
+        $whereClause = "WHERE " . implode(" AND ", $filters);
+        $sql = "SELECT * FROM {$transactionTable} {$whereClause} ORDER BY transaction_date DESC";
 
-        // Execute raw SQL query
-        $results = DB::select($sql, $bindings);
-
-        return collect($results);
+        return collect(DB::select($sql, $bindings));
     }
 
     /**
@@ -499,6 +485,14 @@ class Transaction extends Model
         $usersTable = config('db_tables.user');
         $financialAccountsTable = config('db_tables.financial_account');
 
+        $bindings = [$startDate, $endDate];
+        $where = "WHERE t.transaction_date >= ? AND t.transaction_date < ?";
+
+        if ($userId !== null) {
+            $where .= " AND ua.id_user = ?";
+            $bindings[] = $userId;
+        }
+
         $sql = "
             SELECT 
                 u.id AS user_id,
@@ -510,18 +504,7 @@ class Transaction extends Model
             INNER JOIN {$financialAccountsTable} fa 
                 ON fa.id = t.financial_account_id
             AND fa.type = 'EX'
-            WHERE t.transaction_date >= ?
-            AND t.transaction_date < ?
-        ";
-
-        $bindings = [$startDate, $endDate];
-
-        if ($userId !== null) {
-            $sql .= " AND ua.id_user = ?";
-            $bindings[] = $userId;
-        }
-
-        $sql .= "
+            {$where}
             GROUP BY u.id, u.name
             ORDER BY total_expenses DESC
         ";
