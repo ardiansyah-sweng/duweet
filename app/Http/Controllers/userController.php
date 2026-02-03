@@ -269,7 +269,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Berhasil mengambil user tanpa account.',
+            'message' => 'Berhasil mengambil user yang belum setup account.',
             'data' => [
                 'users' => $users,
                 'total_users' => count($users)
