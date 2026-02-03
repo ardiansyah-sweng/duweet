@@ -509,6 +509,109 @@ class ReportController extends Controller
         }
     }
 
+    /**
+     * Sum income by period untuk ADMIN (agregat semua user)
+     * 
+     * GET /api/admin/income/by-period
+     * Query params (flexible input):
+     * Option 1 - Full Date:
+     * - start_date (format: Y-m-d)
+     * - end_date (format: Y-m-d)
+     * 
+     * Option 2 - Year & Month:
+     * - start_year (tahun) & start_month (bulan) untuk tanggal mulai bulan
+     * - end_year (tahun) & end_month (bulan) untuk tanggal akhir bulan
+     * 
+     * Default: 1 Jan 2025 - 31 Dec 2026
+     */
+    public function adminIncomeByPeriod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'end_date' => 'nullable|date|date_format:Y-m-d',
+            'start_year' => 'nullable|integer|min:2000|max:2100',
+            'start_month' => 'nullable|integer|min:1|max:12',
+            'end_year' => 'nullable|integer|min:2000|max:2100',
+            'end_month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+        $defaultEndDate = Carbon::create(2026, 12, 31)->endOfDay();
+
+        // Determine start date
+        if ($request->input('start_date')) {
+            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+        } elseif ($request->input('start_year') && $request->input('start_month')) {
+            $startDate = Carbon::createFromDate(
+                (int) $request->input('start_year'),
+                (int) $request->input('start_month'),
+                1
+            )->startOfDay();
+        } else {
+            $startDate = $defaultStartDate;
+        }
+
+        // Determine end date
+        if ($request->input('end_date')) {
+            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        } elseif ($request->input('end_year') && $request->input('end_month')) {
+            $endDate = Carbon::createFromDate(
+                (int) $request->input('end_year'),
+                (int) $request->input('end_month'),
+                1
+            )->endOfMonth()->endOfDay();
+        } else {
+            $endDate = $defaultEndDate;
+        }
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.',
+            ], 400);
+        }
+
+        try {
+            $data = Transaction::getAdminIncomeSummaryByPeriod($startDate, $endDate);
+
+            // Aggregate totals from all periods
+            $grandTotalIncome = (int) $data->sum('total_income');
+            $grandTotalTransactions = (int) $data->sum('transaction_count');
+            $grandTotalUsers = (int) $data->sum('user_count');
+
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'start_month' => $startDate->format('Y-m'),
+                    'end_month' => $endDate->format('Y-m'),
+                ],
+                'summary' => [
+                    'total_income' => $grandTotalIncome,
+                    'total_income_formatted' => 'Rp ' . number_format($grandTotalIncome, 0, ',', '.'),
+                    'total_transactions' => $grandTotalTransactions,
+                    'total_users' => $grandTotalUsers,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil ringkasan income by period.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /* Sum Cash In by Period
      * 
      * GET /api/reports/sum-cashin-by-period

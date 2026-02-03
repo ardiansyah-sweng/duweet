@@ -878,19 +878,8 @@ class Transaction extends Model
             $dateColumn = TransactionColumns::TRANSACTION_DATE;
         }
 
-        try {
-            $driver = DB::connection()->getPDO()->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } catch (\Exception $e) {
-            $driver = 'mysql';
-        }
-
-        if ($driver === 'sqlite') {
-            $periodeExpr = "strftime('%Y-%m', t." . $dateColumn . ")";
-        } elseif ($driver === 'pgsql' || $driver === 'postgres') {
-            $periodeExpr = "to_char(t." . $dateColumn . ", 'YYYY-MM')";
-        } else {
-            $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')"; // MySQL/MariaDB
-        }
+        // MySQL/MariaDB only
+        $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')";
 
         $sql = "
             SELECT
@@ -925,6 +914,96 @@ class Transaction extends Model
         ";
 
         return DB::delete($query, [$id]);
+    }
+
+    /**
+     * Sum income by period untuk ADMIN (agregat semua user)
+     * 
+     * DML SQL (MySQL/MariaDB):
+     * -----------------------------------------------------------
+     * SELECT
+     *     DATE_FORMAT(t.transaction_date, '%Y-%m') AS periode,
+     *     COALESCE(SUM(t.amount), 0) AS total_income,
+     *     COUNT(t.id) AS transaction_count,
+     *     COUNT(DISTINCT t.user_account_id) AS user_count
+     * FROM transactions t
+     * INNER JOIN financial_accounts fa ON fa.id = t.financial_account_id
+     * WHERE
+     *     fa.type = 'IN'
+     *     AND t.balance_effect = 'increase'
+     *     AND fa.is_group = 0
+     *     AND t.transaction_date BETWEEN ? AND ?
+     * GROUP BY DATE_FORMAT(t.transaction_date, '%Y-%m')
+     * ORDER BY periode ASC;
+     * -----------------------------------------------------------
+     *
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getAdminIncomeSummaryByPeriod(Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
+    {
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        try {
+            if (!Schema::hasColumn($transactionsTable, $dateColumn)) {
+                $dateColumn = 'created_at';
+            }
+        } catch (\Exception $e) {
+            $dateColumn = TransactionColumns::TRANSACTION_DATE;
+        }
+
+        // MySQL/MariaDB only
+        $periodeExpr = "DATE_FORMAT(t." . $dateColumn . ", '%Y-%m')";
+
+        $sql = "
+            SELECT
+                {$periodeExpr} AS periode,
+                COALESCE(SUM(t.amount), 0) AS total_income,
+                COUNT(t.id) AS transaction_count,
+                COUNT(DISTINCT t.user_account_id) AS user_count
+            FROM {$transactionsTable} t
+            INNER JOIN {$accountsTable} fa ON fa.id = t.financial_account_id
+            WHERE
+                fa.type = 'IN'
+                AND t.balance_effect = 'increase'
+                AND fa.is_group = 0
+                AND t." . $dateColumn . " BETWEEN ? AND ?
+            GROUP BY {$periodeExpr}
+            ORDER BY periode ASC
+        ";
+
+        $rows = DB::select($sql, [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+        ]);
+
+        // Generate semua bulan dari startDate sampai endDate
+        $allMonths = [];
+        $current = $startDate->copy()->startOfMonth();
+        $end = $endDate->copy()->endOfMonth();
+        
+        while ($current->lessThanOrEqualTo($end)) {
+            $allMonths[$current->format('Y-m')] = (object)[
+                'periode' => $current->format('Y-m'),
+                'total_income' => 0,
+                'transaction_count' => 0,
+                'user_count' => 0,
+            ];
+            $current->addMonth();
+        }
+
+        // Merge data hasil query ke semua bulan
+        foreach ($rows as $row) {
+            $periode = is_object($row) ? $row->periode : $row['periode'];
+            if (isset($allMonths[$periode])) {
+                $allMonths[$periode] = $row;
+            }
+        }
+
+        return collect(array_values($allMonths));
     }
 
     /**
