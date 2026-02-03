@@ -264,6 +264,8 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
             ],
             'total_accounts' => (int) $result->total_accounts,
         ];
+    }
+
     public static function GetStructureNestedAccountUser()
     {
         try {
@@ -291,7 +293,35 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
                 INNER JOIN user_accounts ua ON ua." . UserAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::USER_ACCOUNT_ID . "
                 INNER JOIN users u ON u." . UserColumns::ID . " = ua." . UserAccountColumns::ID_USER . "
                 INNER JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . "
-                ORDER BY u." . UserColumns::ID . ", ua." . UserAccountColumns::ID . ", fa." . FinancialAccountColumns::LEVEL . ", fa." . FinancialAccountColumns::ID . "
+                
+                UNION
+                
+                SELECT
+                    u." . UserColumns::ID . " AS user_id,
+                    u." . UserColumns::NAME . " AS user_name,
+                    u." . UserColumns::EMAIL . " AS user_email,
+                    ua." . UserAccountColumns::ID . " AS user_account_id,
+                    ua." . UserAccountColumns::USERNAME . " AS username,
+                    ua." . UserAccountColumns::EMAIL . " AS user_account_email,
+                    ua." . UserAccountColumns::IS_ACTIVE . " AS user_account_is_active,
+                    parent_fa." . FinancialAccountColumns::ID . " AS financial_account_id,
+                    parent_fa." . FinancialAccountColumns::NAME . " AS financial_account_name,
+                    parent_fa." . FinancialAccountColumns::TYPE . " AS financial_account_type,
+                    parent_fa." . FinancialAccountColumns::PARENT_ID . " AS financial_account_parent_id,
+                    parent_fa." . FinancialAccountColumns::LEVEL . " AS financial_account_level,
+                    parent_fa." . FinancialAccountColumns::IS_GROUP . " AS financial_account_is_group,
+                    parent_fa." . FinancialAccountColumns::INITIAL_BALANCE . " AS financial_account_initial_balance,
+                    NULL AS user_financial_balance,
+                    NULL AS user_financial_initial_balance,
+                    NULL AS user_financial_is_active,
+                    parent_fa." . FinancialAccountColumns::IS_ACTIVE . " AS financial_account_is_active
+                FROM user_financial_accounts ufa
+                INNER JOIN user_accounts ua ON ua." . UserAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::USER_ACCOUNT_ID . "
+                INNER JOIN users u ON u." . UserColumns::ID . " = ua." . UserAccountColumns::ID_USER . "
+                INNER JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . "
+                INNER JOIN financial_accounts parent_fa ON parent_fa." . FinancialAccountColumns::ID . " = fa." . FinancialAccountColumns::PARENT_ID . "
+                
+                ORDER BY user_id, user_account_id, financial_account_level, financial_account_id
             ";
             
             $results = DB::select($query);
