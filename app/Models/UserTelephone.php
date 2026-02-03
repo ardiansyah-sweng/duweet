@@ -19,7 +19,7 @@ class UserTelephone extends Model
     {
         parent::__construct($attributes);
         // Pastikan di file config/db_tables.php ada: 'user_telephone' => 'user_telephones'
-        $this->table = config('db_tables.user_telephone', 'user_telephones');
+        $this->table = config('db_tables.user_telephone');
     }
 
     /**

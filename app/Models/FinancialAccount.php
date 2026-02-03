@@ -21,7 +21,7 @@ class FinancialAccount extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('db_tables.financial_account', 'financial_accounts');
+        $this->table = config('db_tables.financial_account');
     }
 
     protected $fillable = [

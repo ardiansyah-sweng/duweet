@@ -615,8 +615,8 @@ class Transaction extends Model
     public static function getExpensesSummaryByPeriodAdmin(Carbon $startDate, Carbon $endDate): \Illuminate\Support\Collection
     {
         // Get table names from config
-        $transactionsTable = config('db_tables.transaction', 'transactions');
-        $accountsTable = config('db_tables.financial_account', 'financial_accounts');
+        $transactionsTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
 
         // Determine date format function based on database driver
         try {
@@ -873,7 +873,7 @@ class Transaction extends Model
     public static function updateTransactionRaw(int $id, array $data): array
     {
         try {
-            $transactionTable = config('db_tables.transaction', 'transactions');
+            $transactionTable = config('db_tables.transaction');
             
             // Cek apakah kolom transaction_date ada di database dosen
             $hasDateColumn = Schema::hasColumn($transactionTable, 'transaction_date');
