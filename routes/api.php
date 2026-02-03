@@ -12,6 +12,7 @@ use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
@@ -31,6 +32,7 @@ Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
 // =============================================================
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
+Route::put('/users/{id}', [UserController::class, 'updateUser']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [\App\Http\Controllers\TransactionController::class, 'monthlyExpense']);
 
@@ -73,6 +75,8 @@ Route::prefix('user-account')->group(function () {
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
    
 });
+
+Route::get('account-user/nested-structure', [UserAccountController::class, 'GetstructureNested'])->name('api.user-account.nested-structure');
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
 
@@ -170,10 +174,20 @@ Route::get(
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
+Route::get('/users-without-account', [UserController::class, 'getUsersWithoutAccount'])->name('api.users.without-account');
 
 Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
 
+Route::get(
+    '/admin/income/by-period',
+    [\App\Http\Controllers\ReportController::class, 'adminIncomeByPeriod']
+);
+
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+
+Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
+
