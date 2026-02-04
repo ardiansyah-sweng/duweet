@@ -714,10 +714,11 @@ class ReportController extends Controller
     /**
      * Mengambil group balance user berdasarkan account type
      */
-    public function getGroupBalanceByAccountType()
+    public function getGroupBalanceByAccountType(Request $request)
     {
         try {
-            $result = UserFinancialAccount::getGroupBalanceByAccountType();
+            $accountType = $request->input('account_type');
+            $result = UserFinancialAccount::getGroupBalanceByAccountType($accountType);
 
             return response()->json([
                 'status' => 'success',
