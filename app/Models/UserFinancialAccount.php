@@ -163,6 +163,8 @@ class UserFinancialAccount extends Model
      */
     public static function getGroupBalanceByAccountType($accountType = null)
     {
+        $accountTypeFilter = $accountType !== null ? " AND fa.type = '" . strtoupper($accountType) . "'" : '';
+
         $sql = "
             SELECT 
                 ufa.user_account_id,
@@ -177,13 +179,7 @@ class UserFinancialAccount extends Model
             WHERE 
                 fa.is_active = 1
                 AND ufa.is_active = 1
-        ";
-
-        if ($accountType !== null) {
-            $sql .= " AND fa.type = '" . strtoupper($accountType) . "' ";
-        }
-
-        $sql .= "
+                {$accountTypeFilter}
             GROUP BY 
                 ufa.user_account_id, ufa.financial_account_id, fa.type
             ORDER BY 
