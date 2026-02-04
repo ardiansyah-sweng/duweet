@@ -409,4 +409,30 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
             return [];
         }
     }
+
+    /**
+     * DML: Query list user account yang masih aktif (untuk Admin)
+     */
+    public static function query_list_user_account_aktif()
+    {
+        $query = "
+            SELECT
+                ua." . UserAccountColumns::ID . " AS account_id,
+                ua." . UserAccountColumns::USERNAME . ",
+                ua." . UserAccountColumns::EMAIL . ",
+                ua." . UserAccountColumns::IS_ACTIVE . ",
+                ua." . UserAccountColumns::VERIFIED_AT . ",
+                u." . UserColumns::ID . " AS user_id,
+                u." . UserColumns::NAME . ",
+                u." . UserColumns::FIRST_NAME . ",
+                u." . UserColumns::LAST_NAME . "
+            FROM user_accounts ua
+            INNER JOIN users u ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
+            WHERE ua." . UserAccountColumns::IS_ACTIVE . " = 1
+            ORDER BY ua." . UserAccountColumns::ID . " ASC
+        ";
+
+        return DB::select($query);
+    }
+
 }
