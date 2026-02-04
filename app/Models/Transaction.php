@@ -1069,4 +1069,42 @@ class Transaction extends Model
 
         return $result;
     }
+
+    /**
+     * Update tanggal dan/atau deskripsi transaksi berdasarkan ID.
+     * Menggunakan SQL murni yang dirangkai dahulu baru dieksekusi (Permintaan Dosen).
+     */
+    public static function updateDateDescription(int $id, array $data)
+    {
+        $fields = [];
+        $bindings = [];
+
+        // Cek jika ada input tanggal
+        if (isset($data['transaction_date'])) {
+            $fields[] = "transaction_date = ?";
+            $bindings[] = $data['transaction_date'];
+        }
+
+        // Cek jika ada input deskripsi
+        if (isset($data['description'])) {
+            $fields[] = "description = ?";
+            $bindings[] = $data['description'];
+        }
+
+        // Jika tidak ada data yang dikirim, balikkan 0
+        if (empty($fields)) {
+            return 0;
+        }
+
+        $fields[] = "updated_at = NOW()";
+        
+        // Gabungkan semua field menjadi satu setClause yang rapi
+        $setClause = implode(', ', $fields);
+        
+        // SQL yang utuh (Satu kalimat)
+        $sql = "UPDATE transactions SET {$setClause} WHERE id = ?";
+        $bindings[] = $id;
+        
+        return DB::update($sql, $bindings);
+    }
 }
