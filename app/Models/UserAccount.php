@@ -15,31 +15,17 @@ class UserAccount extends Model
     use HasFactory;
 
     protected $table = 'user_accounts';
-
-    /**
-     * Table ini tidak menggunakan created_at/updated_at default Laravel
-     * Model ini tidak menggunakan created_at dan updated_at.
-     */
     public $timestamps = false;
 
-    /**
-     * Casting otomatis.
-     */
     protected $casts = [
         UserAccountColumns::IS_ACTIVE => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
-    /**
-     * Hidden fields (password tidak ditampilkan).
-     */
     protected $hidden = [
         UserAccountColumns::PASSWORD,
     ];
 
-    /**
-     * Fillable (menggunakan constant class).
-     */
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
@@ -50,9 +36,6 @@ class UserAccount extends Model
         return UserAccountColumns::getPrimaryKey();
     }
 
-    /**
-     * Relasi ke tabel users.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
@@ -63,41 +46,20 @@ class UserAccount extends Model
         return $this->hasMany(Transaction::class, 'user_account_id');
     }
 
-    /**
-     * Relasi ke UserFinancialAccounts
-     * Setiap UserAccount bisa memiliki beberapa akun keuangan
-     */
     public function userFinancialAccounts()
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
     }
 
-    /**
-     * Insert UserAccount baru menggunakan MURNI SQL (INSERT INTO)
-     * Logika hashing dan default value dilakukan di sini.
-     * @param array $data Data yang sudah divalidasi dari controller
-     * @return bool
-     */
+    // --- RAW SQL METHODS ---
+
     public static function insertUserAccountRaw(array $data)
     {
-        // 1. Siapkan variabel data dari input array
-        // Kita gunakan Constant sebagai key agar tidak typo
-        $idUser     = $data[UserAccountColumns::ID_USER];
-        $username   = $data[UserAccountColumns::USERNAME];
-        $email      = $data[UserAccountColumns::EMAIL];
-        
-        // 2. Hash Password (enkripsi)
-        $password   = Hash::make($data[UserAccountColumns::PASSWORD]);
-        
-        // 3. Set Default Values
+        $password = Hash::make($data[UserAccountColumns::PASSWORD]);
         $verifiedAt = now(); 
-        $isActive   = 1; // Boolean true di MySQL/MariaDB disimpan sebagai 1
+        $isActive = 1;
 
-        // 4. Rakit Query SQL Native (INSERT INTO)
-        // Kita gunakan concatenation Constant untuk nama kolom agar dinamis & aman
-        $tableName = 'user_accounts'; 
-        
-        $query = "INSERT INTO $tableName (
+        $query = "INSERT INTO user_accounts (
                     " . UserAccountColumns::ID_USER . ", 
                     " . UserAccountColumns::USERNAME . ", 
                     " . UserAccountColumns::EMAIL . ", 
@@ -105,216 +67,101 @@ class UserAccount extends Model
                     " . UserAccountColumns::VERIFIED_AT . ", 
                     " . UserAccountColumns::IS_ACTIVE . "
                   ) VALUES (?, ?, ?, ?, ?, ?)";
-
         
         return DB::insert($query, [
-            $idUser, 
-            $username, 
-            $email, 
+            $data[UserAccountColumns::ID_USER], 
+            $data[UserAccountColumns::USERNAME], 
+            $data[UserAccountColumns::EMAIL], 
             $password, 
             $verifiedAt, 
             $isActive
         ]);
     }
 
-    /**
-     * UPDATE UserAccount menggunakan RAW QUERY (DML) - [BARU DITAMBAHKAN]
-     * Menggunakan query dinamis agar bisa update parsial.
-     * @param int $id
-     * @param array $data (Key harus sesuai dengan UserAccountColumns)
-     * @return int Jumlah baris yang terupdate
-     */
     public static function updateUserAccountRaw($id, array $data)
     {
         $updateSets = [];
         $bindings = [];
 
-        // 1. Cek Kolom Username
         if (array_key_exists(UserAccountColumns::USERNAME, $data)) {
             $updateSets[] = UserAccountColumns::USERNAME . " = ?";
             $bindings[] = $data[UserAccountColumns::USERNAME];
         }
-
-        // 2. Cek Kolom Email
         if (array_key_exists(UserAccountColumns::EMAIL, $data)) {
             $updateSets[] = UserAccountColumns::EMAIL . " = ?";
             $bindings[] = $data[UserAccountColumns::EMAIL];
         }
-
-        // 3. Cek Kolom Password (Hash ulang jika password diubah)
         if (array_key_exists(UserAccountColumns::PASSWORD, $data)) {
             $updateSets[] = UserAccountColumns::PASSWORD . " = ?";
             $bindings[] = Hash::make($data[UserAccountColumns::PASSWORD]);
         }
-
-        // 4. Cek Status Active
         if (array_key_exists(UserAccountColumns::IS_ACTIVE, $data)) {
             $updateSets[] = UserAccountColumns::IS_ACTIVE . " = ?";
             $bindings[] = $data[UserAccountColumns::IS_ACTIVE];
         }
 
-        // Jika tidak ada data valid yang dikirim untuk diupdate
-        if (empty($updateSets)) {
-            return 0;
-        }
+        if (empty($updateSets)) return 0;
 
-        // Masukkan ID ke binding terakhir untuk WHERE clause
         $bindings[] = $id;
-
-        // Rakit Query: "UPDATE user_accounts SET username = ?, email = ? WHERE id = ?"
         $query = "UPDATE user_accounts SET " . implode(', ', $updateSets) . 
                  " WHERE " . UserAccountColumns::ID . " = ?";
 
         return DB::update($query, $bindings);
     }
 
-    /**
-     * Hapus satu UserAccount berdasarkan ID dengan raw query (DELETE FROM)
-     * @param int $id
-     * @return array
-     * RAW DELETE USER ACCOUNT (DML)
-     */
     public static function deleteUserAccountRaw($id)
     {
         try {
-            // Menggunakan raw query DELETE FROM
-            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-            DB::delete($deleteQuery, [$id]);
-
-            return [
-                'success' => true,
-                'message' => 'UserAccount berhasil dihapus'
-            ];
+            DB::delete("DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?", [$id]);
+            return ['success' => true, 'message' => 'UserAccount berhasil dihapus'];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
-            ];
+            return ['success' => false, 'message' => 'Gagal: ' . $e->getMessage()];
         }
     }
 
-    /**
-     * DML: Cari user account by ID menggunakan RAW QUERY
-     */
     public static function cariUserById($id)
     {
-        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
-        $result = DB::select($query, [$id]);
-
+        $result = DB::select("SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ? LIMIT 1", [$id]);
         return $result[0] ?? null;
     }
 
-    /**
-     * DML: Cari user by email menggunakan RAW QUERY
-     */
     public static function cariUserByEmail($email)
     {
-        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
-        $result = DB::select($query, [$email]);
-
+        $result = DB::select("SELECT * FROM user_accounts WHERE email = ? LIMIT 1", [$email]);
         return $result[0] ?? null;
     }
 
-    /**
-     * DML: Reset password by email (RAW UPDATE)
-     */
     public static function resetPasswordByEmail($email, $newPassword)
     {
         $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
-
-        $query = "
-            UPDATE user_accounts 
-            SET password = ?
-            WHERE email = ?
-        ";
-
-        return DB::update($query, [$hashed, $email]);
+        return DB::update("UPDATE user_accounts SET password = ? WHERE email = ?", [$hashed, $email]);
     }
 
-    /**
-     * DML: Cari user berdasarkan email dan password (LOGIKA FIX)
-     */
     public static function cariUserByEmailLogin(string $email, string $password)
     {
-        $user = DB::select(
-            "SELECT * FROM user_accounts WHERE email = ? LIMIT 1",
-            [$email]
-        );
-
-        if (!empty($user)) {
-            $userData = $user[0];
-
-            // Hash::check untuk membandingkan input dengan bcrypt di DB
-            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
-                return $userData;
-            }
+        $user = DB::select("SELECT * FROM user_accounts WHERE email = ? LIMIT 1", [$email]);
+        if (!empty($user) && Hash::check($password, $user[0]->password)) {
+            return $user[0];
         }
-
         return null;
     }
 
-    /**
-     * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
-     */
     public static function cariUserByUsernameLogin(string $username, string $password)
     {
-        $user = DB::select(
-            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
-            [$username]
-        );
-
-        // Hash::check
-        if (!empty($user)) {
-            $userData = $user[0];
-
-            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
-                return $userData;
-            }
+        $user = DB::select("SELECT * FROM user_accounts WHERE username = ? LIMIT 1", [$username]);
+        if (!empty($user) && Hash::check($password, $user[0]->password)) {
+            return $user[0];
         }
-
         return null;
     }
 
     public static function HitungTotalAccountperUser($userId)
     {
-        $query = "
-            SELECT 
-                u." . UserColumns::ID . " AS user_id,
-                u." . UserColumns::NAME . " AS name,
-                u." . UserColumns::EMAIL . " AS email,
-                u." . UserColumns::FIRST_NAME . " AS first_name,
-                u." . UserColumns::MIDDLE_NAME . " AS middle_name,
-                u." . UserColumns::LAST_NAME . " AS last_name,
-                COUNT(ua." . UserAccountColumns::ID . ") AS total_accounts
-            FROM users u
-            LEFT JOIN user_accounts ua ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
-            WHERE u." . UserColumns::ID . " = ?
-            GROUP BY 
-                u." . UserColumns::ID . ",
-                u." . UserColumns::NAME . ",
-                u." . UserColumns::EMAIL . ",
-                u." . UserColumns::FIRST_NAME . ",
-                u." . UserColumns::MIDDLE_NAME . ",
-                u." . UserColumns::LAST_NAME . "
-            LIMIT 1
-        ";
+        $query = "SELECT u.id AS user_id, u.name, u.email, COUNT(ua.id) AS total_accounts
+            FROM users u LEFT JOIN user_accounts ua ON ua.user_id = u.id
+            WHERE u.id = ? GROUP BY u.id, u.name, u.email LIMIT 1";
 
         $result = DB::selectOne($query, [$userId]);
-
-        if (!$result) {
-            return null;
-        }
-
-        return [
-            'user' => [
-                'id' => (int) $result->user_id,
-                'name' => $result->name,
-                'email' => $result->email,
-                'first_name' => $result->first_name,
-                'middle_name' => $result->middle_name,
-                'last_name' => $result->last_name,
-            ],
-            'total_accounts' => (int) $result->total_accounts,
-        ];
+        return $result ? (array) $result : null;
     }
 }
