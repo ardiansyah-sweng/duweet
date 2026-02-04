@@ -1107,4 +1107,25 @@ class Transaction extends Model
         
         return DB::update($sql, $bindings);
     }
+      public static function fullTextSearchDescription(string $keyword)
+        {
+            $transactionsTable = config('db_tables.transaction');
+
+            $sql = "
+                SELECT 
+                    id,
+                    description AS deskripsi,
+                    transaction_date,
+                    created_at,
+                    updated_at,
+                    amount AS jumlah
+                FROM {$transactionsTable}
+                WHERE description LIKE ?
+                ORDER BY transaction_date DESC
+            ";
+
+            $rows = DB::select($sql, ['%' . $keyword . '%']);
+
+            return collect($rows);
+        }
 }
