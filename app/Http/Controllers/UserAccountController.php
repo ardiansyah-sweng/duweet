@@ -10,11 +10,10 @@ use Illuminate\Http\JsonResponse;
 
 class UserAccountController extends Controller
 {
-    /**
-     * ============================
-     * WEB LISTING
-     * ============================
-     */
+    // =========================================================================
+    // WEB METHODS
+    // =========================================================================
+    
     public function indexWeb()
     {
         $userAccounts = UserAccount::with('user')->get();
@@ -30,54 +29,41 @@ class UserAccountController extends Controller
         ));
     }
 
-    /**
-     * ============================
-     * API LISTING
-     * ============================
-     */
+    // =========================================================================
+    // API METHODS
+    // =========================================================================
+
     public function index()
     {
         $userAccounts = UserAccount::with('user')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $userAccounts
-        ]);
+        return response()->json(['success' => true, 'data' => $userAccounts]);
     }
 
-    /**
-     * ============================
-     * SHOW SINGLE USER ACCOUNT
-     * ============================
-     */
     public function show($id)
     {
         $userAccount = UserAccount::with('user')->find($id);
 
         if (!$userAccount) {
-            return response()->json([
-                'success' => false,
-                'message' => 'UserAccount tidak ditemukan'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'UserAccount tidak ditemukan'], 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $userAccount
-        ]);
+        return response()->json(['success' => true, 'data' => $userAccount]);
     }
 
-    /**
-     * Store a new user account (RAW QUERY - Via Model)
-     * Controller sekarang hanya validasi dan memanggil Model.
-     * ============================
-     * CREATE USER ACCOUNT
-     * ============================
-     */
+    public function findById($id): JsonResponse
+    {
+        // Menggunakan method raw dari Model
+        $user = UserAccount::cariUserById($id);
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User account tidak ditemukan'], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $user]);
+    }
+
     public function store(Request $request)
     {
-        // 1. Validasi Input
-        // Menggunakan Constant agar nama field validasi sinkron dengan database
         $validated = $request->validate([
             UserAccountColumns::ID_USER => 'required|exists:users,id',
             UserAccountColumns::USERNAME => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME . '|max:255',
@@ -88,35 +74,26 @@ class UserAccountController extends Controller
 
         $validated[UserAccountColumns::PASSWORD] = bcrypt($validated[UserAccountColumns::PASSWORD]);
 
+        // Menggunakan Eloquent create (sesuai kode asli tim)
         $userAccount = UserAccount::create($validated);
+        
         return response()->json([
-            'success' => true,
-            'message' => 'UserAccount berhasil dibuat',
+            'success' => true, 
+            'message' => 'UserAccount berhasil dibuat', 
             'data' => $userAccount
         ], 201);
     }
 
-    /**
-     * Update a user account (RAW QUERY VERSION)
-     * Menggunakan method static updateUserAccountRaw dari Model
-     * ============================
-     * UPDATE USER ACCOUNT
-     * ============================
-     */
     public function update(Request $request, $id)
     {
-        // 1. Cek apakah user ada (Menggunakan Raw/Static method agar konsisten)
+        // 1. Cek User Exist (Pakai Raw Query biar konsisten)
         $existingUser = UserAccount::cariUserById($id);
 
         if (!$existingUser) {
-            return response()->json([
-                'success' => false,
-                'message' => 'UserAccount tidak ditemukan'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'UserAccount tidak ditemukan'], 404);
         }
 
-        // 2. Validasi Input
-        // Menggunakan 'sometimes' agar user bisa update sebagian data saja
+        // 2. Validasi
         $validated = $request->validate([
             UserAccountColumns::USERNAME => 'sometimes|string|max:255|unique:user_accounts,' . UserAccountColumns::USERNAME . ',' . $id,
             UserAccountColumns::EMAIL => 'sometimes|email|max:255|unique:user_accounts,' . UserAccountColumns::EMAIL . ',' . $id,
@@ -124,74 +101,50 @@ class UserAccountController extends Controller
             UserAccountColumns::IS_ACTIVE => 'boolean',
         ]);
 
-        // 3. Proses Update via Model (RAW Query)
-        // Password hashing sudah ditangani otomatis di dalam method updateUserAccountRaw
+        // 3. Update Raw
         try {
-            $affectedRows = UserAccount::updateUserAccountRaw($id, $validated);
+            $affected = UserAccount::updateUserAccountRaw($id, $validated);
 
-            // 4. Ambil data terbaru untuk response
-            $updatedUser = UserAccount::cariUserById($id);
+            if ($affected > 0) {
+                $updatedData = UserAccount::cariUserById($id);
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'UserAccount berhasil diupdate', 
+                    'data' => $updatedData
+                ]);
+            }
 
             return response()->json([
-                'success' => true,
-                'message' => $affectedRows > 0 ? 'UserAccount berhasil diupdate' : 'Tidak ada perubahan data',
-                'data' => $updatedUser
+                'success' => true, 
+                'message' => 'Tidak ada data yang berubah', 
+                'data' => $existingUser
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengupdate data',
-                'error' => $e->getMessage()
+                'success' => false, 
+                'message' => 'Gagal update: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    /**
-     * ============================
-     * DELETE (ELOQUENT)
-     * ============================
-     */
     public function destroy($id)
     {
         $userAccount = UserAccount::find($id);
 
         if (!$userAccount) {
-            return response()->json([
-                'success' => false,
-                'message' => 'UserAccount tidak ditemukan'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'UserAccount tidak ditemukan'], 404);
         }
 
         $userAccount->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'UserAccount berhasil dihapus'
-        ]);
+        return response()->json(['success' => true, 'message' => 'UserAccount berhasil dihapus']);
     }
 
-    /**
-     * ============================
-     * DELETE WITH RAW QUERY
-     * ============================
-     */
     public function destroyRaw($id)
     {
         $result = UserAccount::deleteUserAccountRaw($id);
-
-        if (!$result['success']) {
-            return response()->json($result, 500);
-        }
-
-        return response()->json($result);
+        return response()->json($result, $result['success'] ? 200 : 500);
     }
-
-    /**
-     * ======================================================
-     * RESET PASSWORD – (DML VERSION)
-     * ======================================================
-     */
 
     public function resetPassword(Request $request): JsonResponse
     {
@@ -211,30 +164,7 @@ class UserAccountController extends Controller
         return response()->json([
             'updated' => $updated,
             'email' => $user->email,
-            'new_password' => $data['new_password'],
             'message' => 'Password reset successful'
-        ]);
-    }
-
-    /**
-     * ======================================================
-     * FIND USER ACCOUNT BY ID – (DML VERSION)
-     * ======================================================
-     */
-    public function findById($id): JsonResponse
-    {
-        $user = UserAccount::cariUserById($id);
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User account tidak ditemukan'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $user
         ]);
     }
 
@@ -243,15 +173,9 @@ class UserAccountController extends Controller
         $summary = UserAccount::HitungTotalAccountperUser($userId);
 
         if (!$summary) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan.'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'User tidak ditemukan.'], 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $summary
-        ]);
+        return response()->json(['success' => true, 'data' => $summary]);
     }
 }
