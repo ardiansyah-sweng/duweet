@@ -1107,9 +1107,9 @@ class Transaction extends Model
         
         return DB::update($sql, $bindings);
     }
-   public static function fullTextSearchDescription(string $keyword)
+    public static function fullTextSearchDescription(string $keyword)
 {
-    $transactionsTable = config('db_tables.transaction', 'transactions');
+     $transactionsTable = config('db_tables.transaction');
 
     $sql = "
         SELECT 
