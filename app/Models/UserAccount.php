@@ -435,4 +435,5 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
         return DB::select($query);
     }
 
+    
 }

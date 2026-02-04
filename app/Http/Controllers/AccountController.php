@@ -122,4 +122,5 @@ class AccountController extends Controller
         return response()->json(['data' => $row], 200);
     }
 
+    
 }
