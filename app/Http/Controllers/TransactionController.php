@@ -348,4 +348,38 @@ class TransactionController extends Controller
         ], 500);
     }
 }
+public function search(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'keyword' => 'required|string|min:3',
+            ]);
+
+            $keyword = $request->input('keyword');
+
+           
+            $results = Transaction::fullTextSearchDescription($keyword);
+
+            return response()->json([
+                'success' => true,
+                'keyword' => $keyword,
+                'count' => $results->count(),
+                'data' => $results,
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan pencarian: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 }

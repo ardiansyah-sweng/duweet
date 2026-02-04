@@ -99,6 +99,8 @@ Route::prefix('transactions')->group(function () {
     Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
     Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
+    Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
+
 });
 
 // Financial Account API Routes
