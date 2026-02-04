@@ -435,5 +435,11 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
         return DB::select($query);
     }
 
-    
+    public static function updatePasswordById($id, $password){
+        return DB::update(
+            "UPDATE user_accounts SET password = ? WHERE id = ?",
+            [Hash::make($password), $id]
+        );
+    }
+
 }

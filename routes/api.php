@@ -194,3 +194,5 @@ Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
 Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
 
 Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggalandbulan']);
+
+Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
