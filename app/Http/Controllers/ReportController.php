@@ -710,4 +710,26 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Mengambil group balance user berdasarkan account type
+     */
+    public function getGroupBalanceByAccountType()
+    {
+        try {
+            $result = UserFinancialAccount::getGroupBalanceByAccountType();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data group balance user berdasarkan account type berhasil diambil',
+                'data' => $result,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil data group balance user',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

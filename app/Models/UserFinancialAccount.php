@@ -154,4 +154,34 @@ class UserFinancialAccount extends Model
             }, $byAccount),
         ];
     }
+
+    /**
+     * Query group balance user berdasarkan account type
+     * 
+     */
+    public static function getGroupBalanceByAccountType()
+    {
+        $sql = "
+            SELECT 
+                ufa.user_account_id,
+                ufa.financial_account_id,
+                fa.type AS account_type,
+                SUM(ufa.initial_balance) AS total_initial_balance,
+                SUM(ufa.balance) AS total_balance
+            FROM 
+                user_financial_accounts ufa
+            INNER JOIN 
+                financial_accounts fa ON ufa.financial_account_id = fa.id
+            WHERE 
+                fa.is_active = 1
+                AND ufa.is_active = 1
+            GROUP BY 
+                ufa.user_account_id, ufa.financial_account_id, fa.type
+            ORDER BY 
+                fa.type, ufa.user_account_id
+        ";
+
+        return DB::select($sql);
+    }
 }
+    
