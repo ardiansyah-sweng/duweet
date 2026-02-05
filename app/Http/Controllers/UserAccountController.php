@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Constants\UserAccountColumns;
 use App\Models\UserAccount;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash; // Masih dibutuhkan untuk method update
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB; // <--- WAJIB ADA karena dipakai di store()
 use Illuminate\Http\JsonResponse;
 
 class UserAccountController extends Controller
@@ -68,16 +69,13 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Store a new user account (RAW QUERY - Via Model)
-     * Controller sekarang hanya validasi dan memanggil Model.
      * ============================
-     * CREATE USER ACCOUNT
+     * CREATE USER ACCOUNT (RAW)
      * ============================
      */
     public function store(Request $request)
     {
         // 1. Validasi Input
-        // Menggunakan Constant agar nama field validasi sinkron dengan database
         $validated = $request->validate([
             UserAccountColumns::ID_USER => 'required|exists:users,id',
             UserAccountColumns::USERNAME => 'required|string|unique:user_accounts,' . UserAccountColumns::USERNAME . '|max:255',
@@ -86,7 +84,7 @@ class UserAccountController extends Controller
             UserAccountColumns::IS_ACTIVE => 'boolean',
         ]);
 
-        // Panggil raw insert via model (tanpa hash ulang, karena sudah di model)
+        // 2. Panggil raw insert via model (Password di-hash di dalam Model)
         $result = UserAccount::insertUserAccountRaw($validated);
 
         if (!$result) {
@@ -96,8 +94,9 @@ class UserAccountController extends Controller
             ], 500);
         }
 
-        // Ambil data terbaru untuk response
-        $userAccount = UserAccount::find(DB::getPdo()->lastInsertId());
+        // 3. Ambil ID terakhir menggunakan PDO (Membutuhkan import DB)
+        $lastId = DB::getPdo()->lastInsertId();
+        $userAccount = UserAccount::find($lastId);
 
         return response()->json([
             'success' => true,
@@ -107,16 +106,16 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Update a user account (RAW QUERY - Via Model)
      * ============================
-     * UPDATE USER ACCOUNT
+     * UPDATE USER ACCOUNT (RAW)
      * ============================
      */
     public function update(Request $request, $id)
     {
-        $userAccount = UserAccount::find($id);
+        // Cek dulu apakah user ada
+        $existing = UserAccount::cariUserById($id);
 
-        if (!$userAccount) {
+        if (!$existing) {
             return response()->json([
                 'success' => false,
                 'message' => 'UserAccount tidak ditemukan'
@@ -131,21 +130,15 @@ class UserAccountController extends Controller
         ]);
 
         // Panggil raw update via model
-        $result = UserAccount::updateUserAccountRaw($id, $validated);
-
-        if (!$result) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengupdate UserAccount'
-            ], 500);
-        }
+        $affected = UserAccount::updateUserAccountRaw($id, $validated);
 
         // Ambil data terbaru untuk response
-        $updatedUserAccount = UserAccount::find($id);
+        $updatedUserAccount = UserAccount::cariUserById($id);
 
+        // Jika affected 0, mungkin data sama, tapi tetap sukses
         return response()->json([
             'success' => true,
-            'message' => 'UserAccount berhasil diupdate',
+            'message' => $affected > 0 ? 'UserAccount berhasil diupdate' : 'Tidak ada perubahan data',
             'data' => $updatedUserAccount
         ]);
     }
@@ -191,11 +184,10 @@ class UserAccountController extends Controller
     }
 
     /**
-     * ======================================================
-     * RESET PASSWORD – (DML VERSION)
-     * ======================================================
+     * ============================
+     * RESET PASSWORD (DML)
+     * ============================
      */
-
     public function resetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -214,15 +206,14 @@ class UserAccountController extends Controller
         return response()->json([
             'updated' => $updated,
             'email' => $user->email,
-            'new_password' => $data['new_password'],
             'message' => 'Password reset successful'
         ]);
     }
 
     /**
-     * ======================================================
-     * FIND USER ACCOUNT BY ID – (DML VERSION)
-     * ======================================================
+     * ============================
+     * FIND BY ID (DML)
+     * ============================
      */
     public function findById($id): JsonResponse
     {
@@ -241,6 +232,11 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ============================
+     * COUNT PER USER
+     * ============================
+     */
     public function countAccountsPerUser($userId): JsonResponse
     {
         $summary = UserAccount::HitungTotalAccountperUser($userId);
@@ -259,10 +255,13 @@ class UserAccountController extends Controller
     }
 
     /**
-     * Return list of active user accounts (for admin) as JSON.
+     * ============================
+     * LIST ACTIVE USERS (Team Code)
+     * ============================
      */
     public function listActive(Request $request): JsonResponse
     {
+        // Method ini harus ada di Model UserAccount
         $results = UserAccount::query_list_user_account_aktif();
 
         return response()->json([
@@ -271,9 +270,15 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ============================
+     * GET NESTED STRUCTURE (Team Code)
+     * ============================
+     */
     public function GetstructureNested(): JsonResponse
     {
         try {
+            // Method ini harus ada di Model UserAccount
             $nestedStructure = UserAccount::GetStructureNestedAccountUser();
 
             return response()->json([
@@ -290,48 +295,29 @@ class UserAccountController extends Controller
             ], 500);
         }
     }
-
-    // public function findByEmail(Request $request): JsonResponse
-    // {
-    //     $request->validate([
-    //         'email' => ['required', 'email'],
-    //     ]);
-
-    //     $user = UserAccount::cariUserByEmail($request->email);
-
-    //     if (!$user) {
-    //         return response()->json(['message' => 'User not found'], 404);
-    //     }
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'data' => $user
-    //     ]);
-    // }
-
     
     /**
- * ======================================================
- * GET USERS WHO HAVE NOT LOGGED IN PERIOD– (DML VERSION)
- * ======================================================
- */
-public function notLoggedIn(Request $request): JsonResponse
-{
-    $startDate = $request->query('start_date');
-    $endDate   = $request->query('end_date');
+     * ============================
+     * GET NOT LOGGED IN (Team Code)
+     * ============================
+     */
+    public function notLoggedIn(Request $request): JsonResponse
+    {
+        $startDate = $request->query('start_date');
+        $endDate   = $request->query('end_date');
 
-    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
-        $startDate,
-        $endDate
-    );
+        // Method ini harus ada di Model UserAccount
+        $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+            $startDate,
+            $endDate
+        );
 
-    return response()->json([
-        'success' => true,
-        'start_date' => $startDate,
-        'end_date' => $endDate,
-        'total_found' => count($data),
-        'data' => $data
-    ]);
-}
-
+        return response()->json([
+            'success' => true,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'total_found' => count($data),
+            'data' => $data
+        ]);
+    }
 }
