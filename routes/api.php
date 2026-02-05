@@ -94,6 +94,7 @@ Route::prefix('transactions')->group(function () {
     Route::get('/', [\App\Http\Controllers\TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
     Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
@@ -196,3 +197,4 @@ Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
 Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggalandbulan']);
 
 Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
+Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
