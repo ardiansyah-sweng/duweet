@@ -132,6 +132,8 @@ Route::prefix('reports')->group(function () {
         ->name('api.reports.surplus-defisit');
     Route::get('/sum-cashin-by-period', [ReportController::class, 'sumCashInByPeriod'])
         ->name('api.reports.sum-cashin-by-period');
+    Route::get('/group-balance-by-account-type', [ReportController::class, 'getGroupBalanceByAccountType'])
+        ->name('api.reports.group-balance-by-account-type');
 });
 
 // =============================================================
