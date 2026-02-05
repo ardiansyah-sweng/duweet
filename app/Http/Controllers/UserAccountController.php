@@ -224,6 +224,31 @@ class UserAccountController extends Controller
         ]);
     }
 
+    /**
+     * ======================================================
+     * GET INACTIVE USERS – (DML VERSION)
+     * ======================================================
+     */
+    public function inactiveByPeriod(Request $request): JsonResponse
+{
+    $startDate = $request->query('start_date');
+    $endDate   = $request->query('end_date');
+
+    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+        $startDate,
+        $endDate
+    );
+
+    return response()->json([
+        'success' => true,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'total_found' => count($data),
+        'data' => $data
+    ]);
+}
+
+
     public function countAccountsPerUser($userId): JsonResponse
     {
         $summary = UserAccount::HitungTotalAccountperUser($userId);
@@ -239,6 +264,39 @@ class UserAccountController extends Controller
             'success' => true,
             'data' => $summary
         ]);
+    }
+
+    /**
+     * Return list of active user accounts (for admin) as JSON.
+     */
+    public function listActive(Request $request): JsonResponse
+    {
+        $results = UserAccount::query_list_user_account_aktif();
+
+        return response()->json([
+            'success' => true,
+            'data' => $results,
+        ]);
+    }
+
+    public function GetstructureNested(): JsonResponse
+    {
+        try {
+            $nestedStructure = UserAccount::GetStructureNestedAccountUser();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Nested user account structure retrieved success',
+                'count' => count($nestedStructure),
+                'data' => $nestedStructure
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving nested user account structure',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // public function findByEmail(Request $request): JsonResponse
@@ -259,5 +317,29 @@ class UserAccountController extends Controller
     //     ]);
     // }
 
-}   
+    
+    /**
+ * ======================================================
+ * GET USERS WHO HAVE NOT LOGGED IN PERIOD– (DML VERSION)
+ * ======================================================
+ */
+public function notLoggedIn(Request $request): JsonResponse
+{
+    $startDate = $request->query('start_date');
+    $endDate   = $request->query('end_date');
 
+    $data = UserAccount::query_user_tidak_login_dalam_periode_tanggal(
+        $startDate,
+        $endDate
+    );
+
+    return response()->json([
+        'success' => true,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'total_found' => count($data),
+        'data' => $data
+    ]);
+}
+
+}

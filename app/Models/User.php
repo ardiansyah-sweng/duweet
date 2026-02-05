@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Constants\UserColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -341,5 +342,150 @@ class User extends Authenticatable
         }
 
         return array_values($users);
+    }
+
+
+  
+    public static function getUsersWithoutAccount()
+    {
+        $query = "SELECT u.id, u.name, u.email
+                  FROM users u
+                  WHERE NOT EXISTS (
+                      SELECT ua.id_user
+                      FROM user_accounts ua
+                      WHERE ua.id_user = u.id
+                  )";
+
+        return DB::select($query);
+    }
+    
+    
+
+
+    public static function SearchUsersbyEmailandNameandid($searchTerm)
+    { 
+        if (empty($searchTerm)) {
+            return [];
+        }
+
+        $params = [];
+        $likeTerm = '%' . $searchTerm . '%';
+
+        $query = "SELECT 
+                    u.id,
+                    u.name,
+                    u.first_name,
+                    u.middle_name,
+                    u.last_name,
+                    u.email,
+                    u.provinsi,
+                    u.kabupaten,
+                    u.kecamatan,
+                    u.jalan,
+                    u.kode_pos,
+                    u.tanggal_lahir,
+                    u.bulan_lahir,
+                    u.tahun_lahir,
+                    u.usia,
+                    u.created_at,
+                    u.updated_at
+                    FROM users u
+                    WHERE ";
+
+    
+        if (strpos($searchTerm, '@') !== false) {
+            $query .= "u.email LIKE ?";
+            $params[] = $likeTerm;
+        }
+        elseif (is_numeric($searchTerm)) {
+            $query .= "u.id = ?";
+            $params[] = $searchTerm;
+        }
+        else {
+
+            $query .= "(u.name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
+            $params = [$likeTerm, $likeTerm, $likeTerm];
+        }
+
+        try {
+            return DB::select($query, $params);
+        } catch (\Exception $e) {
+            
+            Log::error('Search Users Error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+
+        /**
+     * Update user: name, email, password, photo, preference
+     */
+    public static function updateUserRaw(int $userId, array $data)
+    {
+        try {
+            DB::beginTransaction();
+
+            $fields = [];
+            $values = [];
+
+            if (isset($data['name'])) {
+                $fields[] = "name = ?";
+                $values[] = $data['name'];
+            }
+
+            if (isset($data['email'])) {
+                if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    return 'Format email tidak valid.';
+                }
+
+                $fields[] = "email = ?";
+                $values[] = $data['email'];
+            }
+
+            if (empty($fields)) {
+                return 'Tidak ada data yang diupdate.';
+            }
+
+            $values[] = $userId;
+
+            DB::update(
+                "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?",
+                $values
+            );
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return 'Gagal update user: ' . $e->getMessage();
+        }
+    }
+    public static function countUserpertanggaldanbulan(?string $startDate = null, ?string $endDate = null): array
+    {
+        if (!$startDate || !$endDate) {
+            return [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'jumlah_user' => 0,
+            ];
+        }
+
+        // Hitung tanggal akhir eksklusif di PHP (hindari penggunaan INTERVAL di SQL)
+        try {
+            $endExclusive = (new \DateTime($endDate))->modify('+1 day')->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            // Jika parsing gagal, fallback ke nilai yang diberikan (masih lebih baik jika input tervalidasi sebelum)
+            $endExclusive = $endDate;
+        }
+
+        $query = "SELECT COUNT(*) AS jumlah_user FROM users WHERE created_at >= ? AND created_at < ?";
+        $result = DB::selectOne($query, [$startDate, $endExclusive]);
+
+        return [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'jumlah_user' => isset($result->jumlah_user) ? (int) $result->jumlah_user : 0,
+        ];
     }
 }

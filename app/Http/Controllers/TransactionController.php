@@ -226,7 +226,51 @@ class TransactionController extends Controller
         }
 
     }
-    
+
+    public function update(Request $request, $id)
+    {
+        // Validasi: hanya description dan date, boleh salah satu (nullable)
+        $validated = $request->validate([
+            'transaction_date' => 'nullable|date|date_format:Y-m-d H:i:s',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            // Filter hanya data yang tidak null
+            $updateData = array_filter($validated, function ($value) {
+                return !is_null($value);
+            });
+
+            if (empty($updateData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data yang dikirim untuk diperbarui.',
+                ], 400);
+            }
+
+            // Panggil method model updateDateDescription
+            $affected = Transaction::updateDateDescription((int) $id, $updateData);
+
+            if ($affected > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaksi berhasil diperbarui.',
+                ], 200);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan atau tidak ada perubahan data.',
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui transaksi: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /**
      * API: Get spending summary (sum of spending) grouped by period for a user account
      * Query params (GET): user_account_id (int), start_date (Y-m-d), end_date (Y-m-d)
@@ -317,4 +361,38 @@ class TransactionController extends Controller
             'total_cash_out' => $totalCashOut
         ]);
     }
+
+public function search(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'keyword' => 'required|string|min:3',
+            ]);
+
+            $keyword = $request->input('keyword');
+
+           
+            $results = Transaction::fullTextSearchDescription($keyword);
+
+            return response()->json([
+                'success' => true,
+                'keyword' => $keyword,
+                'count' => $results->count(),
+                'data' => $results,
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan pencarian: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }

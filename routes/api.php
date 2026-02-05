@@ -12,6 +12,7 @@ use App\Http\Controllers\UserAccountController;
 use App\Http\Controllers\TransactionController;
 use App\Models\FinancialAccount;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request as HttpRequest;
 // Explicit FQCN below for TransactionController to avoid analyzer confusion
 use App\Http\Controllers\FinancialAccountController;
@@ -31,6 +32,7 @@ Route::get('/userlog', [UserController::class, 'AmbilDataUserYangLogin']);
 // =============================================================
 // User API Routes
 Route::post('/users', [UserController::class, 'createUserRaw']);
+Route::put('/users/{id}', [UserController::class, 'updateUser']);
 // Monthly expenses
 Route::get('/transactions/monthly-expense', [\App\Http\Controllers\TransactionController::class, 'monthlyExpense']);
 
@@ -62,21 +64,26 @@ Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
 Route::get('/user-accounts/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
 
 Route::prefix('user-account')->group(function () {
+     Route::get('/inactive-users', [UserAccountController::class, 'inactiveByPeriod'])->name('api.user-account.inactive-users');
+      Route::get('/not-logged-in/{days?}', [UserAccountController::class, 'notLoggedIn'])->name('api.user-account.not-logged-in');
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/find-by-id/{id}', [UserAccountController::class, 'findById'])->name('api.user-account.find-by-id');
     Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
-    Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
+    @Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
     Route::delete('/{id}/raw', [UserAccountController::class, 'destroyRaw'])->name('api.user-account.destroy-raw');
+   
 });
+
+Route::get('account-user/nested-structure', [UserAccountController::class, 'GetstructureNested'])->name('api.user-account.nested-structure');
 
 Route::get('/ping', fn () => response()->json(['pong' => true]));
 
 Route::get('/accounts', function () {
     return response()->json(['ok' => true]);
 });
-
+Route::get('/admin/active-user-accounts', [\App\Http\Controllers\UserAccountController::class, 'listActive']);
 
 Route::post('/financial_accounts', [AccountController::class, 'store']);
 Route::get('/financial_accounts', [AccountController::class, 'index']);
@@ -87,8 +94,10 @@ Route::prefix('transactions')->group(function () {
     Route::get('/', [\App\Http\Controllers\TransactionController::class, 'index'])->name('api.transactions.index');
     Route::get('/by-user-account', [\App\Http\Controllers\TransactionController::class, 'byUserAccount'])->name('api.transactions.by-user-account');
     Route::get('/filter/period', [\App\Http\Controllers\TransactionController::class, 'filterByPeriod'])->name('api.transactions.filter-period');
+    Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
     Route::delete('/group/{groupId}/hard', [\App\Http\Controllers\TransactionController::class, 'hardDeleteByGroupId']);
     Route::post('/Transaction', [TransactionController::class, 'Insert'])->name('api.transactions.insert');
+    Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
     Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
     Route::get('/total-cash-out', [TransactionController::class, 'SumCashOutByPeriod']);
@@ -122,6 +131,10 @@ Route::prefix('reports')->group(function () {
     Route::get(
         '/surplus-defisit', [ReportController::class, 'surplusDefisitByPeriod'])
         ->name('api.reports.surplus-defisit');
+    Route::get('/sum-cashin-by-period', [ReportController::class, 'sumCashInByPeriod'])
+        ->name('api.reports.sum-cashin-by-period');
+    Route::get('/group-balance-by-account-type', [ReportController::class, 'getGroupBalanceByAccountType'])
+        ->name('api.reports.group-balance-by-account-type');
 });
 
 // =============================================================
@@ -167,10 +180,24 @@ Route::get(
 
 Route::get('/users/{id}/accounts', [UserController::class, 'getUserAccounts'])->name('api.users.accounts');
 Route::get('/users', [UserController::class, 'getUsers'])->name('api.users.get-users');
+Route::get('/users-without-account', [UserController::class, 'getUsersWithoutAccount'])->name('api.users.without-account');
 
 Route::get(
     '/admin/reports/cashin-by-period',
     [\App\Http\Controllers\ReportController::class, 'adminCashinByPeriod']
 );
 
+Route::get(
+    '/admin/income/by-period',
+    [\App\Http\Controllers\ReportController::class, 'adminIncomeByPeriod']
+);
+
 Route::post('/test-login', [UserAccountTestController::class, 'testLogin']);
+
+
+Route::get('/users/admin/search', [UserController::class, 'searchUsers']);
+
+Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggalandbulan']);
+
+Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
+Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');

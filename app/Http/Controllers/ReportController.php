@@ -508,4 +508,229 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Sum income by period untuk ADMIN (agregat semua user)
+     * 
+     * GET /api/admin/income/by-period
+     * Query params (flexible input):
+     * Option 1 - Full Date:
+     * - start_date (format: Y-m-d)
+     * - end_date (format: Y-m-d)
+     * 
+     * Option 2 - Year & Month:
+     * - start_year (tahun) & start_month (bulan) untuk tanggal mulai bulan
+     * - end_year (tahun) & end_month (bulan) untuk tanggal akhir bulan
+     * 
+     * Default: 1 Jan 2025 - 31 Dec 2026
+     */
+    public function adminIncomeByPeriod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'end_date' => 'nullable|date|date_format:Y-m-d',
+            'start_year' => 'nullable|integer|min:2000|max:2100',
+            'start_month' => 'nullable|integer|min:1|max:12',
+            'end_year' => 'nullable|integer|min:2000|max:2100',
+            'end_month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $defaultStartDate = Carbon::create(2025, 1, 1)->startOfDay();
+        $defaultEndDate = Carbon::create(2026, 12, 31)->endOfDay();
+
+        // Determine start date
+        if ($request->input('start_date')) {
+            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+        } elseif ($request->input('start_year') && $request->input('start_month')) {
+            $startDate = Carbon::createFromDate(
+                (int) $request->input('start_year'),
+                (int) $request->input('start_month'),
+                1
+            )->startOfDay();
+        } else {
+            $startDate = $defaultStartDate;
+        }
+
+        // Determine end date
+        if ($request->input('end_date')) {
+            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        } elseif ($request->input('end_year') && $request->input('end_month')) {
+            $endDate = Carbon::createFromDate(
+                (int) $request->input('end_year'),
+                (int) $request->input('end_month'),
+                1
+            )->endOfMonth()->endOfDay();
+        } else {
+            $endDate = $defaultEndDate;
+        }
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.',
+            ], 400);
+        }
+
+        try {
+            $data = Transaction::getAdminIncomeSummaryByPeriod($startDate, $endDate);
+
+            // Aggregate totals from all periods
+            $grandTotalIncome = (int) $data->sum('total_income');
+            $grandTotalTransactions = (int) $data->sum('transaction_count');
+            $grandTotalUsers = (int) $data->sum('user_count');
+
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'start_month' => $startDate->format('Y-m'),
+                    'end_month' => $endDate->format('Y-m'),
+                ],
+                'summary' => [
+                    'total_income' => $grandTotalIncome,
+                    'total_income_formatted' => 'Rp ' . number_format($grandTotalIncome, 0, ',', '.'),
+                    'total_transactions' => $grandTotalTransactions,
+                    'total_users' => $grandTotalUsers,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil ringkasan income by period.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /* Sum Cash In by Period
+     * 
+     * GET /api/reports/sum-cashin-by-period
+     * 
+     * Query Params:
+     * - start_date (required, format: Y-m-d)
+     * - end_date (optional, format: Y-m-d) - jika kosong, auto-set berdasarkan period_format
+     * - period_format (optional, default: month) - day|week|month|quarter|year
+     * - user_account_id (optional)
+     * - financial_account_id (optional)
+     * 
+     * Returns: Total cash in (single number) for account type 'AS' (no grouping)
+     */
+    public function sumCashInByPeriod(Request $request)
+    {
+        // 1. Validasi input
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d',
+            'user_account_id' => 'nullable|integer|exists:user_accounts,id',
+            'financial_account_id' => 'nullable|integer|exists:financial_accounts,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // 2. Parse start_date (required)
+        $startDate = Carbon::parse($request->query('start_date'))->startOfDay();
+        // Period format will be determined solely from the input date range below
+
+        // 3. Auto-set end_date berdasarkan period_format jika tidak diberikan
+        if ($request->query('end_date')) {
+            $endDate = Carbon::parse($request->query('end_date'))->endOfDay();
+        } else {
+            // Default end_date = end of month from start date
+            $endDate = $startDate->copy()->endOfMonth()->endOfDay();
+        }
+
+        // 4. Validasi periode
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        // 6. Extract filter parameters
+        $userAccountId = $request->query('user_account_id') ? (int) $request->query('user_account_id') : null;
+        $financialAccountId = $request->query('financial_account_id') ? (int) $request->query('financial_account_id') : null;
+
+        try {
+            // 7. Query model untuk mendapatkan agregat totals (sum, transaction_count, user_count) untuk akun bertipe 'AS'
+            $totals = Transaction::sumCashInByPeriod(
+                $startDate,
+                $endDate,
+                $userAccountId,
+                $financialAccountId
+            );
+
+            $totalCashIn = (int) ($totals['total_cash_in'] ?? 0);
+            $totalTransactions = (int) ($totals['transaction_count'] ?? 0);
+            $totalUsers = (int) ($totals['user_count'] ?? 0);
+            $totalCashInFormatted = 'Rp ' . number_format($totalCashIn, 0, ',', '.');
+
+            // 8. Format response
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'start_month' => $startDate->format('Y-m'),
+                    'end_month' => $endDate->format('Y-m'),
+                ],
+                'summary' => [
+                    'total_cash_in' => $totalCashIn,
+                    'total_cash_in_formatted' => $totalCashInFormatted,
+                    'total_transactions' => $totalTransactions,
+                    'total_users' => $totalUsers,
+                ],
+                'filters' => [
+                    'user_account_id' => $userAccountId,
+                    'financial_account_id' => $financialAccountId,
+                    'account_type' => 'AS',
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil laporan sum cash in',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Mengambil group balance user berdasarkan account type
+     */
+    public function getGroupBalanceByAccountType(Request $request)
+    {
+        try {
+            $accountType = $request->input('account_type');
+            $result = UserFinancialAccount::getGroupBalanceByAccountType($accountType);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data group balance user berdasarkan account type berhasil diambil',
+                'data' => $result,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil data group balance user',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
