@@ -733,4 +733,82 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    public function sumCashOutByPeriod(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'nullable|date_format:Y-m-d',
+            'user_account_id' => 'nullable|integer|exists:user_accounts,id',
+            'financial_account_id' => 'nullable|integer|exists:financial_accounts,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $startDate = Carbon::parse($request->query('start_date'))->startOfDay();
+
+        if ($request->query('end_date')) {
+            $endDate = Carbon::parse($request->query('end_date'))->endOfDay();
+        } else {
+            $endDate = $startDate->copy()->endOfMonth()->endOfDay();
+        }
+
+        if ($startDate->greaterThan($endDate)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir'
+            ], 400);
+        }
+
+        $userAccountId = $request->query('user_account_id') ? (int) $request->query('user_account_id') : null;
+        $financialAccountId = $request->query('financial_account_id') ? (int) $request->query('financial_account_id') : null;
+
+        try {
+            $totals = Transaction::sumCashOutByPeriod(
+                $startDate,
+                $endDate,
+                $userAccountId,
+                $financialAccountId
+            );
+
+            $totalCashOut = (int) ($totals['total_cash_out'] ?? 0);
+            $totalTransactions = (int) ($totals['transaction_count'] ?? 0);
+            $totalUsers = (int) ($totals['user_count'] ?? 0);
+            $totalCashOutFormatted = 'Rp ' . number_format($totalCashOut, 0, ',', '.');
+
+            // 8. Format response
+            return response()->json([
+                'success' => true,
+                'period' => [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'start_month' => $startDate->format('Y-m'),
+                    'end_month' => $endDate->format('Y-m'),
+                ],
+                'summary' => [
+                    'total_cash_out' => $totalCashOut,
+                    'total_cash_out_formatted' => $totalCashOutFormatted,
+                    'total_transactions' => $totalTransactions,
+                    'total_users' => $totalUsers,
+                ],
+                'filters' => [
+                    'user_account_id' => $userAccountId,
+                    'financial_account_id' => $financialAccountId,
+                    'account_type' => 'AS',
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil laporan sum cash out',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

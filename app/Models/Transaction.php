@@ -916,18 +916,6 @@ class Transaction extends Model
         return DB::delete($query, [$id]);
     }
 
-    public static function SumCashOutByPeriod($startDate, $endDate)
-    {
-        $query = "SELECT 
-                    SUM(t." . TransactionColumns::AMOUNT . ") AS total_cash_out
-                  FROM transactions t
-                  WHERE t." . TransactionColumns::BALANCE_EFFECT . " = 'decrease'
-                    AND DATE(t." . TransactionColumns::TRANSACTION_DATE . ") >= ?
-                    AND DATE(t." . TransactionColumns::TRANSACTION_DATE . ") <= ?";
-
-        $result = DB::selectOne($query, [$startDate, $endDate]);
-        return $result ? $result->total_cash_out : 0;
-    }
     /**
      * Sum income by period untuk ADMIN (agregat semua user)
      * 
@@ -1140,4 +1128,48 @@ class Transaction extends Model
 
             return collect($rows);
         }
+
+    public static function sumCashOutByPeriod(
+        Carbon $startDate,
+        Carbon $endDate,
+        ?int $userAccountId = null,
+        ?int $financialAccountId = null
+    ): array {
+        $transactionTable = config('db_tables.transaction');
+        $accountsTable = config('db_tables.financial_account');
+
+        $dateColumn = TransactionColumns::CREATED_AT;
+
+        $sql = "
+            SELECT 
+                COALESCE(SUM(t.amount), 0) AS total_cash_out,
+                COUNT(t.id) AS transaction_count,
+                COUNT(DISTINCT t.user_account_id) AS user_count
+            FROM {$transactionTable} t
+            INNER JOIN {$accountsTable} fa ON t.financial_account_id = fa.id
+            WHERE t.entry_type = 'credit'
+                AND t.balance_effect = 'decrease'
+                AND t.{$dateColumn} BETWEEN ? AND ?
+                AND (? IS NULL OR t.user_account_id = ?)
+                AND (? IS NULL OR t.financial_account_id = ?)
+                AND fa.type = 'AS'
+        ";
+
+        $bindings = [
+            $startDate->toDateTimeString(),
+            $endDate->toDateTimeString(),
+            $userAccountId, $userAccountId,
+            $financialAccountId, $financialAccountId,
+        ];
+
+        $rows = DB::select($sql, $bindings);
+
+        $result = [
+            'total_cash_out' => (int) ($rows[0]->total_cash_out ?? 0),
+            'transaction_count' => (int) ($rows[0]->transaction_count ?? 0),
+            'user_count' => (int) ($rows[0]->user_count ?? 0),
+        ];
+
+        return $result;
+    }
 }

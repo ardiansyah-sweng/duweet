@@ -100,7 +100,6 @@ Route::prefix('transactions')->group(function () {
     Route::put('/{id}', [TransactionController::class, 'update'])->name('api.transactions.update');
     Route::get('/spending/summary', [TransactionController::class, 'spendingSummaryByPeriod'])->name('api.transactions.spending-summary');
     Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('api.transactions.deleteByGroupIdRaw');
-    Route::get('/total-cash-out', [TransactionController::class, 'SumCashOutByPeriod']);
 });
 
 // Financial Account API Routes
@@ -135,6 +134,8 @@ Route::prefix('reports')->group(function () {
         ->name('api.reports.sum-cashin-by-period');
     Route::get('/group-balance-by-account-type', [ReportController::class, 'getGroupBalanceByAccountType'])
         ->name('api.reports.group-balance-by-account-type');
+    Route::get('/sum-cash-out', [ReportController::class, 'sumCashOutByPeriod'])
+        ->name('api.reports.sum-cash-out-by-period');
 });
 
 // =============================================================
