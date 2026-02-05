@@ -9,23 +9,40 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Constants\FinancialAccountColumns;
+use App\Constants\UserFinancialAccountColumns;
+use Illuminate\Support\Facades\Log;
 
 class UserAccount extends Model
 {
     use HasFactory;
 
     protected $table = 'user_accounts';
+
+    /**
+     * Table ini tidak menggunakan created_at/updated_at default Laravel
+     * Model ini tidak menggunakan created_at dan updated_at.
+     */
     public $timestamps = false;
 
+    /**
+     * Casting otomatis.
+     */
     protected $casts = [
         UserAccountColumns::IS_ACTIVE => 'boolean',
         UserAccountColumns::VERIFIED_AT => 'datetime',
     ];
 
+    /**
+     * Hidden fields (password tidak ditampilkan).
+     */
     protected $hidden = [
         UserAccountColumns::PASSWORD,
     ];
 
+    /**
+     * Fillable (menggunakan constant class).
+     */
     public function getFillable()
     {
         return UserAccountColumns::getFillable();
@@ -36,6 +53,9 @@ class UserAccount extends Model
         return UserAccountColumns::getPrimaryKey();
     }
 
+    /**
+     * Relasi ke tabel users.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, UserAccountColumns::ID_USER);
@@ -46,20 +66,41 @@ class UserAccount extends Model
         return $this->hasMany(Transaction::class, 'user_account_id');
     }
 
+    /**
+     * Relasi ke UserFinancialAccounts
+     * Setiap UserAccount bisa memiliki beberapa akun keuangan
+     */
     public function userFinancialAccounts()
     {
         return $this->hasMany(UserFinancialAccount::class, 'user_id', 'user_id');
     }
 
-    // --- RAW SQL METHODS ---
-
+    /**
+     * Insert UserAccount baru menggunakan MURNI SQL (INSERT INTO)
+     * Logika hashing dan default value dilakukan di sini.
+     * * @param array $data Data yang sudah divalidasi dari controller
+     * @return bool
+     */
     public static function insertUserAccountRaw(array $data)
     {
-        $password = Hash::make($data[UserAccountColumns::PASSWORD]);
+        // 1. Siapkan variabel data dari input array
+        // Kita gunakan Constant sebagai key agar tidak typo
+        $idUser     = $data[UserAccountColumns::ID_USER];
+        $username   = $data[UserAccountColumns::USERNAME];
+        $email      = $data[UserAccountColumns::EMAIL];
+        
+        // 2. Hash Password (enkripsi)
+        $password   = Hash::make($data[UserAccountColumns::PASSWORD]);
+        
+        // 3. Set Default Values
         $verifiedAt = now(); 
-        $isActive = 1;
+        $isActive   = 1; // Boolean true di MySQL/MariaDB disimpan sebagai 1
 
-        $query = "INSERT INTO user_accounts (
+        // 4. Rakit Query SQL Native (INSERT INTO)
+        // Kita gunakan concatenation Constant untuk nama kolom agar dinamis & aman
+        $tableName = 'user_accounts'; 
+        
+        $query = "INSERT INTO $tableName (
                     " . UserAccountColumns::ID_USER . ", 
                     " . UserAccountColumns::USERNAME . ", 
                     " . UserAccountColumns::EMAIL . ", 
@@ -67,101 +108,344 @@ class UserAccount extends Model
                     " . UserAccountColumns::VERIFIED_AT . ", 
                     " . UserAccountColumns::IS_ACTIVE . "
                   ) VALUES (?, ?, ?, ?, ?, ?)";
+
         
         return DB::insert($query, [
-            $data[UserAccountColumns::ID_USER], 
-            $data[UserAccountColumns::USERNAME], 
-            $data[UserAccountColumns::EMAIL], 
+            $idUser, 
+            $username, 
+            $email, 
             $password, 
             $verifiedAt, 
             $isActive
         ]);
     }
 
+    /**
+     * Update UserAccount menggunakan MURNI SQL (UPDATE)
+     * Logika hashing dilakukan di sini jika password diupdate.
+     * @param int $id ID UserAccount
+     * @param array $data Data yang sudah divalidasi dari controller
+     * @return bool
+     */
     public static function updateUserAccountRaw($id, array $data)
     {
-        $updateSets = [];
+        // Siapkan data untuk update
+        $updates = [];
         $bindings = [];
 
-        if (array_key_exists(UserAccountColumns::USERNAME, $data)) {
-            $updateSets[] = UserAccountColumns::USERNAME . " = ?";
+        if (isset($data[UserAccountColumns::USERNAME])) {
+            $updates[] = UserAccountColumns::USERNAME . " = ?";
             $bindings[] = $data[UserAccountColumns::USERNAME];
         }
-        if (array_key_exists(UserAccountColumns::EMAIL, $data)) {
-            $updateSets[] = UserAccountColumns::EMAIL . " = ?";
+
+        if (isset($data[UserAccountColumns::EMAIL])) {
+            $updates[] = UserAccountColumns::EMAIL . " = ?";
             $bindings[] = $data[UserAccountColumns::EMAIL];
         }
-        if (array_key_exists(UserAccountColumns::PASSWORD, $data)) {
-            $updateSets[] = UserAccountColumns::PASSWORD . " = ?";
+
+        if (isset($data[UserAccountColumns::PASSWORD])) {
+            // Hash password di sini
+            $updates[] = UserAccountColumns::PASSWORD . " = ?";
             $bindings[] = Hash::make($data[UserAccountColumns::PASSWORD]);
         }
-        if (array_key_exists(UserAccountColumns::IS_ACTIVE, $data)) {
-            $updateSets[] = UserAccountColumns::IS_ACTIVE . " = ?";
-            $bindings[] = $data[UserAccountColumns::IS_ACTIVE];
+
+        if (isset($data[UserAccountColumns::IS_ACTIVE])) {
+            $updates[] = UserAccountColumns::IS_ACTIVE . " = ?";
+            $bindings[] = $data[UserAccountColumns::IS_ACTIVE] ? 1 : 0; // Boolean ke integer
         }
 
-        if (empty($updateSets)) return 0;
+        if (empty($updates)) {
+            return false; // Tidak ada yang diupdate
+        }
 
+        // Rakit query UPDATE
+        $query = "UPDATE user_accounts SET " . implode(', ', $updates) . " WHERE " . UserAccountColumns::ID . " = ?";
         $bindings[] = $id;
-        $query = "UPDATE user_accounts SET " . implode(', ', $updateSets) . 
-                 " WHERE " . UserAccountColumns::ID . " = ?";
 
-        return DB::update($query, $bindings);
+        return DB::update($query, $bindings) > 0;
     }
 
+    /**
+     * Hapus satu UserAccount berdasarkan ID dengan raw query (DELETE FROM)
+     * * @param int $id
+     * @return array
+     * RAW DELETE USER ACCOUNT (DML)
+     */
     public static function deleteUserAccountRaw($id)
     {
         try {
-            DB::delete("DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?", [$id]);
-            return ['success' => true, 'message' => 'UserAccount berhasil dihapus'];
+            // Menggunakan raw query DELETE FROM
+            $deleteQuery = "DELETE FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+            DB::delete($deleteQuery, [$id]);
+
+            return [
+                'success' => true,
+                'message' => 'UserAccount berhasil dihapus'
+            ];
         } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Gagal: ' . $e->getMessage()];
+            return [
+                'success' => false,
+                'message' => 'Gagal menghapus UserAccount: ' . $e->getMessage()
+            ];
         }
     }
-
+    /**
+     * DML: Cari user account by ID menggunakan RAW QUERY
+     */
     public static function cariUserById($id)
     {
-        $result = DB::select("SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ? LIMIT 1", [$id]);
+        $query = "SELECT * FROM user_accounts WHERE " . UserAccountColumns::ID . " = ?";
+        $result = DB::select($query, [$id]);
+
         return $result[0] ?? null;
     }
 
+    /**
+     * DML: Cari user by email menggunakan RAW QUERY
+     */
     public static function cariUserByEmail($email)
     {
-        $result = DB::select("SELECT * FROM user_accounts WHERE email = ? LIMIT 1", [$email]);
+        $query = "SELECT * FROM user_accounts WHERE email = ? LIMIT 1";
+        $result = DB::select($query, [$email]);
+
         return $result[0] ?? null;
     }
 
+    /**
+     * DML: Reset password by email (RAW UPDATE)
+     */
     public static function resetPasswordByEmail($email, $newPassword)
     {
         $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
-        return DB::update("UPDATE user_accounts SET password = ? WHERE email = ?", [$hashed, $email]);
+
+        $query = "
+            UPDATE user_accounts 
+            SET password = ?
+            WHERE email = ?
+        ";
+
+        return DB::update($query, [$hashed, $email]);
     }
 
-    public static function cariUserByEmailLogin(string $email, string $password)
-    {
-        $user = DB::select("SELECT * FROM user_accounts WHERE email = ? LIMIT 1", [$email]);
-        if (!empty($user) && Hash::check($password, $user[0]->password)) {
-            return $user[0];
-        }
-        return null;
-    }
+/**
+ * DML: Ambil user yang tidak login dalam periode hari tertentu 
+ */
+public static function query_user_tidak_login_dalam_periode_tanggal($startDate, $endDate)
+{
+    $sql = "
+        SELECT ua.*
+        FROM user_accounts ua
+        LEFT JOIN user_login ul
+            ON ua.id = ul.user_account_id
+        WHERE (
+            ul.last_login_at IS NULL
+            OR ul.last_login_at NOT BETWEEN ? AND ?
+        )
+        AND ua.is_active = 1
+    ";
 
+    return DB::select($sql, [$startDate, $endDate]);
+}
+    /**
+     * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
+     */
     public static function cariUserByUsernameLogin(string $username, string $password)
     {
-        $user = DB::select("SELECT * FROM user_accounts WHERE username = ? LIMIT 1", [$username]);
-        if (!empty($user) && Hash::check($password, $user[0]->password)) {
-            return $user[0];
+        $user = DB::select(
+            "SELECT * FROM user_accounts WHERE username = ? LIMIT 1",
+            [$username]
+        );
+
+        // Hash::check
+        if (!empty($user)) {
+            $userData = $user[0];
+
+            if (\Illuminate\Support\Facades\Hash::check($password, $userData->password)) {
+                return $userData;
+            }
         }
+
         return null;
     }
 
     public static function HitungTotalAccountperUser($userId)
     {
-        $query = "SELECT u.id AS user_id, u.name, u.email, COUNT(ua.id) AS total_accounts
-            FROM users u LEFT JOIN user_accounts ua ON ua.user_id = u.id
-            WHERE u.id = ? GROUP BY u.id, u.name, u.email LIMIT 1";
+        $query = "
+            SELECT 
+                u." . UserColumns::ID . " AS user_id,
+                u." . UserColumns::NAME . " AS name,
+                u." . UserColumns::EMAIL . " AS email,
+                u." . UserColumns::FIRST_NAME . " AS first_name,
+                u." . UserColumns::MIDDLE_NAME . " AS middle_name,
+                u." . UserColumns::LAST_NAME . " AS last_name,
+                COUNT(ua." . UserAccountColumns::ID . ") AS total_accounts
+            FROM users u
+            LEFT JOIN user_accounts ua ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
+            WHERE u." . UserColumns::ID . " = ?
+            GROUP BY 
+                u." . UserColumns::ID . ",
+                u." . UserColumns::NAME . ",
+                u." . UserColumns::EMAIL . ",
+                u." . UserColumns::FIRST_NAME . ",
+                u." . UserColumns::MIDDLE_NAME . ",
+                u." . UserColumns::LAST_NAME . "
+            LIMIT 1
+        ";
 
         $result = DB::selectOne($query, [$userId]);
-        return $result ? (array) $result : null;
+
+        if (!$result) {
+            return null;
+        }
+
+        return [
+            'user' => [
+                'id' => (int) $result->user_id,
+                'name' => $result->name,
+                'email' => $result->email,
+                'first_name' => $result->first_name,
+                'middle_name' => $result->middle_name,
+                'last_name' => $result->last_name,
+            ],
+            'total_accounts' => (int) $result->total_accounts,
+        ];
     }
-}
+
+    public static function GetStructureNestedAccountUser()
+    {
+        try {
+            $query = "
+                SELECT
+                    u." . UserColumns::ID . " AS user_id,
+                    u." . UserColumns::NAME . " AS user_name,
+                    u." . UserColumns::EMAIL . " AS user_email,
+                    ua." . UserAccountColumns::ID . " AS user_account_id,
+                    ua." . UserAccountColumns::USERNAME . " AS username,
+                    ua." . UserAccountColumns::EMAIL . " AS user_account_email,
+                    ua." . UserAccountColumns::IS_ACTIVE . " AS user_account_is_active,
+                    fa." . FinancialAccountColumns::ID . " AS financial_account_id,
+                    fa." . FinancialAccountColumns::NAME . " AS financial_account_name,
+                    fa." . FinancialAccountColumns::TYPE . " AS financial_account_type,
+                    fa." . FinancialAccountColumns::PARENT_ID . " AS financial_account_parent_id,
+                    fa." . FinancialAccountColumns::LEVEL . " AS financial_account_level,
+                    fa." . FinancialAccountColumns::IS_GROUP . " AS financial_account_is_group,
+                    fa." . FinancialAccountColumns::INITIAL_BALANCE . " AS financial_account_initial_balance,
+                    ufa." . UserFinancialAccountColumns::BALANCE . " AS user_financial_balance,
+                    ufa." . UserFinancialAccountColumns::INITIAL_BALANCE . " AS user_financial_initial_balance,
+                    ufa." . UserFinancialAccountColumns::IS_ACTIVE . " AS user_financial_is_active,
+                    fa." . FinancialAccountColumns::IS_ACTIVE . " AS financial_account_is_active
+                FROM user_financial_accounts ufa
+                INNER JOIN user_accounts ua ON ua." . UserAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::USER_ACCOUNT_ID . "
+                INNER JOIN users u ON u." . UserColumns::ID . " = ua." . UserAccountColumns::ID_USER . "
+                INNER JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . "
+                
+                UNION
+                
+                SELECT
+                    u." . UserColumns::ID . " AS user_id,
+                    u." . UserColumns::NAME . " AS user_name,
+                    u." . UserColumns::EMAIL . " AS user_email,
+                    ua." . UserAccountColumns::ID . " AS user_account_id,
+                    ua." . UserAccountColumns::USERNAME . " AS username,
+                    ua." . UserAccountColumns::EMAIL . " AS user_account_email,
+                    ua." . UserAccountColumns::IS_ACTIVE . " AS user_account_is_active,
+                    parent_fa." . FinancialAccountColumns::ID . " AS financial_account_id,
+                    parent_fa." . FinancialAccountColumns::NAME . " AS financial_account_name,
+                    parent_fa." . FinancialAccountColumns::TYPE . " AS financial_account_type,
+                    parent_fa." . FinancialAccountColumns::PARENT_ID . " AS financial_account_parent_id,
+                    parent_fa." . FinancialAccountColumns::LEVEL . " AS financial_account_level,
+                    parent_fa." . FinancialAccountColumns::IS_GROUP . " AS financial_account_is_group,
+                    parent_fa." . FinancialAccountColumns::INITIAL_BALANCE . " AS financial_account_initial_balance,
+                    NULL AS user_financial_balance,
+                    NULL AS user_financial_initial_balance,
+                    NULL AS user_financial_is_active,
+                    parent_fa." . FinancialAccountColumns::IS_ACTIVE . " AS financial_account_is_active
+                FROM user_financial_accounts ufa
+                INNER JOIN user_accounts ua ON ua." . UserAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::USER_ACCOUNT_ID . "
+                INNER JOIN users u ON u." . UserColumns::ID . " = ua." . UserAccountColumns::ID_USER . "
+                INNER JOIN financial_accounts fa ON fa." . FinancialAccountColumns::ID . " = ufa." . UserFinancialAccountColumns::FINANCIAL_ACCOUNT_ID . "
+                INNER JOIN financial_accounts parent_fa ON parent_fa." . FinancialAccountColumns::ID . " = fa." . FinancialAccountColumns::PARENT_ID . "
+                
+                ORDER BY user_id, user_account_id, financial_account_level, financial_account_id
+            ";
+            
+            $results = DB::select($query);
+            
+            if (empty($results)) {
+                return [];
+            }
+            
+            $users = [];
+            
+            foreach ($results as $row) {
+                $userId = (int) $row->user_id;
+                $userAccountId = (int) $row->user_account_id;
+                
+                if (!isset($users[$userId])) {
+                    $users[$userId] = [
+                        'user_id' => $userId,
+                        'user_name' => $row->user_name,
+                        'user_email' => $row->user_email,
+                        'user_accounts' => [],
+                    ];
+                }
+                
+                if (!isset($users[$userId]['user_accounts'][$userAccountId])) {
+                    $users[$userId]['user_accounts'][$userAccountId] = [
+                        'user_account_id' => $userAccountId,
+                        'username' => $row->username,
+                        'email' => $row->user_account_email,
+                        'is_active' => (bool) $row->user_account_is_active,
+                        'financial_accounts' => [],
+                        '_fa_index' => [],
+                    ];
+                }
+                
+                if ($row->financial_account_id !== null) {
+                    $financialAccountId = (int) $row->financial_account_id;
+
+                    if (!isset($users[$userId]['user_accounts'][$userAccountId]['_fa_index'][$financialAccountId])) {
+                        $users[$userId]['user_accounts'][$userAccountId]['_fa_index'][$financialAccountId] = [
+                            'financial_account_id' => $financialAccountId,
+                            'name' => $row->financial_account_name,
+                            'type' => $row->financial_account_type,
+                            'parent_id' => $row->financial_account_parent_id !== null ? (int) $row->financial_account_parent_id : null,
+                            'level' => $row->financial_account_level !== null ? (int) $row->financial_account_level : null,
+                            'is_group' => (bool) $row->financial_account_is_group,
+                            'initial_balance' => $row->financial_account_initial_balance !== null ? (float) $row->financial_account_initial_balance : null,
+                            'balance' => $row->user_financial_balance !== null ? (float) $row->user_financial_balance : null,
+                            'user_initial_balance' => $row->user_financial_initial_balance !== null ? (float) $row->user_financial_initial_balance : null,
+                            'user_is_active' => $row->user_financial_is_active !== null ? (bool) $row->user_financial_is_active : null,
+                            'is_active' => (bool) $row->financial_account_is_active,
+                            'children' => [],
+                        ];
+                    }
+                }
+            }
+            
+           
+            foreach ($users as &$user) {
+                foreach ($user['user_accounts'] as &$account) {
+                    $faIndex = $account['_fa_index'] ?? [];
+                    $roots = [];
+
+                    foreach ($faIndex as $faId => &$faNode) {
+                        $parentId = $faNode['parent_id'];
+                        if ($parentId !== null && isset($faIndex[$parentId])) {
+                            $faIndex[$parentId]['children'][] = &$faNode;
+                        } else {
+                            $roots[] = &$faNode;
+                        }
+                    }
+                    unset($faNode);
+
+                    $account['financial_accounts'] = array_values($roots);
+                    unset($account['_fa_index']);
+                }
+                unset($account);
+
+                $user['user_accounts'] = array_values($user['user_accounts']);
+            }
+            unset($user);
+            
+            return array_values
