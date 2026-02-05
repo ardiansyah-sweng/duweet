@@ -256,7 +256,7 @@ class UserAccountController extends Controller
 
     /**
      * ============================
-     * LIST ACTIVE USERS (Team Code)
+     * LIST ACTIVE USERS 
      * ============================
      */
     public function listActive(Request $request): JsonResponse
@@ -272,7 +272,7 @@ class UserAccountController extends Controller
 
     /**
      * ============================
-     * GET NESTED STRUCTURE (Team Code)
+     * GET NESTED STRUCTURE 
      * ============================
      */
     public function GetstructureNested(): JsonResponse
@@ -298,7 +298,7 @@ class UserAccountController extends Controller
     
     /**
      * ============================
-     * GET NOT LOGGED IN (Team Code)
+     * GET NOT LOGGED IN 
      * ============================
      */
     public function notLoggedIn(Request $request): JsonResponse
