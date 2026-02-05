@@ -227,25 +227,25 @@ class UserAccount extends Model
         return DB::update($query, [$hashed, $email]);
     }
 
-/**
- * DML: Ambil user yang tidak login dalam periode hari tertentu 
- */
-public static function query_user_tidak_login_dalam_periode_tanggal($startDate, $endDate)
-{
-    $sql = "
-        SELECT ua.*
-        FROM user_accounts ua
-        LEFT JOIN user_login ul
-            ON ua.id = ul.user_account_id
-        WHERE (
-            ul.last_login_at IS NULL
-            OR ul.last_login_at NOT BETWEEN ? AND ?
-        )
-        AND ua.is_active = 1
-    ";
+    /**
+     * DML: Ambil user yang tidak login dalam periode hari tertentu 
+     */
+    public static function query_user_tidak_login_dalam_periode_tanggal($startDate, $endDate)
+    {
+        $sql = "
+            SELECT ua.*
+            FROM user_accounts ua
+            LEFT JOIN user_login ul
+                ON ua.id = ul.user_account_id
+            WHERE (
+                ul.last_login_at IS NULL
+                OR ul.last_login_at NOT BETWEEN ? AND ?
+            )
+            AND ua.is_active = 1
+        ";
 
-    return DB::select($sql, [$startDate, $endDate]);
-}
+        return DB::select($sql, [$startDate, $endDate]);
+    }
     /**
      * DML: Cari user berdasarkan username dan password (LOGIKA FIX)
      */
@@ -423,7 +423,7 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
                 }
             }
             
-           
+            
             foreach ($users as &$user) {
                 foreach ($user['user_accounts'] as &$account) {
                     $faIndex = $account['_fa_index'] ?? [];
@@ -448,4 +448,42 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
             }
             unset($user);
             
-            return array_values
+            return array_values($users);
+        } catch (\Exception $e) {
+            Log::error('Error in GetStructureNestedAccountUser: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * DML: Query list user account yang masih aktif (untuk Admin)
+     */
+    public static function query_list_user_account_aktif()
+    {
+        $query = "
+            SELECT
+                ua." . UserAccountColumns::ID . " AS account_id,
+                ua." . UserAccountColumns::USERNAME . ",
+                ua." . UserAccountColumns::EMAIL . ",
+                ua." . UserAccountColumns::IS_ACTIVE . ",
+                ua." . UserAccountColumns::VERIFIED_AT . ",
+                u." . UserColumns::ID . " AS user_id,
+                u." . UserColumns::NAME . ",
+                u." . UserColumns::FIRST_NAME . ",
+                u." . UserColumns::LAST_NAME . "
+            FROM user_accounts ua
+            INNER JOIN users u ON ua." . UserAccountColumns::ID_USER . " = u." . UserColumns::ID . "
+            WHERE ua." . UserAccountColumns::IS_ACTIVE . " = 1
+            ORDER BY ua." . UserAccountColumns::ID . " ASC
+        ";
+
+        return DB::select($query);
+    }
+
+    public static function updatePasswordById($id, $password){
+        return DB::update(
+            "UPDATE user_accounts SET password = ? WHERE id = ?",
+            [Hash::make($password), $id]
+        );
+    }
+}
