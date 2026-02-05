@@ -442,4 +442,18 @@ public static function query_user_tidak_login_dalam_periode_tanggal($startDate, 
         );
     }
 
+public static function sumAllBalanceByUserAccountId($userAccountId)
+    {
+        $query = "
+            SELECT COALESCE(SUM(balance), 0) as total_balance
+            FROM user_financial_accounts
+            WHERE user_account_id = ?
+            AND is_active = 1
+        ";
+        
+        $result = DB::selectOne($query, [$userAccountId]);
+
+        return $result->total_balance ?? 0;
+    }
+
 }

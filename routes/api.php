@@ -200,3 +200,5 @@ Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggala
 
 Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
 Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
+
+Route::get('/user-accounts/{id}/total-balance', [UserAccountController::class, 'getTotalBalance']);

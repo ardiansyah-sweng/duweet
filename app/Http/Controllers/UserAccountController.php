@@ -342,4 +342,25 @@ public function notLoggedIn(Request $request): JsonResponse
     ]);
 }
 
+public function getTotalBalance($id): JsonResponse
+    {
+        // Cek apakah user account ada
+        $userAccount = UserAccount::cariUserById($id);
+
+        if (!$userAccount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User Account tidak ditemukan'
+            ], 404);
+        }
+
+        $totalBalance = UserAccount::sumAllBalanceByUserAccountId($id);
+
+        return response()->json([
+            'success' => true,
+            'user_account_id' => $id,
+            'total_balance' => $totalBalance,
+            'message' => 'Total balance berhasil dihitung'
+        ]);
+    }
 }
