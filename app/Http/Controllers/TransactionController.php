@@ -348,8 +348,6 @@ class TransactionController extends Controller
         ], 500);
     }
 }
-
-
 public function search(Request $request): JsonResponse
     {
         try {
