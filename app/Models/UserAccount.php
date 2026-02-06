@@ -65,7 +65,6 @@ class UserAccount extends Model
     }
 
     /**
-     * Helper: Cari data by ID pakai Raw Query
      * Mengembalikan object standard (stdClass), bukan Model Eloquent
      */
     public static function findRaw($id)

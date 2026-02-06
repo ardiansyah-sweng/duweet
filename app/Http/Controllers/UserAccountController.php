@@ -47,7 +47,7 @@ class AccountController extends Controller
             $updateSuccess = UserAccount::updateRaw($id, $validated);
 
             if (!$updateSuccess) {
-                // Jika return false/0, bisa jadi karena data sama persis dengan di DB
+                // Jika return 0, bisa jadi karena data sama persis dengan di DB
                 return response()->json([
                     'status'  => 'success', 
                     'message' => 'Data tidak berubah (isi data sama dengan sebelumnya)',
