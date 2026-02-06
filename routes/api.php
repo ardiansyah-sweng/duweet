@@ -202,3 +202,10 @@ Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggala
 
 Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
 Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
+
+Route::prefix('user-accounts')->group(function () {
+    Route::get('/total-gaji-semua-user', [UserAccountController::class, 'getTotalGajiSemuaUser']);
+    Route::get('/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
+    Route::get('/', [UserAccountController::class, 'index']);
+    Route::get('/{id}', [UserAccountController::class, 'show']);
+});
