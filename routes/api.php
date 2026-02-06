@@ -134,6 +134,8 @@ Route::prefix('reports')->group(function () {
         ->name('api.reports.sum-cashin-by-period');
     Route::get('/group-balance-by-account-type', [ReportController::class, 'getGroupBalanceByAccountType'])
         ->name('api.reports.group-balance-by-account-type');
+    Route::get('/sum-cash-out', [ReportController::class, 'sumCashOutByPeriod'])
+        ->name('api.reports.sum-cash-out-by-period');
 });
 
 // =============================================================
