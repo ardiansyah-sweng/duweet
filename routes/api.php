@@ -58,10 +58,12 @@ Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::class, 'show'])->whereNumber('id');
 
 
-// UserAccount API Routes (no CSRF protection needed)
-Route::get('/user-accounts', [UserAccountController::class, 'index']);
-Route::get('/user-accounts/{id}', [UserAccountController::class, 'show']);
-Route::get('/user-accounts/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
+Route::prefix('user-accounts')->group(function () {
+    Route::get('/total-gaji-semua-user', [UserAccountController::class, 'getTotalGajiSemuaUser']);
+    Route::get('/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
+    Route::get('/', [UserAccountController::class, 'index']);
+    Route::get('/{id}', [UserAccountController::class, 'show']);
+});
 
 Route::prefix('user-account')->group(function () {
      Route::get('/inactive-users', [UserAccountController::class, 'inactiveByPeriod'])->name('api.user-account.inactive-users');
@@ -201,4 +203,3 @@ Route::get('/users/count-by-date', [UserController::class, 'countUserpertanggala
 Route::post('/account/update-password/{id}', [AccountController::class, 'updatePassword']);
 Route::get('/search', [\App\Http\Controllers\TransactionController::class, 'search'])->name('api.transactions.search');
 
-Route::get('/user-accounts/{id}/total-balance', [UserAccountController::class, 'getTotalBalance']);

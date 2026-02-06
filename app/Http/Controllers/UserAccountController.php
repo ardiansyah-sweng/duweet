@@ -363,4 +363,20 @@ public function getTotalBalance($id): JsonResponse
             'message' => 'Total balance berhasil dihitung'
         ]);
     }
+      /**
+     * Get total gaji (Salary) from all users
+     */
+    public function getTotalGajiSemuaUser(): JsonResponse
+    {
+        $totalGaji = \DB::table('user_financial_accounts as ufa')
+            ->join('financial_accounts as fa', 'ufa.financial_account_id', '=', 'fa.id')
+            ->where('fa.name', 'Salary')
+            ->sum('ufa.balance');
+
+        return response()->json([
+            'success' => true,
+            'total_gaji_semua_user' => $totalGaji ?? 0,
+            'message' => 'Total balance gaji semua user berhasil dihitung'
+        ]);
+    }
 }
