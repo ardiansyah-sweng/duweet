@@ -60,9 +60,9 @@ Route::get('/transactions/{id}', [\App\Http\Controllers\TransactionController::c
 
 Route::prefix('user-accounts')->group(function () {
     Route::get('/total-gaji-semua-user', [UserAccountController::class, 'getTotalGajiSemuaUser']);
-    Route::get('/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser']);
+    Route::get('/hitung-total/{userId}', [UserAccountController::class, 'countAccountsPerUser'])->whereNumber('userId');
     Route::get('/', [UserAccountController::class, 'index']);
-    Route::get('/{id}', [UserAccountController::class, 'show']);
+    Route::get('/{id}', [UserAccountController::class, 'show'])->whereNumber('id');
 });
 
 Route::prefix('user-account')->group(function () {
@@ -70,7 +70,7 @@ Route::prefix('user-account')->group(function () {
       Route::get('/not-logged-in/{days?}', [UserAccountController::class, 'notLoggedIn'])->name('api.user-account.not-logged-in');
     Route::get('/', [UserAccountController::class, 'index'])->name('api.user-account.index');
     Route::get('/find-by-id/{id}', [UserAccountController::class, 'findById'])->name('api.user-account.find-by-id');
-    Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show');
+    Route::get('/{id}', [UserAccountController::class, 'show'])->name('api.user-account.show')->whereNumber('id');
     @Route::post('/', [UserAccountController::class, 'store'])->name('api.user-account.store');
     Route::put('/{id}', [UserAccountController::class, 'update'])->name('api.user-account.update');
     Route::delete('/{id}', [UserAccountController::class, 'destroy'])->name('api.user-account.destroy');
